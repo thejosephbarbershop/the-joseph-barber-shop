@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <title>Reserva tu Cita - The Joseph Barbershop</title>
+    <style>
+        :root {
+            --primary-color: #1a1a1a;   /* Negro Barbería */
+            --accent-color: #d4af37;    /* Dorado Premium */
+            --bg-color: #f4f7f6;
+            --text-color: #333;
+            --white: #ffffff;
+            --whatsapp-color: #25d366; /* Verde WhatsApp */
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 430px; /* Formato tipo Smartphone */
+            background-color: var(--white);
+            border-radius: 25px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* --- CABECERA --- */
+        header {
+            background-color: var(--primary-color);
+            color: var(--white);
+            padding: 30px 20px;
+            text-align: center;
+            border-bottom: 4px solid var(--accent-color);
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 1.6rem;
+            font-weight: bold;
+            letter-spacing: 2px;
+            color: var(--accent-color);
+        }
+
+        header p {
+            margin: 5px 0 0 0;
+            font-size: 0.85rem;
+            opacity: 0.7;
+        }
+
+        /* --- CUERPO DEL FORMULARIO --- */
+        .form-content {
+            padding: 20px;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+
+        .form-section {
+            margin-bottom: 25px;
+        }
+
+        .section-title {
+            font-size: 0.85rem;
+            color: #777;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 12px;
+            display: block;
+            font-weight: bold;
+        }
+
+        /* --- INPUTS DE TEXTO --- */
+        .input-field {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #eee;
+            border-radius: 12px;
+            font-size: 1rem;
+            box-sizing: border-box;
+            margin-bottom: 10px;
+            transition: border-color 0.3s;
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: var(--accent-color);
+        }
+
+        /* --- BOTONES DE SELECCIÓN (GRID) --- */
+        .selector-group {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+
+        .selector-item {
+            display: none;
+        }
+
+        .selector-label {
+            display: block;
+            background-color: var(--white);
+            border: 2px solid #eee;
+            border-radius: 14px;
+            padding: 15px 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            height: 100%;
+            box-sizing: border-box;
+        }
+
+        .selector-label:hover {
+            border-color: var(--accent-color);
+            background-color: #fffdf7;
+        }
+
+        .selector-item:checked + .selector-label {
+            border-color: var(--accent-color);
+            background-color: var(--primary-color);
+            color: var(--white);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .selector-item:checked + .selector-label .item-desc {
+            color: var(--accent-color);
+        }
+
+        .item-name {
+            display: block;
+            font-weight: bold;
+            font-size: 0.95rem;
+        }
+
+        .item-desc {
+            display: block;
+            font-size: 0.8rem;
+            color: #666;
+            margin-top: 4px;
+            font-weight: 500;
+        }
+
+        /* --- FECHA Y HORA --- */
+        .datetime-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        /* --- BOTÓN ENVIAR A WHATSAPP --- */
+        .confirm-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+            padding: 16px;
+            background-color: var(--whatsapp-color);
+            color: var(--white);
+            border: none;
+            border-radius: 14px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 4px 10px rgba(37, 211, 102, 0.3);
+        }
+
+        .confirm-btn:hover {
+            background-color: #20ba59;
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        <header>
+            <h1>THE JOSEPH BARBERSHOP</h1>
+            <p>Citas y Reservas por WhatsApp</p>
+        </header>
+
+        <form id="reserva-form" class="form-content">
+            
+            <!-- DATOS DEL CLIENTE -->
+            <div class="form-section">
+                <span class="section-title">Tus Datos</span>
+                <input type="text" id="client-name" class="input-field" placeholder="Nombre completo" required>
+                <input type="tel" id="client-phone" class="input-field" placeholder="Número de teléfono" required>
+            </div>
+
+            <!-- SECCIÓN: SERVICIOS (Escritos directamente en el diseño) -->
+            <div class="form-section">
+                <span class="section-title">Selecciona un Servicio</span>
+                <div class="selector-group">
+                    <div>
+                        <input type="radio" id="srv1" name="servicio" value="Corte de pelo" class="selector-item" required>
+                        <label for="srv1" class="selector-label">
+                            <span class="item-name">Corte de pelo</span>
+                            <span class="item-desc">Servicio Estándar</span>
+                        </label>
+                    </div>
+                    <div>
+                        <input type="radio" id="srv2" name="servicio" value="Cerquillo" class="selector-item">
+                        <label for="srv2" class="selector-label">
+                            <span class="item-name">Cerquillo</span>
+                            <span class="item-desc">Marcado y Limpieza</span>
+                        </label>
+                    </div>
+                    <div>
+                        <input type="radio" id="srv3" name="servicio" value="Haircut niños" class="selector-item">
+                        <label for="srv3" class="selector-label">
+                            <span class="item-name">Haircut niños</span>
+                            <span class="item-desc">Menores de 12 años</span>
+                        </label>
+                    </div>
+                    <div>
+                        <input type="radio" id="srv4" name="servicio" value="Trenzado normal" class="selector-item">
+                        <label for="srv4" class="selector-label">
+                            <span class="item-name">Trenzado normal</span>
+                            <span class="item-desc">Estilo Trenzas</span>
+                        </label>
+                    </div>
+                    <div>
+                        <input type="radio" id="srv5" name="servicio" value="Facial" class="selector-item">
+                        <label for="srv5" class="selector-label">
+                            <span class="item-name">Facial</span>
+                            <span class="item-desc">Limpieza profunda</span>
+                        </label>
+                    </div>
+                    <div>
+                        <input type="radio" id="srv6" name="servicio" value="Cejas" class="selector-item">
+                        <label for="srv6" class="selector-label">
+                            <span class="item-name">Cejas</span>
+                            <span class="item-desc">Perfilado con navaja</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECCIÓN: STAFF/BARBEROS (Escritos directamente en el diseño) -->
+            <div class="form-section">
+                <span class="section-title">Elige tu Especialista</span>
+                <div class="selector-group">
+                    <div>
+                        <input type="radio" id="staff1" name="proveedor" value="Tito" class="selector-item" required>
+                        <label for="staff1" class="selector-label">
+                            <span class="item-name">Tito</span>
+                            <span class="item-desc">Barbero Senior</span>
+                        </label>
+                    </div>
+                    <div>
+                        <input type="radio" id="staff2" name="proveedor" value="Vanessa" class="selector-item">
+                        <label for="staff2" class="selector-label">
+                            <span class="item-name">Vanessa</span>
+                            <span class="item-desc">Especialista</span>
+                        </label>
+                    </div>
+                    <div>
+                        <input type="radio" id="staff3" name="proveedor" value="Dani" class="selector-item">
+                        <label for="staff3" class="selector-label">
+                            <span class="item-name">Dani</span>
+                            <span class="item-desc">Estilista Prof.</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECCIÓN: CUÁNDO -->
+            <div class="form-section">
+                <span class="section-title">Fecha y Hora</span>
+                <div class="datetime-group">
+                    <input type="date" id="booking-date" class="input-field" required>
+                    <input type="time" id="booking-time" class="input-field" min="08:00" max="22:00" required>
+                </div>
+            </div>
+
+            <button type="submit" id="submit-btn" class="confirm-btn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397 0 11.966 0c3.178.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.239 3.481 8.42 0 6.549-5.34 11.896-11.912 11.896-2.006-.001-3.975-.511-5.727-1.483L0 24zm6.59-4.846c1.6.95 3.188 1.449 4.825 1.451 5.436 0 9.86-4.37 9.864-9.799.002-2.63-1.023-5.101-2.885-6.963C16.528 1.981 14.062 1.05 11.43 1.05c-5.437 0-9.863 4.371-9.867 9.801-.001 1.73.473 3.41 1.373 4.888l-.994 3.634 3.715-.963zm13.721-5.03c-.33-.165-1.951-.951-2.253-1.061-.301-.11-.522-.165-.742.165-.219.33-.848 1.062-1.04 1.281-.192.219-.384.242-.714.078-.33-.165-1.391-.512-2.649-1.635-.979-.872-1.64-1.95-1.832-2.28-.192-.33-.02-.508.145-.671.149-.147.33-.385.495-.578.165-.192.219-.33.329-.55.11-.22.055-.412-.027-.577-.082-.165-.742-1.79-.1015-2.607-.34-.822-.727-1.015-1.04-1.015h-.88c-.301 0-.797.113-1.213.567-.417.454-1.591 1.557-1.591 3.8s1.633 4.412 1.859 4.713c.226.302 3.215 4.863 7.79 6.841 1.088.47 1.939.75 2.603.96 1.093.347 2.089.298 2.876.18.877-.13 1.951-.797 2.226-1.528.275-.732.275-1.358.192-1.487-.083-.129-.301-.21-.632-.375z"/>
+                </svg>
+                Enviar a WhatsApp
+            </button>
+        </form>
+    </div>
+
+    <script>
+        // ==================================================
+        //  CONFIGURACIÓN DEL TELÉFONO DE LA BARBERÍA
+        // ==================================================
+        const TELEFONO_WHATSAPP = "18299702130"; 
+
+        const form = document.getElementById('reserva-form');
+
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const clienteNombre = document.getElementById('client-name').value;
+            const clienteTelefono = document.getElementById('client-phone').value;
+            const servicioSeleccionado = document.querySelector('input[name="servicio"]:checked').value;
+            const profesionalNombre = document.querySelector('input[name="proveedor"]:checked').value;
+            const fecha = document.getElementById('booking-date').value;
+            const hora = document.getElementById('booking-time').value;
+
+            const fechaFormateada = fecha.split('-').reverse().join('/');
+
+            // Redactar el texto para WhatsApp
+            const mensajeTexto = 
+                `💈 *NUEVA RESERVA - THE JOSEPH BARBERSHOP* 💈\n\n` +
+                `👤 *Cliente:* ${clienteNombre}\n` +
+                `📞 *Teléfono:* ${clienteTelefono}\n\n` +
+                `✂️ *Servicio:* ${servicioSeleccionado}\n` +
+                `😎 *Especialista:* ${profesionalNombre}\n\n` +
+                `📅 *Fecha:* ${fechaFormateada}\n` +
+                `⏰ *Hora:* ${hora} hs\n\n` +
+                `_Por favor, confirma la disponibilidad de este turno._`;
+
+            const mensajeCodificado = encodeURIComponent(mensajeTexto);
+            const urlWhatsapp = `https://wa.me/${TELEFONO_WHATSAPP}?text=${mensajeCodificado}`;
+
+            window.open(urlWhatsapp, '_blank');
+        });
+    </script>
+</body>
+</html>
