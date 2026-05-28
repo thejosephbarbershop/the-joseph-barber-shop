@@ -1,4 +1,5 @@
 
+
                           <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -170,12 +171,14 @@
         }
 
         /* --- BOTÓN ENVIAR A WHATSAPP --- */
+                /* --- BOTÓN ENVIAR A WHATSAPP FIJO ABAJO --- */
         .confirm-btn {
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 10px;
-            width: 100%;
+            width: calc(100% - 40px); /* Ajusta el ancho al contenedor */
+            max-width: 390px;
             padding: 16px;
             background-color: var(--whatsapp-color);
             color: var(--white);
@@ -187,8 +190,26 @@
             transition: all 0.3s ease;
             text-transform: uppercase;
             letter-spacing: 1px;
-            box-shadow: 0 4px 10px rgba(37, 211, 102, 0.3);
-            margin-top: 20px;
+            box-shadow: 0 -4px 15px rgba(0, 0, 0, 0.1), 0 4px 10px rgba(37, 211, 102, 0.3);
+            
+            /* ESTO HACE QUE SE QUEDE FIJO ABAJO DEL TODO */
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 999;
+        }
+
+        .confirm-btn:hover {
+            background-color: #20ba59;
+            transform: translateX(-50%) translateY(-2px); /* Mantiene la alineación al flotar */
+        }
+
+        /* Espacio extra al final del formulario para que el botón fijo no tape las últimas horas */
+        .form-content {
+            padding: 20px 20px 100px 20px !important;
+        }
+
         }
 
         .confirm-btn:hover {
