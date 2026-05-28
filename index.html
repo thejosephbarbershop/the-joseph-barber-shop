@@ -1,5 +1,4 @@
 
-
                           <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -450,7 +449,6 @@ async function actualizarHorariosDisponibles() {
         console.error("Error consultando horarios:", err.message);
     }
 }
-
 // Escuchar cambios tanto en el calendario como al elegir barbero
 inputFecha.addEventListener('change', actualizarHorariosDisponibles);
 opcionesBarbero.forEach(radio => radio.addEventListener('change', actualizarHorariosDisponibles));
@@ -517,6 +515,8 @@ formulario.addEventListener('submit', async (e) => {
         alert("Ocurrió un error inesperado: " + err.message);
     }
 });
+<script src="https://jquery.com"></script>
+
 
 </script>
 
