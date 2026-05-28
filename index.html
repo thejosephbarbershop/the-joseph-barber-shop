@@ -15,6 +15,7 @@
             --text-color: #333;
             --white: #ffffff;
             --whatsapp-color: #25d366; /* Verde WhatsApp */
+            --danger-color: #de3b3b;   /* Rojo Cancelación */
         }
 
         body {
@@ -32,7 +33,7 @@
 
         .app-container {
             width: 100%;
-            max-width: 430px; /* Formato tipo Smartphone */
+            max-width: 430px;
             background-color: var(--white);
             border-radius: 25px;
             box-shadow: 0 15px 35px rgba(0,0,0,0.15);
@@ -41,7 +42,6 @@
             flex-direction: column;
         }
 
-        /* --- CABECERA --- */
         header {
             background-color: var(--primary-color);
             color: var(--white);
@@ -64,9 +64,8 @@
             opacity: 0.7;
         }
 
-        /* --- CUERPO DEL FORMULARIO --- */
-        .form-content {
-            padding: 20px 20px 100px 20px !important; /* Espacio extra para el botón flotante */
+        .form-content, .cancel-content {
+            padding: 20px 20px 100px 20px !important;
             max-height: 70vh;
             overflow-y: auto;
         }
@@ -85,7 +84,6 @@
             font-weight: bold;
         }
 
-        /* --- INPUTS DE TEXTO --- */
         .input-field {
             width: 100%;
             padding: 12px;
@@ -102,7 +100,6 @@
             border-color: var(--accent-color);
         }
 
-        /* --- BOTONES DE SELECCIÓN (GRID) --- */
         .selector-group {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -156,20 +153,6 @@
             font-weight: 500;
         }
 
-        /* --- ESTILOS PARA LAS HORAS OCUPADAS Y DESHABILITADAS --- */
-        .selector-item:disabled + .selector-label {
-            background-color: #e0e0e0 !important;
-            border-color: #ccc !important;
-            color: #999 !important;
-            cursor: not-allowed !important;
-            box-shadow: none !important;
-        }
-
-        .selector-item:disabled + .selector-label .item-desc {
-            color: #aaa !important;
-        }
-
-        /* --- BOTÓN ENVIAR A WHATSAPP FIJO ABAJO --- */
         .confirm-btn {
             display: flex;
             align-items: center;
@@ -178,7 +161,6 @@
             width: calc(100% - 40px);
             max-width: 390px;
             padding: 16px;
-            background-color: var(--whatsapp-color);
             color: var(--white);
             border: none;
             border-radius: 14px;
@@ -188,7 +170,6 @@
             transition: all 0.3s ease;
             text-transform: uppercase;
             letter-spacing: 1px;
-            box-shadow: 0 -4px 15px rgba(0, 0, 0, 0.1), 0 4px 10px rgba(37, 211, 102, 0.3);
             position: fixed;
             bottom: 20px;
             left: 50%;
@@ -196,9 +177,72 @@
             z-index: 999;
         }
 
-        .confirm-btn:hover {
+        .btn-whatsapp {
+            background-color: var(--whatsapp-color);
+            box-shadow: 0 -4px 15px rgba(0, 0, 0, 0.1), 0 4px 10px rgba(37, 211, 102, 0.3);
+        }
+
+        .btn-whatsapp:hover {
             background-color: #20ba59;
             transform: translateX(-50%) translateY(-2px);
+        }
+
+        .btn-danger {
+            background-color: var(--danger-color);
+            box-shadow: 0 -4px 15px rgba(0, 0, 0, 0.1), 0 4px 10px rgba(222, 59, 59, 0.3);
+        }
+
+        .btn-danger:hover {
+            background-color: #c43030;
+            transform: translateX(-50%) translateY(-2px);
+        }
+
+        .btn-danger:disabled {
+            background-color: #ccc !important;
+            color: #fff !important;
+            cursor: not-allowed !important;
+            box-shadow: none !important;
+            transform: translateX(-50%) !important;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .info-card {
+            background-color: #f9f9f9;
+            border: 2px solid #eee;
+            border-radius: 16px;
+            padding: 20px;
+            text-align: left;
+            margin-top: 15px;
+        }
+
+        .info-line {
+            margin-bottom: 12px;
+            font-size: 0.95rem;
+        }
+
+        .info-line:last-child {
+            margin-bottom: 0;
+        }
+
+        .info-line strong {
+            color: var(--primary-color);
+        }
+
+        #mensaje-status {
+            margin-top: 20px;
+            font-weight: bold;
+            font-size: 1rem;
+        }
+
+        .texto-alerta {
+            grid-column: span 2;
+            text-align: center;
+            font-size: 0.9rem;
+            color: #888;
+            padding: 15px 0;
         }
     </style>
 </head>
@@ -206,8 +250,8 @@
 
     <div class="app-container">
         <header>
-            <h1>THE JOSEPH BARBERSHOP</h1>
-            <p>Citas y Reservas por WhatsApp</p>
+            <h1 id="header-title">THE JOSEPH BARBERSHOP</h1>
+            <p id="header-subtitle">Citas y Reservas por WhatsApp</p>
         </header>
 
         <form id="reserva-form" class="form-content">
@@ -280,104 +324,38 @@
             <div class="form-section">
                 <span class="section-title">Selecciona la Hora</span>
                 <div class="selector-group" id="contenedor-horas">
-                    <div>
-                        <input type="radio" id="hr1" name="hora" value="08:00 AM" class="selector-item hora-opcion" required>
-                        <label for="hr1" class="selector-label">
-                            <span class="item-name">08:00 AM</span>
-                            <span class="item-desc desc-hora">Disponible</span>
-                        </label>
-                    </div>
-                    <div>
-                        <input type="radio" id="hr2" name="hora" value="09:00 AM" class="selector-item hora-opcion">
-                        <label for="hr2" class="selector-label">
-                            <span class="item-name">09:00 AM</span>
-                            <span class="item-desc desc-hora">Disponible</span>
-                        </label>
-                    </div>
-                    <div>
-                        <input type="radio" id="hr3" name="hora" value="10:00 AM" class="selector-item hora-opcion">
-                        <label for="hr3" class="selector-label">
-                            <span class="item-name">10:00 AM</span>
-                            <span class="item-desc desc-hora">Disponible</span>
-                        </label>
-                    </div>
-                    <div>
-                        <input type="radio" id="hr4" name="hora" value="11:00 AM" class="selector-item hora-opcion">
-                        <label for="hr4" class="selector-label">
-                            <span class="item-name">11:00 AM</span>
-                            <span class="item-desc desc-hora">Disponible</span>
-                        </label>
-                    </div>
-                    <div>
-                        <input type="radio" id="hr5" name="hora" value="12:00 PM" class="selector-item hora-opcion">
-                        <label for="hr5" class="selector-label">
-                            <span class="item-name">12:00 PM</span>
-                            <span class="item-desc desc-hora">Disponible</span>
-                        </label>
-                    </div>
-                    <div>
-                        <input type="radio" id="hr6" name="hora" value="01:00 PM" class="selector-item hora-opcion">
-                        <label for="hr6" class="selector-label">
-                            <span class="item-name">01:00 PM</span>
-                            <span class="item-desc desc-hora">Disponible</span>
-                        </label>
-                    </div>
-                    <div>
-                        <input type="radio" id="hr7" name="hora" value="02:00 PM" class="selector-item hora-opcion">
-                        <label for="hr7" class="selector-label">
-                            <span class="item-name">02:00 PM</span>
-                            <span class="item-desc desc-hora">Disponible</span>
-                        </label>
-                    </div>
-                    <div>
-                        <input type="radio" id="hr8" name="hora" value="03:00 PM" class="selector-item hora-opcion">
-                        <label for="hr8" class="selector-label">
-                            <span class="item-name">03:00 PM</span>
-                            <span class="item-desc desc-hora">Disponible</span>
-                        </label>
-                    </div>
-                    <div>
-                        <input type="radio" id="hr9" name="hora" value="04:00 PM" class="selector-item hora-opcion">
-                        <label for="hr9" class="selector-label">
-                            <span class="item-name">04:00 PM</span>
-                            <span class="item-desc desc-hora">Disponible</span>
-                        </label>
-                    </div>
-                    <div>
-                        <input type="radio" id="hr10" name="hora" value="05:00 PM" class="selector-item hora-opcion">
-                        <label for="hr10" class="selector-label">
-                            <span class="item-name">05:00 PM</span>
-                            <span class="item-desc desc-hora">Disponible</span>
-                        </label>
-                    </div>
-                    <div>
-                        <input type="radio" id="hr11" name="hora" value="06:00 PM" class="selector-item hora-opcion">
-                        <label for="hr11" class="selector-label">
-                            <span class="item-name">06:00 PM</span>
-                            <span class="item-desc desc-hora">Disponible</span>
-                        </label>
-                    </div>
-                    <div>
-                        <input type="radio" id="hr12" name="hora" value="07:00 PM" class="selector-item hora-opcion">
-                        <label for="hr12" class="selector-label">
-                            <span class="item-name">07:00 PM</span>
-                            <span class="item-desc desc-hora">Disponible</span>
-                        </label>
-                    </div>
-                    <div>
-                        <input type="radio" id="hr13" name="hora" value="08:00 PM" class="selector-item hora-opcion">
-                        <label for="hr13" class="selector-label">
-                            <span class="item-name">08:00 PM</span>
-                            <span class="item-desc desc-hora">Disponible</span>
-                        </label>
-                    </div>
+                    <div class="texto-alerta">Selecciona fecha y barbero para ver horarios...</div>
                 </div>
             </div>
 
-            <button type="submit" class="confirm-btn">
+            <button type="submit" class="confirm-btn btn-whatsapp">
                 Confirmar y enviar Cita
             </button>
         </form>
+
+        <div id="modulo-cancelar" class="cancel-content hidden">
+            <div class="form-section">
+                <span class="section-title" style="color: var(--danger-color);">Detalles de la Cita a Cancelar</span>
+                <p style="font-size: 0.9rem; color: #555; margin-bottom: 15px;">
+                    Verifica la información de tu espacio antes de confirmar la cancelación. Esta acción liberará el horario de forma inmediata.
+                </p>
+
+                <div class="info-card">
+                    <div class="info-line"><strong>Cliente:</strong> <span id="cancel-info-cliente">Cargando...</span></div>
+                    <div class="info-line"><strong>Servicio:</strong> <span id="cancel-info-servicio">-</span></div>
+                    <div class="info-line"><strong>Barbero:</strong> <span id="cancel-info-barbero">-</span></div>
+                    <div class="info-line"><strong>Fecha:</strong> <span id="cancel-info-fecha">-</span></div>
+                    <div class="info-line"><strong>Horario:</strong> <span id="cancel-info-hora">-</span></div>
+                </div>
+                
+                <p id="mensaje-status" class="text-center"></p>
+            </div>
+
+            <button id="btn-ejecutar-cancelar" class="confirm-btn btn-danger" disabled>
+                Confirmar Cancelación de Espacio
+            </button>
+        </div>
+
     </div>
 
     <script>
@@ -387,37 +365,80 @@
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         const inputFecha = document.getElementById('fecha');
-        const opcionesHora = document.querySelectorAll('.hora-opcion');
+        const contenedorHoras = document.getElementById('contenedor-horas');
         const opcionesBarbero = document.querySelectorAll('.barbero-opcion');
         const formulario = document.getElementById('reserva-form');
         const opcionesServicio = document.querySelectorAll('input[name="servicio"]');
 
-        // Establecer fecha mínima hoy
+        // PARÁMETROS DE CONFIGURACIÓN DE ATENCIÓN (Modificable)
+        const APERTURA_MINUTOS = 8 * 60;   // 08:00 AM en minutos totales
+        const CIERRE_MINUTOS = 21 * 60;   // 09:00 PM en minutos totales
+        const MARGEN_LIMPIEZA = 5;        // 5 minutos entre citas
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const idACancelar = urlParams.get('cancelar');
+        const moduloReserva = document.getElementById('reserva-form');
+        const moduloCancelar = document.getElementById('modulo-cancelar');
+        const btnEjecutarCancelar = document.getElementById('btn-ejecutar-cancelar');
+        const txtStatus = document.getElementById('mensaje-status');
+
+        if (idACancelar) {
+            moduloReserva.classList.add('hidden');
+            moduloCancelar.classList.remove('hidden');
+            document.getElementById('header-title').innerText = "CANCELAR ESPACIO";
+            document.getElementById('header-subtitle').innerText = "Gestión de citas - The Joseph Barbershop";
+            obtenerDetallesCita(idACancelar);
+        }
+
         const hoyObjeto = new Date();
         const hoyString = hoyObjeto.toISOString().split('T')[0];
         inputFecha.min = hoyString;
 
-        // Convierte formato '08:00 AM' o '02:00 PM' a un objeto Date real
-        function convertirHoraA24h(horaStr, fechaStr) {
+        // Utilidades matemáticas para manejo de tiempo lineal
+        function convertirStringAMinutos(horaStr) {
             let [time, modifier] = horaStr.split(' ');
-            let [hours, minutes] = time.split(':');
-            if (hours === '12' && modifier === 'AM') hours = '00';
-            if (modifier === 'PM' && hours !== '12') hours = parseInt(hours, 10) + 12;
-            return new Date(`${fechaStr}T${String(hours).padStart(2, '0')}:${minutes}:00`);
+            let [hours, minutes] = time.split(':').map(Number);
+            if (hours === 12 && modifier === 'AM') hours = 0;
+            if (modifier === 'PM' && hours !== 12) hours += 12;
+            return (hours * 60) + minutes;
         }
 
-        // REVISAR Y BLOQUEAR HORAS OCUPADAS POR DURACIÓN O PASADAS
+        function convertirMinutosAString12h(minutosTotales) {
+            let horas = Math.floor(minutosTotales / 60);
+            let minutos = minutosTotales % 60;
+            let ampm = horas >= 12 ? 'PM' : 'AM';
+            horas = horas % 12;
+            horas = horas ? horas : 12; // el número '0' debe ser '12'
+            let strMinutos = String(minutos).padStart(2, '0');
+            let strHoras = String(horas).padStart(2, '0');
+            return `${strHoras}:${strMinutos} ${ampm}`;
+        }
+
+        function generarObjetoFecha(fechaStr, minutosTotales) {
+            let horas = Math.floor(minutosTotales / 60);
+            let minutos = minutosTotales % 60;
+            return new Date(`${fechaStr}T${String(horas).padStart(2, '0')}:${String(minutos).padStart(2, '0')}:00`);
+        }
+
+        // ==========================================
+        // MOTOR CENTRAL: CALCULO Y GENERACIÓN DINÁMICA
+        // ==========================================
         async function actualizarHorariosDisponibles() {
             const fechaSeleccionada = inputFecha.value;
             const barberoSeleccionadoInput = document.querySelector('input[name="barbero"]:checked');
+            const servicioSeleccionadoInput = document.querySelector('input[name="servicio"]:checked');
             
             if (!fechaSeleccionada || !barberoSeleccionadoInput) return;
             
+            // Si no ha elegido servicio, usamos 45 min por defecto para calcular la primera vista
+            const duracionServicioSolicitado = servicioSeleccionadoInput ? parseInt(servicioSeleccionadoInput.getAttribute('data-duracion'), 10) : 45;
             const barberoSeleccionado = barberoSeleccionadoInput.value;
             const ahora = new Date();
 
+            contenedorHoras.innerHTML = '<div class="texto-alerta">Calculando agenda perfecta...</div>';
+
             try {
-                // Traemos 'hora' (que almacena el string inicial de la cita) y 'duracion'
+                // Consultamos ocupaciones reales en Supabase
                 const { data: reservas, error } = await _supabase
                     .from('reservas')
                     .select('hora, duracion')
@@ -426,80 +447,85 @@
 
                 if (error) throw error;
 
-                // Creamos un Set con todas las marcas de tiempo (timestamp) que quedan bloqueadas
-                let tiemposBloqueados = new Set();
-
+                // Mapear los rangos ocupados a minutos absolutos del día
+                let rangosOcupados = [];
                 reservas.forEach(reserva => {
                     if (!reserva.hora) return;
-                    
-                    const fechaHoraInicio = convertirHoraA24h(reserva.hora, fechaSeleccionada);
-                    const duracionMinutos = reserva.duracion || 30; // Por defecto 30 minutos si está vacío
-
-                    // Calculamos el rango ocupado minuto a minuto (o en bloques de 15-30 minutos)
-                    // Para mayor seguridad en colisiones, bloqueamos el rango completo de tiempo
-                    let tiempoInicioMs = fechaHoraInicio.getTime();
-                    let tiempoFinMs = tiempoInicioMs + (duracionMinutos * 60 * 1000);
-
-                    // Guardamos el rango ocupado
-                    tiemposBloqueados.add({ inicio: tiempoInicioMs, fin: tiempoFinMs });
+                    let inicio = convertirStringAMinutos(reserva.hora);
+                    let fin = inicio + (reserva.duracion || 30);
+                    rangosOcupados.push({ inicio, fin });
                 });
 
-                // Evaluamos cada uno de tus botones de opción (inputs de radio) de la interfaz
-                opcionesHora.forEach(input => {
-                    const horaValor = input.value; 
-                    const label = input.nextElementSibling;
-                    const desc = label.querySelector('.desc-hora');
-                    
-                    const horaBotonObjeto = convertirHoraA24h(horaValor, fechaSeleccionada);
-                    const botonMs = horaBotonObjeto.getTime();
-                    const esPasada = horaBotonObjeto < ahora;
+                // Ordenar las citas cronológicamente para que el algoritmo avance limpio
+                rangosOcupados.sort((a, b) => a.inicio - b.inicio);
 
-                    // Comprobamos si el horario de este botón cae dentro de alguna cita ya reservada
-                    let estaOcupado = false;
-                    for (let rango of tiemposBloqueados) {
-                        // El botón se bloquea si coincide con el inicio o está en medio de la duración de otra cita
-                        if (botonMs >= rango.inicio && botonMs < rango.fin) {
-                            estaOcupado = true;
+                let htmlBotones = "";
+                let minutoPuntero = APERTURA_MINUTOS;
+                let indexBotones = 1;
+
+                // El bucle avanza dinámicamente evaluando espacios en el tiempo
+                while (minutoPuntero + duracionServicioSolicitado <= CIERRE_MINUTOS) {
+                    let colisiona = false;
+                    let inicioPropuesto = minutoPuntero;
+                    let finPropuesto = minutoPuntero + duracionServicioSolicitado;
+
+                    // Validar si el bloque propuesto choca con alguna cita guardada
+                    for (let rango of rangosOcupados) {
+                        if (inicioPropuesto < rango.fin && finPropuesto > rango.inicio) {
+                            colisiona = true;
+                            // Empujamos el puntero directamente al final de la cita que estorba + los 5 min de limpieza
+                            minutoPuntero = rango.fin + MARGEN_LIMPIEZA;
                             break;
                         }
                     }
 
-                    if (estaOcupado) {
-                        input.disabled = true;
-                        input.checked = false; 
-                        desc.textContent = "Ocupado";
-                    } else if (esPasada) {
-                        input.disabled = true;
-                        input.checked = false;
-                        desc.textContent = "Pasado";
-                    } else {
-                        input.disabled = false;
-                        desc.textContent = "Disponible";
+                    if (!colisiona) {
+                        let stringHora12h = convertirMinutosAString12h(minutoPuntero);
+                        let objetoFechaBoton = generarObjetoFecha(fechaSeleccionada, minutoPuntero);
+                        let esPasada = objetoFechaBoton < ahora;
+
+                        if (!esPasada) {
+                            htmlBotones += `
+                                <div>
+                                    <input type="radio" id="dyn-hr-${indexBotones}" name="hora" value="${stringHora12h}" class="selector-item" required>
+                                    <label for="dyn-hr-${indexBotones}" class="selector-label">
+                                        <span class="item-name">${stringHora12h}</span>
+                                        <span class="item-desc">Disponible</span>
+                                    </label>
+                                </div>`;
+                            indexBotones++;
+                        }
+                        
+                        // Si el espacio se crea, la siguiente opción potencial arranca sumando la duración + limpieza
+                        minutoPuntero += duracionServicioSolicitado + MARGEN_LIMPIEZA;
                     }
-                });
+                }
+
+                if (htmlBotones === "") {
+                    contenedorHoras.innerHTML = '<div class="texto-alerta" style="color: var(--danger-color);">No quedan bloques libres para este servicio hoy.</div>';
+                } else {
+                    contenedorHoras.innerHTML = htmlBotones;
+                }
 
             } catch (err) {
                 console.error("Error consultando horarios:", err.message);
+                contenedorHoras.innerHTML = '<div class="texto-alerta" style="color: var(--danger-color);">Error al sincronizar agenda.</div>';
             }
         }
 
-        // Escuchar cambios en fecha, barbero y servicios para recalcular
         inputFecha.addEventListener('change', actualizarHorariosDisponibles);
         opcionesBarbero.forEach(radio => radio.addEventListener('change', actualizarHorariosDisponibles));
         opcionesServicio.forEach(radio => radio.addEventListener('change', actualizarHorariosDisponibles));
 
-        // GUARDAR RESERVA CON DURACIÓN Y REDIRIGIR A WHATSAPP
+        // GUARDAR RESERVA
         formulario.addEventListener('submit', async (e) => {
             e.preventDefault();
 
             const nombre = document.getElementById('client-name').value;
             const telefono = document.getElementById('client-phone').value;
-            
             const servicioInput = document.querySelector('input[name="servicio"]:checked');
             const servicio = servicioInput.value;
-            // Capturamos los minutos desde el atributo 'data-duracion' del HTML
             const duracion = parseInt(servicioInput.getAttribute('data-duracion'), 10) || 30;
-
             const barbero = document.querySelector('input[name="barbero"]:checked').value;
             const fecha = inputFecha.value;
             
@@ -513,21 +539,22 @@
             const nuevaPestana = window.open('about:blank', '_blank');
 
             try {
-                // Doble verificación en tiempo real para evitar colisiones
+                // Doble verificación matemática rápida anti-colisiones concurrentes
                 const { data: duplicados } = await _supabase
                     .from('reservas')
                     .select('hora, duracion')
                     .eq('fecha', fecha)
                     .eq('barbero', barbero);
 
-                const horaNuevaCitaMs = convertirHoraA24h(hora, fecha).getTime();
+                const inicioNuevaCitaMin = convertirStringAMinutos(hora);
+                const finNuevaCitaMin = inicioNuevaCitaMin + duracion;
                 let sobreescrito = false;
 
                 if (duplicados) {
                     for (let d of duplicados) {
-                        let inicioMs = convertirHoraA24h(d.hora, fecha).getTime();
-                        let finMs = inicioMs + ((d.duracion || 30) * 60 * 1000);
-                        if (horaNuevaCitaMs >= inicioMs && horaNuevaCitaMs < finMs) {
+                        let dInicio = convertirStringAMinutos(d.hora);
+                        let dFin = dInicio + (d.duracion || 30);
+                        if (inicioNuevaCitaMin < dFin && finNuevaCitaMin > dInicio) {
                             sobreescrito = true;
                             break;
                         }
@@ -536,21 +563,32 @@
 
                 if (sobreescrito) {
                     nuevaPestana.close();
-                    alert("¡Lo sentimos! Ese horario acaba de ser ocupado por la duración de otra cita. Por favor elige otra hora.");
+                    alert("¡Lo sentimos! Ese bloque horario acaba de ser ocupado. Por favor elige otra hora recalculada.");
                     actualizarHorariosDisponibles();
                     return;
                 }
 
-                // Insertar los datos correspondientes en Supabase (Incluyendo la nueva columna duración)
-                const { error } = await _supabase
+                const { data: nuevaReserva, error } = await _supabase
                     .from('reservas')
-                    .insert([{ fecha: fecha, hora: hora, barbero: barbero, duracion: duracion }]);
+                    .insert([{ 
+                        fecha: fecha, 
+                        hora: hora, 
+                        barbero: barbero, 
+                        duracion: duracion,
+                        cliente: nombre,
+                        telefono: telefono,
+                        servicio: servicio
+                    }])
+                    .select();
 
                 if (error) throw error;
 
-                // Construcción y redirección limpia a WhatsApp
+                const idGenerado = nuevaReserva[0].id;
+                const urlBase = window.location.origin + window.location.pathname;
+                const enlaceCancelar = `${urlBase}?cancelar=${idGenerado}`;
+
                 const telefonoBarberia = "18299702130"; 
-                const mensaje = `💈 *NUEVA CITA - THE JOSEPH BARBERSHOP* 💈\n\n👤 *Cliente:* ${nombre}\n📞 *Teléfono:* ${telefono}\n✂️ *Servicio:* ${servicio} (${duracion} min)\n🧔 *Barbero:* ${barbero}\n📅 *Fecha:* ${fecha}\n⏰ *Hora:* ${hora}\n\n_¡Por favor confirma mi espacio!_`;
+                const mensaje = `💈 *NUEVA CITA - THE JOSEPH BARBERSHOP* 💈\n\n👤 *Cliente:* ${nombre}\n📞 *Teléfono:* ${telefono}\n✂️ *Servicio:* ${servicio} (${duracion} min)\n🧔 *Barbero:* ${barbero}\n📅 *Fecha:* ${fecha}\n⏰ *Hora:* ${hora}\n\n_¡Por favor confirma mi espacio!_\n\n❌ *Para cancelar o cambiar tu espacio haz clic aquí:* \n${enlaceCancelar}`;
                 
                 const urlWhatsapp = `https://wa.me/${telefonoBarberia}?text=${encodeURIComponent(mensaje)}`;
                 
@@ -562,7 +600,66 @@
                 alert("Hubo un percance guardando tu espacio: " + err.message);
             }
         });
+
+        // LÓGICA DE CANCELACIÓN
+        async function obtenerDetallesCita(id) {
+            try {
+                const { data: cita, error } = await _supabase
+                    .from('reservas')
+                    .select('*')
+                    .eq('id', id)
+                    .single();
+
+                if (error || !cita) {
+                    document.getElementById('cancel-info-cliente').innerText = "Cita no encontrada";
+                    document.getElementById('cancel-info-cliente').style.color = "var(--danger-color)";
+                    txtStatus.innerText = "Este enlace no es válido o la cita ya fue cancelada previamente.";
+                    txtStatus.style.color = "var(--danger-color)";
+                    return;
+                }
+
+                document.getElementById('cancel-info-cliente').innerText = cita.cliente || "No especificado";
+                document.getElementById('cancel-info-servicio').innerText = cita.servicio || "No especificado";
+                document.getElementById('cancel-info-barbero').innerText = cita.barbero;
+                document.getElementById('cancel-info-fecha').innerText = cita.fecha;
+                document.getElementById('cancel-info-hora').innerText = `${cita.hora} (${cita.duracion || 30} min)`;
+                
+                btnEjecutarCancelar.disabled = false;
+
+            } catch (err) {
+                txtStatus.innerText = "Error de conexión al cargar la cita.";
+                txtStatus.style.color = "var(--danger-color)";
+            }
+        }
+
+        btnEjecutarCancelar.addEventListener('click', async () => {
+            btnEjecutarCancelar.disabled = true;
+            txtStatus.innerText = "Procesando la liberación de tu espacio...";
+            txtStatus.style.color = "var(--primary-color)";
+
+            try {
+                const { error } = await _supabase
+                    .from('reservas')
+                    .delete()
+                    .eq('id', idACancelar);
+
+                if (error) throw error;
+
+                txtStatus.innerText = "¡Tu cita ha sido cancelada exitosamente! El bloque de horario ya se encuentra disponible para otros clientes.";
+                txtStatus.style.color = "#20ba59";
+                
+                document.getElementById('cancel-info-cliente').innerText = "-";
+                document.getElementById('cancel-info-servicio').innerText = "-";
+                document.getElementById('cancel-info-barbero').innerText = "-";
+                document.getElementById('cancel-info-fecha').innerText = "-";
+                document.getElementById('cancel-info-hora').innerText = "-";
+
+            } catch (err) {
+                btnEjecutarCancelar.disabled = false;
+                txtStatus.innerText = "Error al intentar cancelar: " + err.message;
+                txtStatus.style.color = "var(--danger-color)";
+            }
+        });
     </script>
 </body>
 </html>
-                        
