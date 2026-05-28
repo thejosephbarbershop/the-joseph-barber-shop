@@ -222,31 +222,31 @@
                 <span class="section-title">Selecciona un Servicio</span>
                 <div class="selector-group">
                     <div>
-                        <input type="radio" id="srv1" name="servicio" value="Corte de pelo" class="selector-item" required>
+                        <input type="radio" id="srv1" name="servicio" value="Corte de pelo" data-duracion="45" class="selector-item" required>
                         <label for="srv1" class="selector-label">
                             <span class="item-name">Corte de pelo</span>
-                            <span class="item-desc">Servicio Estándar</span>
+                            <span class="item-desc">45 min • Estándar</span>
                         </label>
                     </div>
                     <div>
-                        <input type="radio" id="srv2" name="servicio" value="Cerquillo" class="selector-item">
+                        <input type="radio" id="srv2" name="servicio" value="Cerquillo" data-duracion="30" class="selector-item">
                         <label for="srv2" class="selector-label">
                             <span class="item-name">Cerquillo</span>
-                            <span class="item-desc">Marcado y Limpieza</span>
+                            <span class="item-desc">30 min • Marcado</span>
                         </label>
                     </div>
                     <div>
-                        <input type="radio" id="srv3" name="servicio" value="Haircut niños" class="selector-item">
+                        <input type="radio" id="srv3" name="servicio" value="Haircut niños" data-duracion="45" class="selector-item">
                         <label for="srv3" class="selector-label">
                             <span class="item-name">Haircut niños</span>
-                            <span class="item-desc">Menores de 12 años</span>
+                            <span class="item-desc">45 min • &lt; 12 años</span>
                         </label>
                     </div>
                     <div>
-                        <input type="radio" id="srv4" name="servicio" value="Trenzado normal" class="selector-item">
+                        <input type="radio" id="srv4" name="servicio" value="Trenzado normal" data-duracion="60" class="selector-item">
                         <label for="srv4" class="selector-label">
                             <span class="item-name">Trenzado normal</span>
-                            <span class="item-desc">Estilo Trenzas</span>
+                            <span class="item-desc">60 min • Estilo</span>
                         </label>
                     </div>
                 </div>
@@ -256,7 +256,7 @@
                 <span class="section-title">Selecciona tu Barbero</span>
                 <div class="selector-group">
                     <div>
-                        <input type="radio" id="barb1" name="barbero" value="Joseph" class="selector-item barbero-opcion" checked required>
+                        <input type="radio" id="barb1" name="barbero" value="Joseph" class="selector-item barbero-opcion" required>
                         <label for="barb1" class="selector-label">
                             <span class="item-name">Joseph</span>
                             <span class="item-desc">Barbero Máster</span>
@@ -390,29 +390,23 @@
         const opcionesHora = document.querySelectorAll('.hora-opcion');
         const opcionesBarbero = document.querySelectorAll('.barbero-opcion');
         const formulario = document.getElementById('reserva-form');
+        const opcionesServicio = document.querySelectorAll('input[name="servicio"]');
 
-        // Establecer fecha de hoy corregida para zona horaria local
+        // Establecer fecha mínima hoy
         const hoyObjeto = new Date();
-        const offset = hoyObjeto.getTimezoneOffset();
-        const hoyLocal = new Date(hoyObjeto.getTime() - (offset * 60 * 1000));
-        const hoyString = hoyLocal.toISOString().split('T')[0];
-        
+        const hoyString = hoyObjeto.toISOString().split('T')[0];
         inputFecha.min = hoyString;
-        inputFecha.value = hoyString; // Preseleccionar el día de hoy para mejorar UX
 
-        // Conversión segura de hora para comparaciones precisas
+        // Convierte formato '08:00 AM' o '02:00 PM' a un objeto Date real
         function convertirHoraA24h(horaStr, fechaStr) {
             let [time, modifier] = horaStr.split(' ');
             let [hours, minutes] = time.split(':');
-            if (hours === '12') hours = '00';
-            if (modifier === 'PM') hours = parseInt(hours, 10) + 12;
-            
-            // Reemplaza guiones por barras diagonales para evitar problemas de desfase en navegadores iOS/Safari
-            const fechaFormateada = fechaStr.replace(/-/g, '/'); 
-            return new Date(`${fechaFormateada} ${String(hours).padStart(2, '0')}:${minutes}:00`);
+            if (hours === '12' && modifier === 'AM') hours = '00';
+            if (modifier === 'PM' && hours !== '12') hours = parseInt(hours, 10) + 12;
+            return new Date(`${fechaStr}T${String(hours).padStart(2, '0')}:${minutes}:00`);
         }
 
-        // REVISAR Y BLOQUEAR HORAS OCUPADAS O PASADAS
+        // REVISAR Y BLOQUEAR HORAS OCUPADAS POR DURACIÓN O PASADAS
         async function actualizarHorariosDisponibles() {
             const fechaSeleccionada = inputFecha.value;
             const barberoSeleccionadoInput = document.querySelector('input[name="barbero"]:checked');
@@ -423,25 +417,54 @@
             const ahora = new Date();
 
             try {
+                // Traemos 'hora' (que almacena el string inicial de la cita) y 'duracion'
                 const { data: reservas, error } = await _supabase
                     .from('reservas')
-                    .select('hora')
+                    .select('hora, duracion')
                     .eq('fecha', fechaSeleccionada)
                     .eq('barbero', barberoSeleccionado);
 
                 if (error) throw error;
 
-                const horasOcupadas = reservas.map(r => r.hora);
+                // Creamos un Set con todas las marcas de tiempo (timestamp) que quedan bloqueadas
+                let tiemposBloqueados = new Set();
 
+                reservas.forEach(reserva => {
+                    if (!reserva.hora) return;
+                    
+                    const fechaHoraInicio = convertirHoraA24h(reserva.hora, fechaSeleccionada);
+                    const duracionMinutos = reserva.duracion || 30; // Por defecto 30 minutos si está vacío
+
+                    // Calculamos el rango ocupado minuto a minuto (o en bloques de 15-30 minutos)
+                    // Para mayor seguridad en colisiones, bloqueamos el rango completo de tiempo
+                    let tiempoInicioMs = fechaHoraInicio.getTime();
+                    let tiempoFinMs = tiempoInicioMs + (duracionMinutos * 60 * 1000);
+
+                    // Guardamos el rango ocupado
+                    tiemposBloqueados.add({ inicio: tiempoInicioMs, fin: tiempoFinMs });
+                });
+
+                // Evaluamos cada uno de tus botones de opción (inputs de radio) de la interfaz
                 opcionesHora.forEach(input => {
-                    const horaValor = input.value;
+                    const horaValor = input.value; 
                     const label = input.nextElementSibling;
                     const desc = label.querySelector('.desc-hora');
                     
-                    const horaCitaObjeto = convertirHoraA24h(horaValor, fechaSeleccionada);
-                    const esPasada = horaCitaObjeto < ahora;
+                    const horaBotonObjeto = convertirHoraA24h(horaValor, fechaSeleccionada);
+                    const botonMs = horaBotonObjeto.getTime();
+                    const esPasada = horaBotonObjeto < ahora;
 
-                    if (horasOcupadas.includes(horaValor)) {
+                    // Comprobamos si el horario de este botón cae dentro de alguna cita ya reservada
+                    let estaOcupado = false;
+                    for (let rango of tiemposBloqueados) {
+                        // El botón se bloquea si coincide con el inicio o está en medio de la duración de otra cita
+                        if (botonMs >= rango.inicio && botonMs < rango.fin) {
+                            estaOcupado = true;
+                            break;
+                        }
+                    }
+
+                    if (estaOcupado) {
                         input.disabled = true;
                         input.checked = false; 
                         desc.textContent = "Ocupado";
@@ -460,70 +483,78 @@
             }
         }
 
-        // Escuchar cambios
+        // Escuchar cambios en fecha, barbero y servicios para recalcular
         inputFecha.addEventListener('change', actualizarHorariosDisponibles);
         opcionesBarbero.forEach(radio => radio.addEventListener('change', actualizarHorariosDisponibles));
+        opcionesServicio.forEach(radio => radio.addEventListener('change', actualizarHorariosDisponibles));
 
-        // 🔥 EJECUTAR AL CARGAR LA PÁGINA (Para que no salgan todas disponibles al inicio)
-        document.addEventListener('DOMContentLoaded', actualizarHorariosDisponibles);
-
-        // GUARDAR RESERVA Y REDIRIGIR A WHATSAPP
+        // GUARDAR RESERVA CON DURACIÓN Y REDIRIGIR A WHATSAPP
         formulario.addEventListener('submit', async (e) => {
             e.preventDefault();
 
             const nombre = document.getElementById('client-name').value;
             const telefono = document.getElementById('client-phone').value;
-            const servicio = document.querySelector('input[name="servicio"]:checked').value;
+            
+            const servicioInput = document.querySelector('input[name="servicio"]:checked');
+            const servicio = servicioInput.value;
+            // Capturamos los minutos desde el atributo 'data-duracion' del HTML
+            const duracion = parseInt(servicioInput.getAttribute('data-duracion'), 10) || 30;
+
             const barbero = document.querySelector('input[name="barbero"]:checked').value;
             const fecha = inputFecha.value;
             
             const horaSeleccionadaInput = document.querySelector('input[name="hora"]:checked');
             if (!horaSeleccionadaInput) {
-                alert("Por favor, selecciona un horario válido y disponible.");
+                alert("Por favor, selecciona un horario.");
                 return;
             }
             const hora = horaSeleccionadaInput.value;
 
-            // Previene el bloqueo de ventanas emergentes en móviles
             const nuevaPestana = window.open('about:blank', '_blank');
 
             try {
-                // Doble verificación en tiempo real
-                const { data: duplicado } = await _supabase
+                // Doble verificación en tiempo real para evitar colisiones
+                const { data: duplicados } = await _supabase
                     .from('reservas')
-                    .select('id')
+                    .select('hora, duracion')
                     .eq('fecha', fecha)
-                    .eq('hora', hora)
                     .eq('barbero', barbero);
 
-                if (duplicado && duplicado.length > 0) {
-                    if(nuevaPestana) nuevaPestana.close();
-                    alert("¡Lo sentimos! Ese barbero acaba de ser reservado en esa hora. Por favor elige otro horario.");
+                const horaNuevaCitaMs = convertirHoraA24h(hora, fecha).getTime();
+                let sobreescrito = false;
+
+                if (duplicados) {
+                    for (let d of duplicados) {
+                        let inicioMs = convertirHoraA24h(d.hora, fecha).getTime();
+                        let finMs = inicioMs + ((d.duracion || 30) * 60 * 1000);
+                        if (horaNuevaCitaMs >= inicioMs && horaNuevaCitaMs < finMs) {
+                            sobreescrito = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (sobreescrito) {
+                    nuevaPestana.close();
+                    alert("¡Lo sentimos! Ese horario acaba de ser ocupado por la duración de otra cita. Por favor elige otra hora.");
                     actualizarHorariosDisponibles();
                     return;
                 }
 
-                // Insertar los datos correspondientes en Supabase
+                // Insertar los datos correspondientes en Supabase (Incluyendo la nueva columna duración)
                 const { error } = await _supabase
                     .from('reservas')
-                    .insert([{ fecha: fecha, hora: hora, barbero: barbero }]);
+                    .insert([{ fecha: fecha, hora: hora, barbero: barbero, duracion: duracion }]);
 
                 if (error) throw error;
 
-                // Redirección limpia a WhatsApp
+                // Construcción y redirección limpia a WhatsApp
                 const telefonoBarberia = "18299702130"; 
-                const mensaje = `💈 *NUEVA CITA - THE JOSEPH BARBERSHOP* 💈\n\n👤 *Cliente:* ${nombre}\n📞 *Teléfono:* ${telefono}\n✂️ *Servicio:* ${servicio}\n🧔 *Barbero:* ${barbero}\n📅 *Fecha:* ${fecha}\n⏰ *Hora:* ${hora}\n\n_¡Por favor confirma mi espacio!_`;
+                const mensaje = `💈 *NUEVA CITA - THE JOSEPH BARBERSHOP* 💈\n\n👤 *Cliente:* ${nombre}\n📞 *Teléfono:* ${telefono}\n✂️ *Servicio:* ${servicio} (${duracion} min)\n🧔 *Barbero:* ${barbero}\n📅 *Fecha:* ${fecha}\n⏰ *Hora:* ${hora}\n\n_¡Por favor confirma mi espacio!_`;
                 
                 const urlWhatsapp = `https://wa.me/${telefonoBarberia}?text=${encodeURIComponent(mensaje)}`;
                 
-                if(nuevaPestana) {
-                    nuevaPestana.location.href = urlWhatsapp;
-                } else {
-                    window.open(urlWhatsapp, '_blank');
-                }
-                
-                // Resetear selección de hora tras compra exitosa
-                horaSeleccionadaInput.checked = false;
+                nuevaPestana.location.href = urlWhatsapp;
                 actualizarHorariosDisponibles();
 
             } catch (err) {
@@ -534,3 +565,4 @@
     </script>
 </body>
 </html>
+                        
