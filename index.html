@@ -398,6 +398,10 @@
 const SUPABASE_KEY = "sb_publishable_4WhsBfpOQAvHFxWXEBriMw_Vvg1fY-r";
 const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+const SUPABASE_URL = "https://supabase.co";
+const SUPABASE_KEY = "sb_publishable_4WhsBfpOQAvHFxWXEBriMw_Vvg1fY-r";
+const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
 const inputFecha = document.getElementById('fecha');
 const opcionesHora = document.querySelectorAll('.hora-opcion');
 const opcionesBarbero = document.querySelectorAll('.barbero-opcion');
@@ -412,13 +416,11 @@ async function actualizarHorariosDisponibles() {
     const fechaSeleccionada = inputFecha.value;
     const barberoSeleccionadoInput = document.querySelector('input[name="barbero"]:checked');
     
-    // Si falta la fecha o el barbero, no hacemos la consulta todavía
     if (!fechaSeleccionada || !barberoSeleccionadoInput) return;
     
     const barberoSeleccionado = barberoSeleccionadoInput.value;
 
     try {
-        // Consulta inteligente: Filtra por Fecha Y por Barbero
         const { data: reservas, error } = await _supabase
             .from('reservas')
             .select('hora')
@@ -437,10 +439,10 @@ async function actualizarHorariosDisponibles() {
             if (horasOcupadas.includes(horaValor)) {
                 input.disabled = true;
                 input.checked = false; 
-                desc.textContent = "Ocupado";
+                if (desc) desc.textContent = "Ocupado";
             } else {
                 input.disabled = false;
-                desc.textContent = "Disponible";
+                if (desc) desc.textContent = "Disponible";
             }
         });
 
@@ -453,7 +455,7 @@ async function actualizarHorariosDisponibles() {
 inputFecha.addEventListener('change', actualizarHorariosDisponibles);
 opcionesBarbero.forEach(radio => radio.addEventListener('change', actualizarHorariosDisponibles));
 
-// 2. GUARDAR RESERVA Y ABRIR WHATSAPP EVITANDO EL BLOQUEO DE POP-UPS
+// GUARDAR RESERVA Y REDIRIGIR A WHATSAPP (METODO INMUNE A BLOQUEOS)
 formulario.addEventListener('submit', async (e) => {
     e.preventDefault();
 
@@ -470,46 +472,49 @@ formulario.addEventListener('submit', async (e) => {
     }
     const hora = horaSeleccionadaInput.value;
 
-    // TRUCO DE SEGURIDAD: Abrimos una ventana en blanco INMEDIATAMENTE al hacer clic
-    // Esto demuestra al navegador que fue una acción real del usuario y evita el bloqueo
-    const nuevaPestana = window.open('about:blank', '_blank');
-
     try {
-        // Doble verificación instantánea por barbero
-        const { data: duplicado } = await _supabase
+        // 1. Doble verificación instantánea por barbero
+        const { data: duplicado, error: errorDup } = await _supabase
             .from('reservas')
             .select('id')
             .eq('fecha', fecha)
             .eq('hora', hora)
             .eq('barbero', barbero);
 
+        if (errorDup) {
+            alert("Error de conexión con la base de datos: " + errorDup.message);
+            return;
+        }
+
         if (duplicado && duplicado.length > 0) {
-            nuevaPestana.close(); // Cerramos la pestaña vacía si hay error
             alert("¡Lo sentimos! Ese barbero acaba de ser reservado en esa hora. Por favor elige otro horario o barbero.");
             actualizarHorariosDisponibles();
             return;
         }
 
-        // Guardar registro en Supabase
-        const { error } = await _supabase
+        // 2. Guardar registro en Supabase
+        const { error: errorInsert } = await _supabase
             .from('reservas')
             .insert([{ fecha: fecha, hora: hora, barbero: barbero }]);
 
-        if (error) throw error;
+        if (errorInsert) {
+            alert("No se pudo guardar la cita en la base de datos: " + errorInsert.message);
+            return;
+        }
 
+        // 3. ENLACE DE WHATSAPP DIRECTO (Misma pestaña, salta cualquier bloqueo)
         const telefonoBarberia = "18299702130"; 
         const mensaje = `💈 *NUEVA CITA - THE JOSEPH BARBERSHOP* 💈\n\n👤 *Cliente:* ${nombre}\n📞 *Teléfono:* ${telefono}\n✂️ *Servicio:* ${servicio}\n🧔 *Barbero:* ${barbero}\n📅 *Fecha:* ${fecha}\n⏰ *Hora:* ${hora}\n\n_¡Por favor confirma mi espacio!_`;
         
         const urlWhatsapp = `https://whatsapp.com{telefonoBarberia}&text=${encodeURIComponent(mensaje)}`;
         
-        // Inyectamos el enlace real de WhatsApp en la pestaña que ya teníamos reservada
-        nuevaPestana.location.href = urlWhatsapp;
-
-        actualizarHorariosDisponibles();
+        alert("¡Cita registrada con éxito! Presiona Aceptar para ir a WhatsApp y confirmar.");
+        
+        // Redirección forzada sin ventanas emergentes
+        window.location.href = urlWhatsapp;
 
     } catch (err) {
-        nuevaPestana.close(); // Cerramos la pestaña vacía si falla la red
-        alert("Hubo un percance guardando tu espacio: " + err.message);
+        alert("Ocurrió un error inesperado: " + err.message);
     }
 });
 
@@ -521,4 +526,3 @@ formulario.addEventListener('submit', async (e) => {
             </button>
 </form>
 <html>
-  
