@@ -1,403 +1,142 @@
 
-                          <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
-    <title>Reserva tu Cita - The Joseph Barbershop</title>
-    <!-- CONEXIÓN CON LA LIBRERÍA DE SUPABASE -->
-    <script src="https://jsdelivr.net"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reserva de Citas - The Joseph Barbershop</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        :root {
-            --primary-color: #1a1a1a;   /* Negro Barbería */
-            --accent-color: #d4af37;    /* Dorado Premium */
-            --bg-color: #f4f7f6;
-            --text-color: #333;
-            --white: #ffffff;
-            --whatsapp-color: #25d366; /* Verde WhatsApp */
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            margin: 0;
-            padding: 10px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            box-sizing: border-box;
-        }
-
-        .app-container {
-            width: 100%;
-            max-width: 430px; /* Formato tipo Smartphone */
-            background-color: var(--white);
-            border-radius: 25px;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.15);
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-        }
-
-        /* --- CABECERA --- */
-        header {
-            background-color: var(--primary-color);
-            color: var(--white);
-            padding: 30px 20px;
-            text-align: center;
-            border-bottom: 4px solid var(--accent-color);
-        }
-
-        header h1 {
-            margin: 0;
-            font-size: 1.6rem;
-            font-weight: bold;
-            letter-spacing: 2px;
-            color: var(--accent-color);
-        }
-
-        header p {
-            margin: 5px 0 0 0;
-            font-size: 0.85rem;
-            opacity: 0.7;
-        }
-
-        /* --- CUERPO DEL FORMULARIO --- */
-        .form-content {
-            padding: 20px;
-            max-height: 70vh;
-            overflow-y: auto;
-        }
-
-        .form-section {
-            margin-bottom: 25px;
-        }
-
-        .section-title {
-            font-size: 0.85rem;
-            color: #777;
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-            margin-bottom: 12px;
-            display: block;
-            font-weight: bold;
-        }
-
-        /* --- INPUTS DE TEXTO --- */
-        .input-field {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #eee;
-            border-radius: 12px;
-            font-size: 1rem;
-            box-sizing: border-box;
-            margin-bottom: 10px;
-            transition: border-color 0.3s;
-        }
-
-        .input-field:focus {
-            outline: none;
-            border-color: var(--accent-color);
-        }
-
-        /* --- BOTONES DE SELECCIÓN (GRID) --- */
-        .selector-group {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 12px;
-        }
-
-        .selector-item {
-            display: none;
-        }
-
-        .selector-label {
-            display: block;
-            background-color: var(--white);
-            border: 2px solid #eee;
-            border-radius: 14px;
-            padding: 15px 10px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.25s ease;
-            height: 100%;
-            box-sizing: border-box;
-        }
-
-        .selector-label:hover {
-            border-color: var(--accent-color);
-            background-color: #fffdf7;
-        }
-
-        .selector-item:checked + .selector-label {
-            border-color: var(--accent-color);
-            background-color: var(--primary-color);
-            color: var(--white);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-        }
-
-        .selector-item:checked + .selector-label .item-desc {
-            color: var(--accent-color);
-        }
-
-        .item-name {
-            display: block;
-            font-weight: bold;
-            font-size: 0.95rem;
-        }
-
-        .item-desc {
-            display: block;
-            font-size: 0.8rem;
-            color: #666;
-            margin-top: 4px;
-            font-weight: 500;
-        }
-
-        /* --- ESTILOS PARA LAS HORAS OCUPADAS --- */
-        .selector-item:disabled + .selector-label {
-            background-color: #e0e0e0 !important;
-            border-color: #ccc !important;
-            color: #999 !important;
-            cursor: not-allowed !important;
-            box-shadow: none !important;
-        }
-
-        .selector-item:disabled + .selector-label .item-desc {
-            color: #aaa !important;
-        }
-
-        /* --- BOTÓN ENVIAR A WHATSAPP --- */
-                /* --- BOTÓN ENVIAR A WHATSAPP FIJO ABAJO --- */
-        .confirm-btn {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            width: calc(100% - 40px); /* Ajusta el ancho al contenedor */
-            max-width: 390px;
-            padding: 16px;
-            background-color: var(--whatsapp-color);
-            color: var(--white);
-            border: none;
-            border-radius: 14px;
-            font-size: 1.1rem;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            box-shadow: 0 -4px 15px rgba(0, 0, 0, 0.1), 0 4px 10px rgba(37, 211, 102, 0.3);
-            
-            /* ESTO HACE QUE SE QUEDE FIJO ABAJO DEL TODO */
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 999;
-        }
-
-        .confirm-btn:hover {
-            background-color: #20ba59;
-            transform: translateX(-50%) translateY(-2px); /* Mantiene la alineación al flotar */
-        }
-
-        /* Espacio extra al final del formulario para que el botón fijo no tape las últimas horas */
-        .form-content {
-            padding: 20px 20px 100px 20px !important;
-        }
-
-        }
-
-        .confirm-btn:hover {
-            background-color: #20ba59;
-            transform: translateY(-2px);
-        }
+        body { font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px; }
+        .form-container { max-width: 500px; background: white; padding: 20px; margin: 0 auto; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .form-group { margin-bottom: 15px; }
+        label { font-weight: bold; display: block; margin-bottom: 5px; }
+        input[type="text"], input[type="tel"], input[type="date"] { width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
+        .grid-horas { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 10px; }
+        .hora-opcion-container { border: 1px solid #ddd; padding: 10px; border-radius: 4px; text-align: center; cursor: pointer; background: #fff; }
+        .hora-opcion-container input { display: none; }
+        .hora-opcion-container:has(input:checked) { background: #e0f0ff; border-color: #007bff; }
+        .hora-opcion-container:has(input:disabled) { background: #f0f0f0; border-color: #ccc; color: #999; cursor: not-allowed; }
+        .desc-hora { display: block; font-size: 12px; color: #28a745; font-weight: bold; }
+        .hora-opcion-container:has(input:disabled) .desc-hora { color: #dc3545; }
+        .btn-enviar { width: 100%; padding: 12px; background: #25d366; color: white; border: none; border-radius: 4px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 20px; }
+        .btn-enviar:hover { background: #128c7e; }
+        .radio-group { display: flex; gap: 10px; margin-top: 5px; }
     </style>
 </head>
 <body>
 
-    <div class="app-container">
-        <header>
-            <h1>THE JOSEPH BARBERSHOP</h1>
-            <p>Citas y Reservas por WhatsApp</p>
-        </header>
+<div class="form-container">
+    <form id="reserva-form">
+        <div class="form-group">
+            <label for="client-name">Nombre Completo</label>
+            <input type="text" id="client-name" required placeholder="Ej. Juan Pérez">
+        </div>
+        <div class="form-group">
+            <label for="client-phone">Teléfono</label>
+            <input type="tel" id="client-phone" required placeholder="Ej. 18095551234">
+        </div>
 
-        <form id="reserva-form" class="form-content">
-            
-            <!-- DATOS DEL CLIENTE -->
-            <div class="form-section">
-                <span class="section-title">Tus Datos</span>
-                <input type="text" id="client-name" class="input-field" placeholder="Nombre completo" required>
-                <input type="tel" id="client-phone" class="input-field" placeholder="Número de teléfono" required>
+        <div class="form-group">
+            <label>Selecciona el Servicio</label>
+            <div class="radio-group">
+                <label><input type="radio" name="servicio" value="Corte de Cabello" checked> Corte de Cabello</label>
+                <label><input type="radio" name="servicio" value="Barba"> Barba</label>
+                <label><input type="radio" name="servicio" value="Combo Completo"> Combo Completo</label>
             </div>
+        </div>
 
-            <!-- SECCIÓN: SERVICIOS -->
-            <div class="form-section">
-                <span class="section-title">Selecciona un Servicio</span>
-                <div class="selector-group">
-                    <div>
-                        <input type="radio" id="srv1" name="servicio" value="Corte de pelo" class="selector-item" required>
-                        <label for="srv1" class="selector-label">
-                            <span class="item-name">Corte de pelo</span>
-                            <span class="item-desc">Servicio Estándar</span>
-                        </label>
-                    </div>
-                    <div>
-                        <input type="radio" id="srv2" name="servicio" value="Cerquillo" class="selector-item">
-                        <label for="srv2" class="selector-label">
-                            <span class="item-name">Cerquillo</span>
-                            <span class="item-desc">Marcado y Limpieza</span>
-                        </label>
-                    </div>
-                    <div>
-                        <input type="radio" id="srv3" name="servicio" value="Haircut niños" class="selector-item">
-                        <label for="srv3" class="selector-label">
-                            <span class="item-name">Haircut niños</span>
-                            <span class="item-desc">Menores de 12 años</span>
-                        </label>
-                    </div>
-                    <div>
-                        <input type="radio" id="srv4" name="servicio" value="Trenzado normal" class="selector-item">
-                        <label for="srv4" class="selector-label">
-                            <span class="item-name">Trenzado normal</span>
-                            <span class="item-desc">Estilo Trenzas</span>
-                        </label>
-                    </div>
-                </div>
+        <div class="form-group">
+            <label>Selecciona tu Barbero</label>
+            <div class="radio-group">
+                <label><input type="radio" name="barbero" class="barbero-opcion" value="Joseph" checked> Joseph</label>
+                <label><input type="radio" name="barbero" class="barbero-opcion" value="Carlos"> Carlos</label>
             </div>
-                        <!-- SECCIÓN: SELECCIONAR PROVEEDOR (BARBERO) -->
-            <div class="form-section">
-                <span class="section-title">Selecciona tu Barbero</span>
-                <div class="selector-group">
-                    <div>
-                        <input type="radio" id="barb1" name="barbero" value="Tito" class="selector-item barbero-opcion" required>
-                        <label for="barb1" class="selector-label">
-                            <span class="item-name">Joseph</span>
-                            <span class="item-desc">Barbero Máster</span>
-                        </label>
-                    </div>
-                    <div>
-                        <input type="radio" id="barb2" name="barbero" value="vanessa" class="selector-item barbero-opcion">
-                        <label for="barb2" class="selector-label">
-                            <span class="item-name">Carlos</span>
-                            <span class="item-desc">Especialista</span>
-                        </label>
-                    </div>
-                </div>
+        </div>
+
+        <div class="form-group">
+            <label for="fecha">Selecciona la Fecha</label>
+            <input type="date" id="fecha" required>
+        </div>
+
+        <div class="form-group">
+            <label>Selecciona la Hora</label>
+            <div class="grid-horas">
+                <label class="hora-opcion-container">
+                    <input type="radio" name="hora" class="hora-opcion" value="08:00 AM">
+                    <span>08:00 AM</span>
+                    <span class="desc-hora">Disponible</span>
+                </label>
+                <label class="hora-opcion-container">
+                    <input type="radio" name="hora" class="hora-opcion" value="09:00 AM">
+                    <span>09:00 AM</span>
+                    <span class="desc-hora">Disponible</span>
+                </label>
+                <label class="hora-opcion-container">
+                    <input type="radio" name="hora" class="hora-opcion" value="10:00 AM">
+                    <span>10:00 AM</span>
+                    <span class="desc-hora">Disponible</span>
+                </label>
+                <label class="hora-opcion-container">
+                    <input type="radio" name="hora" class="hora-opcion" value="11:00 AM">
+                    <span>11:00 AM</span>
+                    <span class="desc-hora">Disponible</span>
+                </label>
+                <label class="hora-opcion-container">
+                    <input type="radio" name="hora" class="hora-opcion" value="12:00 PM">
+                    <span>12:00 PM</span>
+                    <span class="desc-hora">Disponible</span>
+                </label>
+                <label class="hora-opcion-container">
+                    <input type="radio" name="hora" class="hora-opcion" value="01:00 PM">
+                    <span>01:00 PM</span>
+                    <span class="desc-hora">Disponible</span>
+                </label>
+                <label class="hora-opcion-container">
+                    <input type="radio" name="hora" class="hora-opcion" value="02:00 PM">
+                    <span>02:00 PM</span>
+                    <span class="desc-hora">Disponible</span>
+                </label>
+                <label class="hora-opcion-container">
+                    <input type="radio" name="hora" class="hora-opcion" value="03:00 PM">
+                    <span>03:00 PM</span>
+                    <span class="desc-hora">Disponible</span>
+                </label>
+                <label class="hora-opcion-container">
+                    <input type="radio" name="hora" class="hora-opcion" value="04:00 PM">
+                    <span>04:00 PM</span>
+                    <span class="desc-hora">Disponible</span>
+                </label>
+                <label class="hora-opcion-container">
+                    <input type="radio" name="hora" class="hora-opcion" value="05:00 PM">
+                    <span>05:00 PM</span>
+                    <span class="desc-hora">Disponible</span>
+                </label>
+                <label class="hora-opcion-container">
+                    <input type="radio" name="hora" class="hora-opcion" value="06:00 PM">
+                    <span>06:00 PM</span>
+                    <span class="desc-hora">Disponible</span>
+                </label>
+                <label class="hora-opcion-container">
+                    <input type="radio" name="hora" class="hora-opcion" value="07:00 PM">
+                    <span>07:00 PM</span>
+                    <span class="desc-hora">Disponible</span>
+                </label>
+                <label class="hora-opcion-container">
+                    <input type="radio" name="hora" class="hora-opcion" value="08:00 PM">
+                    <span>08:00 PM</span>
+                    <span class="desc-hora">Disponible</span>
+                </label>
             </div>
+        </div>
 
+        <button type="submit" class="btn-enviar">Confirmar y enviar Cita</button>
+    </form>
+</div>
 
-            <!-- SECCIÓN: SELECCIONAR FECHA -->
-            <div class="form-section">
-                <span class="section-title">Selecciona el Día</span>
-                <input type="date" id="fecha" class="input-field" required>
-            </div>
-
-            <!-- SECCIÓN: SELECCIONAR HORA (COMPLETA DESDE LAS 8 AM A 8 PM) -->
-                           <div class="selector-group" id="contenedor-horas">
-                    <div>
-                        <input type="radio" id="hr1" name="hora" value="08:00 AM" class="selector-item hora-opcion" required>
-                        <label for="hr1" class="selector-label">
-                            <span class="item-name">08:00 AM</span>
-                            <span class="item-desc desc-hora">Disponible</span>
-                        </label>
-                    </div>
-                    <div>
-                        <input type="radio" id="hr2" name="hora" value="09:00 AM" class="selector-item hora-opcion">
-                        <label for="hr2" class="selector-label">
-                            <span class="item-name">09:00 AM</span>
-                            <span class="item-desc desc-hora">Disponible</span>
-                        </label>
-                    </div>
-                    <div>
-                        <input type="radio" id="hr3" name="hora" value="10:00 AM" class="selector-item hora-opcion">
-                        <label for="hr3" class="selector-label">
-                            <span class="item-name">10:00 AM</span>
-                            <span class="item-desc desc-hora">Disponible</span>
-                        </label>
-                    </div>
-                    <div>
-                        <input type="radio" id="hr4" name="hora" value="11:00 AM" class="selector-item hora-opcion">
-                        <label for="hr4" class="selector-label">
-                            <span class="item-name">11:00 AM</span>
-                            <span class="item-desc desc-hora">Disponible</span>
-                        </label>
-                    </div>
-                    <div>
-                        <input type="radio" id="hr5" name="hora" value="12:00 PM" class="selector-item hora-opcion">
-                        <label for="hr5" class="selector-label">
-                            <span class="item-name">12:00 PM</span>
-                            <span class="item-desc desc-hora">Disponible</span>
-                        </label>
-                    </div>
-                    <div>
-                        <input type="radio" id="hr6" name="hora" value="01:00 PM" class="selector-item hora-opcion">
-                        <label for="hr6" class="selector-label">
-                            <span class="item-name">01:00 PM</span>
-                            <span class="item-desc desc-hora">Disponible</span>
-                        </label>
-                    </div>
-                    <div>
-                        <input type="radio" id="hr7" name="hora" value="02:00 PM" class="selector-item hora-opcion">
-                        <label for="hr7" class="selector-label">
-                            <span class="item-name">02:00 PM</span>
-                            <span class="item-desc desc-hora">Disponible</span>
-                        </label>
-                    </div>
-                    <div>
-                        <input type="radio" id="hr8" name="hora" value="03:00 PM" class="selector-item hora-opcion">
-                        <label for="hr8" class="selector-label">
-                            <span class="item-name">03:00 PM</span>
-                            <span class="item-desc desc-hora">Disponible</span>
-                        </label>
-                    </div>
-                    <div>
-                        <input type="radio" id="hr9" name="hora" value="04:00 PM" class="selector-item hora-opcion">
-                        <label for="hr9" class="selector-label">
-                            <span class="item-name">04:00 PM</span>
-                            <span class="item-desc desc-hora">Disponible</span>
-                        </label>
-                    </div>
-                    <div>
-                        <input type="radio" id="hr10" name="hora" value="05:00 PM" class="selector-item hora-opcion">
-                        <label for="hr10" class="selector-label">
-                            <span class="item-name">05:00 PM</span>
-                            <span class="item-desc desc-hora">Disponible</span>
-                        </label>
-                    </div>
-                    <div>
-                        <input type="radio" id="hr11" name="hora" value="06:00 PM" class="selector-item hora-opcion">
-                        <label for="hr11" class="selector-label">
-                            <span class="item-name">06:00 PM</span>
-                            <span class="item-desc desc-hora">Disponible</span>
-                        </label>
-                    </div>
-                    <div>
-                        <input type="radio" id="hr12" name="hora" value="07:00 PM" class="selector-item hora-opcion">
-                        <label for="hr12" class="selector-label">
-                            <span class="item-name">07:00 PM</span>
-                            <span class="item-desc desc-hora">Disponible</span>
-                        </label>
-                    </div>
-                    <div>
-                        <input type="radio" id="hr13" name="hora" value="08:00 PM" class="selector-item hora-opcion">
-                        <label for="hr13" class="selector-label">
-                            <span class="item-name">08:00 PM</span>
-                            <span class="item-desc desc-hora">Disponible</span>
-                        </label>
-                    </div>
-                </div>
-
-                    </div>
-                    <div>
-<script>const SUPABASE_URL = "https://xnfmqumhhxpkrigizvlu.supabase.co/rest/v1/";
-const SUPABASE_KEY = "sb_publishable_4WhsBfpOQAvHFxWXEBriMw_Vvg1fY-r";
-const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-const SUPABASE_URL = "https://supabase.co";
+<script>
+// Configuración de Supabase (Reemplaza con tus credenciales reales)
+const SUPABASE_URL = "https://supabase.co"; 
 const SUPABASE_KEY = "sb_publishable_4WhsBfpOQAvHFxWXEBriMw_Vvg1fY-r";
 const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
@@ -414,56 +153,54 @@ inputFecha.min = hoy;
 async function actualizarHorariosDisponibles() {
     const fechaSeleccionada = inputFecha.value;
     const barberoSeleccionadoInput = document.querySelector('input[name="barbero"]:checked');
-    
     if (!fechaSeleccionada || !barberoSeleccionadoInput) return;
     
     const barberoSeleccionado = barberoSeleccionadoInput.value;
-
     try {
         const { data: reservas, error } = await _supabase
             .from('reservas')
             .select('hora')
             .eq('fecha', fechaSeleccionada)
             .eq('barbero', barberoSeleccionado);
-
+            
         if (error) throw error;
-
-        const horasOcupadas = reservas.map(r => r.hora);
-
+        const horasOcupadas = reservas ? reservas.map(r => r.hora) : [];
+        
         opcionesHora.forEach(input => {
             const horaValor = input.value;
-            const label = input.nextElementSibling;
-            const desc = label.querySelector('.desc-hora');
-
+            const label = input.parentElement;
+            const desc = label ? label.querySelector('.desc-hora') : null;
+            
             if (horasOcupadas.includes(horaValor)) {
                 input.disabled = true;
-                input.checked = false; 
+                input.checked = false;
                 if (desc) desc.textContent = "Ocupado";
             } else {
                 input.disabled = false;
                 if (desc) desc.textContent = "Disponible";
             }
         });
-
     } catch (err) {
         console.error("Error consultando horarios:", err.message);
     }
 }
+
 // Escuchar cambios tanto en el calendario como al elegir barbero
 inputFecha.addEventListener('change', actualizarHorariosDisponibles);
 opcionesBarbero.forEach(radio => radio.addEventListener('change', actualizarHorariosDisponibles));
 
-// GUARDAR RESERVA Y REDIRIGIR A WHATSAPP (METODO INMUNE A BLOQUEOS)
+// GUARDAR RESERVA Y REDIRIGIR A WHATSAPP
 formulario.addEventListener('submit', async (e) => {
     e.preventDefault();
-
+    e.stopPropagation();
+    
     const nombre = document.getElementById('client-name').value;
     const telefono = document.getElementById('client-phone').value;
     const servicio = document.querySelector('input[name="servicio"]:checked').value;
     const barbero = document.querySelector('input[name="barbero"]:checked').value;
     const fecha = inputFecha.value;
-    
     const horaSeleccionadaInput = document.querySelector('input[name="hora"]:checked');
+    
     if (!horaSeleccionadaInput) {
         alert("Por favor, selecciona un horario.");
         return;
@@ -500,29 +237,22 @@ formulario.addEventListener('submit', async (e) => {
             return;
         }
 
-        // 3. ENLACE DE WHATSAPP DIRECTO (Misma pestaña, salta cualquier bloqueo)
-        const telefonoBarberia = "18299702130"; 
+        // 3. ENLACE DE WHATSAPP DIRECTO
+        const telefonoBarberia = "18299702130";
+        
+        // Corrección de Template String con acentos invertidos (``)
         const mensaje = `💈 *NUEVA CITA - THE JOSEPH BARBERSHOP* 💈\n\n👤 *Cliente:* ${nombre}\n📞 *Teléfono:* ${telefono}\n✂️ *Servicio:* ${servicio}\n🧔 *Barbero:* ${barbero}\n📅 *Fecha:* ${fecha}\n⏰ *Hora:* ${hora}\n\n_¡Por favor confirma mi espacio!_`;
         
-        const urlWhatsapp = `https://whatsapp.com{telefonoBarberia}&text=${encodeURIComponent(mensaje)}`;
+        // URL estructurada correctamente para API de WhatsApp
+        const urlWhatsapp = `https://api.whatsapp.com/send?phone=${telefonoBarberia}&text=${encodeURIComponent(mensaje)}`;
         
         alert("¡Cita registrada con éxito! Presiona Aceptar para ir a WhatsApp y confirmar.");
-        
-        // Redirección forzada sin ventanas emergentes
         window.location.href = urlWhatsapp;
 
     } catch (err) {
         alert("Ocurrió un error inesperado: " + err.message);
     }
 });
-<script src="https://jquery.com"></script>
-
-
 </script>
-
-            <!-- BOTÓN DE CONFIRMACIÓN (ENVÍA A WHATSAPP) -->
-            <button type="submit" class="confirm-btn">
-                Confirmar y enviar Cita
-            </button>
-</form>
-<html>
+</body>
+</html>
