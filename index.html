@@ -269,6 +269,27 @@
                     </div>
                 </div>
             </div>
+                        <!-- SECCIÓN: SELECCIONAR PROVEEDOR (BARBERO) -->
+            <div class="form-section">
+                <span class="section-title">Selecciona tu Barbero</span>
+                <div class="selector-group">
+                    <div>
+                        <input type="radio" id="barb1" name="barbero" value="Tito" class="selector-item barbero-opcion" required>
+                        <label for="barb1" class="selector-label">
+                            <span class="item-name">Joseph</span>
+                            <span class="item-desc">Barbero Máster</span>
+                        </label>
+                    </div>
+                    <div>
+                        <input type="radio" id="barb2" name="barbero" value="vanessa" class="selector-item barbero-opcion">
+                        <label for="barb2" class="selector-label">
+                            <span class="item-name">Carlos</span>
+                            <span class="item-desc">Especialista</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
 
             <!-- SECCIÓN: SELECCIONAR FECHA -->
             <div class="form-section">
@@ -462,8 +483,7 @@ formulario.addEventListener('submit', async (e) => {
         const urlWhatsapp = `https://whatsapp.com{telefonoBarberia}&text=${encodeURIComponent(mensaje)}`;
         
         alert("¡Cita reservada con éxito en el sistema! Abriendo WhatsApp para confirmación...");
-        window.open(urlWhatsapp, '_blank');
-        
+       window.location.href = urlWhatsapp;
         inputFecha.dispatchEvent(new Event('change'));
     } catch (err) {
         alert("Hubo un percance guardando tu espacio: " + err.message);
