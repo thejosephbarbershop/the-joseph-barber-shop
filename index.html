@@ -6,6 +6,7 @@
     <title>Reserva tu Cita - The Joseph Barbershop</title>
     
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
     
     <style>
         :root {
@@ -359,6 +360,9 @@
     </div>
 
     <script>
+        // Inicializamos EmailJS con tu llave pública
+        emailjs.init("GQ0nATFCZx9T_S2wV");
+
         const SUPABASE_URL = "https://xnfmqumhhxpkrigizvlu.supabase.co";
         const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhuZm1xdW1oaHhwa3JpZ2l6dmx1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5MTE3NjgsImV4cCI6MjA5NTQ4Nzc2OH0.zNSZ4Nw2Iz2IieExt9SErJddPseWb65Hxedg5ZGZCvI";
         
@@ -416,7 +420,7 @@
 
         function generarObjetoFecha(fechaStr, minutosTotales) {
             let horas = Math.floor(minutosTotales / 60);
-            let minutos = minutosTotales % 60;
+            let minutos = minutes = minutosTotales % 60;
             return new Date(`${fechaStr}T${String(horas).padStart(2, '0')}:${String(minutos).padStart(2, '0')}:00`);
         }
 
@@ -430,7 +434,6 @@
             
             if (!fechaSeleccionada || !barberoSeleccionadoInput) return;
             
-            // Si no ha elegido servicio, usamos 45 min por defecto para calcular la primera vista
             const duracionServicioSolicitado = servicioSeleccionadoInput ? parseInt(servicioSeleccionadoInput.getAttribute('data-duracion'), 10) : 45;
             const barberoSeleccionado = barberoSeleccionadoInput.value;
             const ahora = new Date();
@@ -438,7 +441,6 @@
             contenedorHoras.innerHTML = '<div class="texto-alerta">Calculando agenda perfecta...</div>';
 
             try {
-                // Consultamos ocupaciones reales en Supabase
                 const { data: reservas, error } = await _supabase
                     .from('reservas')
                     .select('hora, duracion')
@@ -447,7 +449,6 @@
 
                 if (error) throw error;
 
-                // Mapear los rangos ocupados a minutos absolutos del día
                 let rangosOcupados = [];
                 reservas.forEach(reserva => {
                     if (!reserva.hora) return;
@@ -456,24 +457,20 @@
                     rangosOcupados.push({ inicio, fin });
                 });
 
-                // Ordenar las citas cronológicamente para que el algoritmo avance limpio
                 rangosOcupados.sort((a, b) => a.inicio - b.inicio);
 
                 let htmlBotones = "";
                 let minutoPuntero = APERTURA_MINUTOS;
                 let indexBotones = 1;
 
-                // El bucle avanza dinámicamente evaluando espacios en el tiempo
                 while (minutoPuntero + duracionServicioSolicitado <= CIERRE_MINUTOS) {
                     let colisiona = false;
                     let inicioPropuesto = minutoPuntero;
                     let finPropuesto = minutoPuntero + duracionServicioSolicitado;
 
-                    // Validar si el bloque propuesto choca con alguna cita guardada
                     for (let rango of rangosOcupados) {
                         if (inicioPropuesto < rango.fin && finPropuesto > rango.inicio) {
                             colisiona = true;
-                            // Empujamos el puntero directamente al final de la cita que estorba + los 5 min de limpieza
                             minutoPuntero = rango.fin + MARGEN_LIMPIEZA;
                             break;
                         }
@@ -496,7 +493,6 @@
                             indexBotones++;
                         }
                         
-                        // Si el espacio se crea, la siguiente opción potencial arranca sumando la duración + limpieza
                         minutoPuntero += duracionServicioSolicitado + MARGEN_LIMPIEZA;
                     }
                 }
@@ -517,7 +513,7 @@
         opcionesBarbero.forEach(radio => radio.addEventListener('change', actualizarHorariosDisponibles));
         opcionesServicio.forEach(radio => radio.addEventListener('change', actualizarHorariosDisponibles));
 
-        // GUARDAR RESERVA
+        // GUARDAR RESERVA (FUSIONADO CON EMAILJS)
         formulario.addEventListener('submit', async (e) => {
             e.preventDefault();
 
@@ -539,7 +535,7 @@
             const nuevaPestana = window.open('about:blank', '_blank');
 
             try {
-                // Doble verificación matemática rápida anti-colisiones concurrentes
+                // Doble verificación anti-colisiones en Supabase
                 const { data: duplicados } = await _supabase
                     .from('reservas')
                     .select('hora, duracion')
@@ -568,6 +564,7 @@
                     return;
                 }
 
+                // Guardamos en Supabase
                 const { data: nuevaReserva, error } = await _supabase
                     .from('reservas')
                     .insert([{ 
@@ -582,6 +579,21 @@
                     .select();
 
                 if (error) throw error;
+
+                // --- INTEGRACIÓN DE EMAILJS AQUÍ ---
+                var datosParaCorreo = {
+                    nombre_cliente: nombre,
+                    telefono: telefono,
+                    hora_cita: `${hora} el día ${fecha} con ${barbero}`
+                };
+
+                emailjs.send("service_z2lbr3y", "template_7phspmb", datosParaCorreo)
+                    .then(function(res) {
+                        console.log("Notificación por correo enviada con éxito.");
+                    }, function(err) {
+                        console.error("Error al mandar el correo de EmailJS:", err);
+                    });
+                // -------------------------------------
 
                 const idGenerado = nuevaReserva[0].id;
                 const urlBase = window.location.origin + window.location.pathname;
