@@ -386,6 +386,19 @@
         const btnEjecutarCancelar = document.getElementById('btn-ejecutar-cancelar');
         const txtStatus = document.getElementById('mensaje-status');
 
+        // --- SISTEMA DE AUTOCOMPLETADO (Al cargar la página) ---
+        document.addEventListener("DOMContentLoaded", function() {
+            const nombreGuardado = localStorage.getItem("barberia_nombre");
+            const telefonoGuardado = localStorage.getItem("barberia_telefono");
+
+            if (nombreGuardado) {
+                document.getElementById("client-name").value = nombreGuardado;
+            }
+            if (telefonoGuardado) {
+                document.getElementById("client-phone").value = telefonoGuardado;
+            }
+        });
+
         if (idACancelar) {
             moduloReserva.classList.add('hidden');
             moduloCancelar.classList.remove('hidden');
@@ -420,7 +433,7 @@
 
         function generarObjetoFecha(fechaStr, minutosTotales) {
             let horas = Math.floor(minutosTotales / 60);
-            let minutos = minutosTotales % 60; // Corregido: removida la doble asignación errónea
+            let minutos = minutosTotales % 60; 
             return new Date(`${fechaStr}T${String(horas).padStart(2, '0')}:${String(minutos).padStart(2, '0')}:00`);
         }
 
@@ -513,7 +526,7 @@
         opcionesBarbero.forEach(radio => radio.addEventListener('change', actualizarHorariosDisponibles));
         opcionesServicio.forEach(radio => radio.addEventListener('change', actualizarHorariosDisponibles));
 
-        // GUARDAR RESERVA (FUSIONADO CON EMAILJS)
+        // GUARDAR RESERVA (FUSIONADO CON EMAILJS Y LOCALSTORAGE)
         formulario.addEventListener('submit', async (e) => {
             e.preventDefault();
 
@@ -579,6 +592,10 @@
                     .select();
 
                 if (error) throw error;
+
+                // --- MEMORIZAR DATOS EN EL DISPOSITIVO (localStorage) ---
+                localStorage.setItem("barberia_nombre", nombre);
+                localStorage.setItem("barberia_telefono", telefono);
 
                 // --- INTEGRACIÓN DE EMAILJS ---
                 var datosParaCorreo = {
