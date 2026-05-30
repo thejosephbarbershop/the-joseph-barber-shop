@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Control - The Joseph Barbershop</title>
+    
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+    
+    <style>
+        :root {
+            --primary-color: #1a1a1a;
+            --accent-color: #d4af37;
+            --bg-color: #f4f7f6;
+            --text-color: #333;
+            --white: #ffffff;
+            --whatsapp-color: #25d366;
+            --alert-color: #ff9800;
+        }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background-color: var(--bg-color); color: var(--text-color); margin: 0; padding: 20px; }
+        .admin-container { max-width: 800px; margin: 0 auto; background: var(--white); border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); overflow: hidden; }
+        header { background-color: var(--primary-color); color: var(--white); padding: 20px; text-align: center; border-bottom: 4px solid var(--accent-color); }
+        header h1 { margin: 0; font-size: 1.5rem; color: var(--accent-color); letter-spacing: 1px; }
+        .controls { padding: 20px; background: #eee; display: flex; gap: 15px; align-items: center; justify-content: center; flex-wrap: wrap; }
+        .btn-refresh { background: var(--primary-color); color: var(--white); border: 2px solid var(--accent-color); padding: 10px 20px; border-radius: 10px; cursor: pointer; font-weight: bold; transition: all 0.3s; }
+        .btn-refresh:hover { background: var(--accent-color); color: var(--primary-color); }
+        .input-date { padding: 10px; border-radius: 10px; border: 2px solid #ccc; font-size: 1rem; }
+        .appointments-list { padding: 20px; }
+        .appointment-card { background: #f9f9f9; border: 2px solid #eee; border-radius: 15px; padding: 15px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+        .appointment-card.urgent { border-color: var(--alert-color); background: #fffbe6; }
+        .info-client h3 { margin: 0 0 5px 0; color: var(--primary-color); }
+        .info-client p { margin: 3px 0; font-size: 0.9rem; color: #666; }
+        .badge-time { background: var(--primary-color); color: var(--accent-color); padding: 5px 10px; border-radius: 8px; font-weight: bold; font-size: 0.9rem; }
+        .btn-remind { background-color: var(--whatsapp-color); color: white; border: none; padding: 12px 18px; border-radius: 10px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 8px; text-decoration: none; font-size: 0.9rem; transition: transform 0.2s; }
+        .btn-remind:hover { transform: scale(1.03); background-color: #20ba59; }
+        .no-data { text-align: center; color: #888; padding: 40px 20px; font-size: 1.1rem; }
+        .status-tag { font-size: 0.8rem; font-weight: bold; padding: 3px 8px; border-radius: 5px; text-transform: uppercase; }
+        .tag-waiting { background: #ffe0b2; color: #f57c00; }
+        .tag-now { background: #c8e6c9; color: #388e3c; }
+    </style>
+</head>
+<body>
+
+    <div class="admin-container">
+        <header>
+            <h1>PANEL DE ADMINISTRACIÓN</h1>
+            <p style="margin: 5px 0 0 0; opacity: 0.8; font-size: 0.9rem;">Monitoreo y Recordatorios de Citas</p>
+        </header>
+        <div class="controls">
+            <label><b>Ver citas del día:</b></label>
+            <input type="date" id="filtro-fecha" class="input-date">
+            <button id="btn-cargar" class="btn-refresh">🔄 Actualizar Lista</button>
+        </div>
+        <div id="lista-citas" class="appointments-list">
+            <div class="no-data">Conectando con la barbería...</div>
+        </div>
+    </div>
+
+    <script>
+        // Forzamos una inicialización limpia
+        window.onload = function() {
+            const SUPABASE_URL = "https://xnfmqumhhxpkrigizvlu.supabase.co";
+            const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhuZm1xdW1oaHhwa3JpZ2l6dmx1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5MTE3NjgsImV4cCI6MjA5NTQ4Nzc2OH0.zNSZ4Nw2Iz2IieExt9SErJddPseWb65Hxedg5ZGZCvI";
+            
+            // Comprobación de seguridad de la librería
+            const miSupabase = window.supabase || (typeof supabase !== 'undefined' ? supabase : null);
+
+            if (!miSupabase) {
+                document.getElementById('lista-citas').innerHTML = '<div class="no-data" style="color: red;">❌ Error de conexión interna. Por favor dale al botón "Refresh" de CodePen.</div>';
+                return;
+            }
+
+            const _supabase = miSupabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+            const selectorFecha = document.getElementById('filtro-fecha');
+            const btnCargar = document.getElementById('btn-cargar');
+            const listaCitas = document.getElementById('lista-citas');
+
+            // Ajustar fecha de hoy automáticamente
+            const hoy = new Date();
+            const offset = hoy.getTimezoneOffset();
+            const hoyLocal = new Date(hoy.getTime() - (offset*60*1000));
+            selectorFecha.value = hoyLocal.toISOString().split('T')[0];
+
+            function horaAMinutos(horaStr) {
+                if (!horaStr) return 0;
+                let [time, modifier] = horaStr.split(' ');
+                let [hours, minutes] = time.split(':').map(Number);
+                if (hours === 12 && modifier === 'AM') hours = 0;
+                if (modifier === 'PM' && hours !== 12) hours += 12;
+                return (hours * 60) + minutes;
+            }
+
+            async function cargarAgenda() {
+                const fechaSeleccionada = selectorFecha.value;
+                if (!fechaSeleccionada) return;
+                
+                listaCitas.innerHTML = '<div class="no-data">🔍 Buscando citas en tiempo real...</div>';
+                
+                try {
+                    // Usamos una consulta directa limpia para evitar bloqueos CORS en CodePen
+                    const { data: reservas, error } = await _supabase
+                        .from('reservas')
+                        .select('*')
+                        .eq('fecha', fechaSeleccionada);
+
+                    if (error) throw error;
+
+                    if (!reservas || reservas.length === 0) {
+                        listaCitas.innerHTML = '<div class="no-data">📭 No hay citas agendadas para esta fecha.</div>';
+                        return;
+                    }
+
+                    // Ordenar citas por hora
+                    reservas.sort((a, b) => horaAMinutos(a.hora) - horaAMinutos(b.hora));
+                    let htmlContenido = "";
+                    
+                    const ahora = new Date();
+                    const minutosActuales = (ahora.getHours() * 60) + ahora.getMinutes();
+                    const esHoy = fechaSeleccionada === ahora.toISOString().split('T')[0];
+
+                    reservas.forEach(cita => {
+                        const minCita = horaAMinutos(cita.hora);
+                        const diferencia = minCita - minutosActuales;
+                        
+                        let esUrgente = esHoy && (diferencia <= 10 && diferencia >= -30);
+                        let claseUrgent = esUrgente ? "urgent" : "";
+                        let estadoTag = "";
+                        
+                        if (esHoy) {
+                            if (diferencia > 10) { 
+                                estadoTag = `<span class="status-tag tag-waiting">Faltan ${diferencia} min</span>`; 
+                            } else if (diferencia <= 10 && diferencia >= -30) { 
+                                estadoTag = `<span class="status-tag tag-now">⏰ Toca Ahora / Pronto</span>`; 
+                            }
+                        }
+
+                        const mensajeRecordatorio = `¡Hola ${cita.cliente}! 🔥 Te saluda Joseph de The Joseph Barbershop. Pasaba a recordarte que tu espacio para hoy de *${cita.servicio}* está reservado para las *${cita.hora}*. ¡Te esperamos! 💈`;
+                        let numCliente = cita.telefono ? cita.telefono.replace(/\D/g, '') : "";
+                        if (numCliente.length === 10 && !numCliente.startsWith('1')) { numCliente = '1' + numCliente; }
+                        const urlWhatsapp = `https://wa.me/${numCliente}?text=${encodeURIComponent(mensajeRecordatorio)}`;
+
+                        htmlContenido += `
+                            <div class="appointment-card ${claseUrgent}">
+                                <div class="info-client">
+                                    <h3>${cita.cliente || "Cliente sin nombre"}</h3>
+                                    <p><strong>📞 Teléfono:</strong> ${cita.telefono || "No registrado"}</p>
+                                    <p><strong>✂️ Servicio:</strong> ${cita.servicio || "No especificado"}</p>
+                                    <div style="margin-top: 8px;">${estadoTag}</div>
+                                </div>
+                                <div style="text-align: right; display: flex; flex-direction: column; gap: 10px; align-items: flex-end;">
+                                    <span class="badge-time">${cita.hora}</span>
+                                    <a href="${urlWhatsapp}" target="_blank" class="btn-remind">💬 Recordar</a>
+                                </div>
+                            </div>`;
+                    });
+                    listaCitas.innerHTML = htmlContenido;
+                } catch (err) {
+                    console.error(err);
+                    listaCitas.innerHTML = '<div class="no-data" style="color: red;">❌ Error al conectar. Si la fecha es correcta, dale al botón "🔄 Actualizar Lista".</div>';
+                }
+            }
+
+            btnCargar.addEventListener('click', cargarAgenda);
+            selectorFecha.addEventListener('change', cargarAgenda);
+            
+            // Primer intento de carga inmediata
+            cargarAgenda();
+        };
+    </script>
+</body>
+</html>
