@@ -420,7 +420,7 @@
 
         function generarObjetoFecha(fechaStr, minutosTotales) {
             let horas = Math.floor(minutosTotales / 60);
-            let minutos = minutes = minutosTotales % 60;
+            let minutos = minutosTotales % 60; // Corregido: removida la doble asignación errónea
             return new Date(`${fechaStr}T${String(horas).padStart(2, '0')}:${String(minutos).padStart(2, '0')}:00`);
         }
 
@@ -558,7 +558,7 @@
                 }
 
                 if (sobreescrito) {
-                    nuevaPestana.close();
+                    if (nuevaPestana) nuevaPestana.close();
                     alert("¡Lo sentimos! Ese bloque horario acaba de ser ocupado. Por favor elige otra hora recalculada.");
                     actualizarHorariosDisponibles();
                     return;
@@ -580,7 +580,7 @@
 
                 if (error) throw error;
 
-                // --- INTEGRACIÓN DE EMAILJS AQUÍ ---
+                // --- INTEGRACIÓN DE EMAILJS ---
                 var datosParaCorreo = {
                     nombre_cliente: nombre,
                     telefono: telefono,
@@ -604,11 +604,15 @@
                 
                 const urlWhatsapp = `https://wa.me/${telefonoBarberia}?text=${encodeURIComponent(mensaje)}`;
                 
-                nuevaPestana.location.href = urlWhatsapp;
+                if (nuevaPestana) {
+                    nuevaPestana.location.href = urlWhatsapp;
+                } else {
+                    window.open(urlWhatsapp, '_blank');
+                }
                 actualizarHorariosDisponibles();
 
             } catch (err) {
-                if(nuevaPestana) nuevaPestana.close();
+                if (nuevaPestana) nuevaPestana.close();
                 alert("Hubo un percance guardando tu espacio: " + err.message);
             }
         });
