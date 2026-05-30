@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Panel de Control - The Joseph Barbershop</title>
     
+    <link rel="manifest" href="manifest.json">
+    
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
     
     <style>
@@ -55,8 +57,8 @@
             <div class="no-data">Conectando con la barbería...</div>
         </div>
     </div>
+
 <script>
-// Esperamos a que la librería cargue en el navegador
 window.onload = function() {
     const SUPABASE_URL = "https://xnfmqumhhxpkrigizvlu.supabase.co";
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhuZm1xdW1oaHhwa3JpZ2l6dmx1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5MTE3NjgsImV4cCI6MjA5NTQ4Nzc2OH0.zNSZ4Nw2Iz2IieExt9SErJddPseWb65Hxedg5ZGZCvI";
@@ -73,10 +75,16 @@ window.onload = function() {
     const btnCargar = document.getElementById('btn-cargar');
     const listaCitas = document.getElementById('lista-citas');
 
-    // Almacén para evitar que una misma notificación suene mil veces
     let notificacionesEnviadas = new Set();
 
-    // 1. SOLICITAR PERMISO DE NOTIFICACIONES AL ENTRAR
+    // REGISTRAR EL SERVICE WORKER PARA NOTIFICACIONES EN SEGUNDO PLANO
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('sw.js')
+            .then(reg => console.log('Service Worker listo para enviar alertas'))
+            .catch(err => console.error('Error al registrar Service Worker:', err));
+    }
+
+    // SOLICITAR PERMISOS AL ENTRAR
     if ("Notification" in window) {
         if (Notification.permission !== "granted" && Notification.permission !== "denied") {
             Notification.requestPermission();
@@ -97,15 +105,20 @@ window.onload = function() {
         return (hours * 60) + minutes;
     }
 
-    // FUNCIÓN PARA DISPARAR LA NOTIFICACIÓN EN EL CELULAR
     function lanzarNotificacionPush(titulo, mensaje) {
         if ("Notification" in window && Notification.permission === "granted") {
-            // Intentar usar ServiceWorker para máxima compatibilidad móvil, o notificación estándar
-            navigator.serviceWorker?.ready.then(registration => {
-                registration.showNotification(titulo, { body: mensaje, icon: 'https://cdn-icons-png.flaticon.com/512/117/117212.png' });
-            }) || new Notification(titulo, { body: mensaje });
+            // Mandar mensaje al Service Worker para saltarse los bloqueos de pantalla del móvil
+            if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+                navigator.serviceWorker.controller.postMessage({
+                    type: 'NOTIFY',
+                    title: titulo,
+                    body: mensaje
+                });
+            } else {
+                // Alternativa estándar si el Service Worker está cargando
+                new Notification(titulo, { body: mensaje });
+            }
             
-            // Hacer vibrar el teléfono si el sistema lo permite
             if ("vibrate" in navigator) {
                 navigator.vibrate([200, 100, 200]);
             }
@@ -152,14 +165,13 @@ window.onload = function() {
                     } else if (diferencia <= 10 && diferencia >= -30) { 
                         estadoTag = `<span class="status-tag tag-now">⏰ Toca Ahora / Pronto</span>`; 
                         
-                        // 2. DISPARAR ALERTA SI FALTA EXACTAMENTE 10 MINUTOS O MENOS Y NO SE HA ENVIADO ANTES
                         const idNotificacion = `${cita.id}-${cita.hora}`;
                         if (diferencia > 0 && diferencia <= 10 && !notificacionesEnviadas.has(idNotificacion)) {
                             lanzarNotificacionPush(
                                 `💈 Próxima Cita en ${diferencia} min`,
                                 `Cliente: ${cita.cliente} \nServicio: ${cita.servicio} a las ${cita.hora}.`
                             );
-                            notificacionesEnviadas.add(idNotificacion); // Bloquear duplicados
+                            notificacionesEnviadas.add(idNotificacion);
                         }
                     }
                 }
@@ -195,7 +207,6 @@ window.onload = function() {
     
     cargarAgenda();
 
-    // 3. AUTO-REVISAR CADA 1 MINUTO EN SEGUNDO PLANO MIENTRAS LA WEB ESTÉ ABIERTA
     setInterval(() => {
         const ahora = new Date();
         const esHoy = selectorFecha.value === ahora.toISOString().split('T')[0];
