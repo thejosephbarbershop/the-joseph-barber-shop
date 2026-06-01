@@ -220,8 +220,8 @@ window.onload = function() {
         }
     }, 60000); 
 
-    // ========================================================
-    // ESCUCHADOR EN TIEMPO REAL PARA NUEVAS CITAS
+  // ========================================================
+    // ESCUCHADOR EN TIEMPO REAL (SOLO PARA ACTUALIZAR LA PANTALLA)
     // ========================================================
     window._supabase
         .channel('cambios-reservas')
@@ -235,13 +235,7 @@ window.onload = function() {
             (payload) => {
                 const nuevaCita = payload.new;
                 
-                // 1. Envía la notificación nativa emergente
-                lanzarNotificacionPush(
-                    `🆕 ¡Nueva Reserva Agendada!`,
-                    `Cliente: ${nuevaCita.cliente || 'Sin nombre'}\nServicio: ${nuevaCita.servicio || 'No especificado'}\nHora: ${nuevaCita.hora}`
-                );
-                
-                // 2. Si el panel está mostrando el día de esa cita, refresca la lista solo
+                // Si estás viendo el día de esa cita, refresca la lista visualmente
                 if (selectorFecha.value === nuevaCita.fecha) {
                     window.cargarAgenda();
                 }
