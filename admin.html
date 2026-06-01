@@ -70,7 +70,6 @@ window.onload = function() {
         return;
     }
 
-    // Definido globalmente para que se use en todo el documento
     window._supabase = miSupabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     const selectorFecha = document.getElementById('filtro-fecha');
     const btnCargar = document.getElementById('btn-cargar');
@@ -78,14 +77,12 @@ window.onload = function() {
 
     let notificacionesEnviadas = new Set();
 
-    // REGISTRAR EL SERVICE WORKER PARA NOTIFICACIONES EN SEGUNDO PLANO
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('sw.js')
             .then(reg => console.log('Service Worker listo para enviar alertas'))
             .catch(err => console.error('Error al registrar Service Worker:', err));
     }
 
-    // SOLICITAR PERMISOS AL ENTRAR
     if ("Notification" in window) {
         if (Notification.permission !== "granted" && Notification.permission !== "denied") {
             Notification.requestPermission();
@@ -124,7 +121,6 @@ window.onload = function() {
         }
     }
 
-    // Convertida en global asignándola a window.
     window.cargarAgenda = async function() {
         const fechaSeleccionada = selectorFecha.value;
         if (!fechaSeleccionada) return;
@@ -132,7 +128,6 @@ window.onload = function() {
         listaCitas.innerHTML = '<div class="no-data">🔍 Buscando citas en tiempo real...</div>';
         
         try {
-            // CORREGIDO: Ahora sí llama explícitamente a la propiedad global window._supabase
             const { data: reservas, error } = await window._supabase
                 .from('reservas')
                 .select('*')
@@ -141,7 +136,6 @@ window.onload = function() {
             if (error) throw error;
 
             if (!reservas || reservas.length === 0) {
-                // CORREGIDO: Eliminada la palabra fantasma "text =" que causaba ReferenceError
                 listaCitas.innerHTML = '<div class="no-data">📭 No hay citas agendadas para esta fecha.</div>';
                 return;
             }
@@ -217,9 +211,37 @@ window.onload = function() {
             window.cargarAgenda();
         }
     }, 60000); 
+
+    // ========================================================
+    // ESCUCHADOR EN TIEMPO REAL PARA NUEVAS CITAS
+    // ========================================================
+    window._supabase
+        .channel('cambios-reservas')
+        .on(
+            'postgres_changes', 
+            { 
+                event: 'INSERT', 
+                schema: 'public', 
+                table: 'reservas' 
+            }, 
+            (payload) => {
+                const nuevaCita = payload.new;
+                
+                // 1. Envía la notificación nativa emergente
+                lanzarNotificacionPush(
+                    `🆕 ¡Nueva Reserva Agendada!`,
+                    `Cliente: ${nuevaCita.cliente || 'Sin nombre'}\nServicio: ${nuevaCita.servicio || 'No especificado'}\nHora: ${nuevaCita.hora}`
+                );
+                
+                // 2. Si el panel está mostrando el día de esa cita, refresca la lista solo
+                if (selectorFecha.value === nuevaCita.fecha) {
+                    window.cargarAgenda();
+                }
+            }
+        )
+        .subscribe();
 };
 
-// Función externa corregida con llamadas a los elementos globales de window
 window.eliminarReserva = async function(idReserva) {
     const confirmar = confirm("¿Estás seguro de que deseas cancelar esta reserva?");
     if (!confirmar) return;
