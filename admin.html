@@ -83,9 +83,17 @@ window.onload = function() {
             .catch(err => console.error('Error al registrar Service Worker:', err));
     }
 
+   // SOLICITAR PERMISOS AL ENTRAR (FORZADO)
     if ("Notification" in window) {
-        if (Notification.permission !== "granted" && Notification.permission !== "denied") {
-            Notification.requestPermission();
+        if (Notification.permission === "default") {
+            Notification.requestPermission().then(permiso => {
+                console.log("Estado del permiso de notificación:", permiso);
+                if (permiso === "granted") {
+                    alert("¡Genial! Notificaciones activadas con éxito.");
+                }
+            });
+        } else if (Notification.permission === "denied") {
+            console.warn("Las notificaciones están bloqueadas en este navegador de forma manual.");
         }
     }
 
