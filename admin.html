@@ -70,7 +70,8 @@ window.onload = function() {
         return;
     }
 
-    const _supabase = miSupabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    // Definido globalmente para que se use en todo el documento
+    window._supabase = miSupabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     const selectorFecha = document.getElementById('filtro-fecha');
     const btnCargar = document.getElementById('btn-cargar');
     const listaCitas = document.getElementById('lista-citas');
@@ -107,7 +108,6 @@ window.onload = function() {
 
     function lanzarNotificacionPush(titulo, mensaje) {
         if ("Notification" in window && Notification.permission === "granted") {
-            // Mandar mensaje al Service Worker para saltarse los bloqueos de pantalla del móvil
             if (navigator.serviceWorker && navigator.serviceWorker.controller) {
                 navigator.serviceWorker.controller.postMessage({
                     type: 'NOTIFY',
@@ -115,7 +115,6 @@ window.onload = function() {
                     body: mensaje
                 });
             } else {
-                // Alternativa estándar si el Service Worker está cargando
                 new Notification(titulo, { body: mensaje });
             }
             
@@ -125,14 +124,16 @@ window.onload = function() {
         }
     }
 
-    async function cargarAgenda() {
+    // Convertida en global asignándola a window.
+    window.cargarAgenda = async function() {
         const fechaSeleccionada = selectorFecha.value;
         if (!fechaSeleccionada) return;
         
         listaCitas.innerHTML = '<div class="no-data">🔍 Buscando citas en tiempo real...</div>';
         
         try {
-            const { data: reservas, error } = await _supabase
+            // CORREGIDO: Ahora sí llama explícitamente a la propiedad global window._supabase
+            const { data: reservas, error } = await window._supabase
                 .from('reservas')
                 .select('*')
                 .eq('fecha', fechaSeleccionada);
@@ -140,6 +141,7 @@ window.onload = function() {
             if (error) throw error;
 
             if (!reservas || reservas.length === 0) {
+                // CORREGIDO: Eliminada la palabra fantasma "text =" que causaba ReferenceError
                 listaCitas.innerHTML = '<div class="no-data">📭 No hay citas agendadas para esta fecha.</div>';
                 return;
             }
@@ -148,12 +150,12 @@ window.onload = function() {
             let htmlContenido = "";
             
             const ahora = new Date();
-            const minutosActuales = (ahora.getHours() * 60) + ahora.getMinutes();
+            const minutesActuales = (ahora.getHours() * 60) + ahora.getMinutes();
             const esHoy = fechaSeleccionada === ahora.toISOString().split('T')[0];
 
             reservas.forEach(cita => {
                 const minCita = horaAMinutos(cita.hora);
-                const diferencia = minCita - minutosActuales;
+                const diferencia = minCita - minutesActuales;
                 
                 let esUrgente = esHoy && (diferencia <= 10 && diferencia >= -30);
                 let claseUrgent = esUrgente ? "urgent" : "";
@@ -192,6 +194,7 @@ window.onload = function() {
                         <div style="text-align: right; display: flex; flex-direction: column; gap: 10px; align-items: flex-end;">
                             <span class="badge-time">${cita.hora}</span>
                             <a href="${urlWhatsapp}" target="_blank" class="btn-remind">💬 Recordar</a>
+                            <button onclick="eliminarReserva('${cita.id}')" style="background-color: #dc3545; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; margin-left: 10px;">❌ Cancelar</button>
                         </div>
                     </div>`;
             });
@@ -202,19 +205,41 @@ window.onload = function() {
         }
     }
 
-    btnCargar.addEventListener('click', cargarAgenda);
-    selectorFecha.addEventListener('change', cargarAgenda);
+    btnCargar.addEventListener('click', window.cargarAgenda);
+    selectorFecha.addEventListener('change', window.cargarAgenda);
     
-    cargarAgenda();
+    window.cargarAgenda();
 
     setInterval(() => {
         const ahora = new Date();
         const esHoy = selectorFecha.value === ahora.toISOString().split('T')[0];
         if (esHoy) {
-            cargarAgenda();
+            window.cargarAgenda();
         }
     }, 60000); 
 };
+
+// Función externa corregida con llamadas a los elementos globales de window
+window.eliminarReserva = async function(idReserva) {
+    const confirmar = confirm("¿Estás seguro de que deseas cancelar esta reserva?");
+    if (!confirmar) return;
+
+    try {
+        const { error } = await window._supabase
+            .from('reservas')
+            .delete()
+            .eq('id', idReserva);
+
+        if (error) throw error;
+
+        alert("Reserva cancelada con éxito.");
+        window.cargarAgenda(); 
+
+    } catch (error) {
+        console.error("Error al cancelar:", error);
+        alert("No se pudo cancelar la reserva.");
+    }
+}   
 </script>
 </body>
 </html>
