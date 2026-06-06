@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pantalla TV - The Joseph Barbershop</title>
+    
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+    
+    <style>
+        :root {
+            --primary-color: #1a1a1a;
+            --accent-color: #d4af37; /* El dorado de tu barbería */
+            --bg-color: #111111;      /* Fondo oscuro para que resalte en la TV */
+            --card-bg: #1e1e1e;
+            --white: #ffffff;
+            --text-muted: #aaaaaa;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--white);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Encabezado Principal */
+        header {
+            background-color: var(--primary-color);
+            padding: 25px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 5px solid var(--accent-color);
+        }
+
+        header h1 {
+            font-size: 3rem;
+            color: var(--accent-color);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        header p {
+            font-size: 1.8rem;
+            color: var(--white);
+            opacity: 0.9;
+        }
+
+        .contador-total {
+            background-color: var(--accent-color);
+            color: var(--primary-color);
+            padding: 10px 35px;
+            border-radius: 12px;
+            font-size: 2.5rem;
+            font-weight: bold;
+        }
+
+        /* Contenedor del contenido */
+        .contenido {
+            display: flex;
+            flex: 1;
+            padding: 40px;
+            gap: 40px;
+            height: calc(100vh - 120px);
+        }
+
+        /* Bloque Izquierdo: Cliente Actual */
+        .turno-actual {
+            flex: 1.3;
+            background-color: var(--card-bg);
+            border-radius: 20px;
+            padding: 50px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            border: 4px solid var(--accent-color);
+            text-align: center;
+            box-shadow: 0 0 40px rgba(212, 175, 55, 0.15);
+        }
+
+        .turno-actual h2 {
+            font-size: 2.8rem;
+            color: var(--accent-color);
+            margin-bottom: 25px;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+        }
+
+        .turno-actual .nombre {
+            font-size: 5.5rem;
+            font-weight: bold;
+            color: var(--white);
+            margin-bottom: 15px;
+            line-height: 1.1;
+        }
+
+        .turno-actual .servicio {
+            font-size: 3rem;
+            color: var(--text-muted);
+            margin-bottom: 30px;
+            font-style: italic;
+        }
+
+        .turno-actual .hora {
+            background: var(--accent-color);
+            color: var(--primary-color);
+            font-size: 4rem;
+            font-weight: bold;
+            padding: 10px 40px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+
+        /* Bloque Derecho: Siguientes Turnos */
+        .proximos-turnos {
+            flex: 1;
+            background-color: var(--card-bg);
+            border-radius: 20px;
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        .proximos-turnos h2 {
+            font-size: 2.5rem;
+            margin-bottom: 25px;
+            color: var(--white);
+            border-bottom: 3px solid #333;
+            padding-bottom: 15px;
+            letter-spacing: 1px;
+        }
+
+        .lista-espera {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        /* Quitar barra de scroll visualmente */
+        .lista-espera::-webkit-scrollbar {
+            display: none;
+        }
+
+        .item-reserva {
+            background-color: #262626;
+            padding: 22px;
+            border-radius: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-left: 8px solid var(--accent-color);
+            animation: slideIn 0.4s ease-out;
+        }
+
+        .item-reserva .info-cliente {
+            max-width: 70%;
+        }
+
+        .item-reserva .info-nombre {
+            font-size: 2.4rem;
+            font-weight: bold;
+            color: var(--white);
+            display: block;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .item-reserva .info-servicio {
+            font-size: 1.6rem;
+            color: var(--text-muted);
+            display: block;
+            margin-top: 4px;
+        }
+
+        .item-reserva .info-hora {
+            font-size: 2.4rem;
+            color: var(--accent-color);
+            font-weight: bold;
+            background: var(--primary-color);
+            padding: 8px 15px;
+            border-radius: 10px;
+            border: 1px solid #333;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(30px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .no-data {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 2rem;
+            padding-top: 50px;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div>
+            <h1>The Joseph Barbershop</h1>
+            <p>Turnos Programados para Hoy</p>
+        </div>
+        <div class="contador-total" id="totalTurnos">Total: 0</div>
+    </header>
+
+    <div class="contenido">
+        <div class="turno-actual">
+            <h2>Atendiendo Ahora</h2>
+            <div class="nombre" id="actualNombre">Libre</div>
+            <div class="servicio" id="actualServicio">Sin servicios agendados</div>
+            <div class="hora" id="actualHora">--:--</div>
+        </div>
+
+        <div class="proximos-turnos">
+            <h2>Siguientes en fila</h2>
+            <div class="lista-espera" id="listaEspera">
+                <div class="no-data">Cargando próximos turnos...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Tus credenciales extraídas de admin.html
+        const SUPABASE_URL = "https://xnfmqumhhxpkrigizvlu.supabase.co";
+        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhuZm1xdW1oaHhwa3JpZ2l6dmx1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5MTE3NjgsImV4cCI6MjA5NTQ4Nzc2OH0.zNSZ4Nw2Iz2IieExt9SErJddPseWb65Hxedg5ZGZCvI";
+        
+        const miSupabase = window.supabase || (typeof supabase !== 'undefined' ? supabase : null);
+        window._supabase = miSupabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        // Tu función idéntica para ordenar las horas correctamente
+        function horaAMinutos(horaStr) {
+            if (!horaStr) return 0;
+            let [time, modifier] = horaStr.split(' ');
+            let [hours, minutes] = time.split(':').map(Number);
+            if (hours === 12 && modifier === 'AM') hours = 0;
+            if (modifier === 'PM' && hours !== 12) hours += 12;
+            return (hours * 60) + minutes;
+        }
+
+        // Lógica principal de renderizado en la TV
+        async function actualizarPantallaTV() {
+            // Obtenemos la fecha de hoy en formato YYYY-MM-DD local
+            const hoy = new Date();
+            const offset = hoy.getTimezoneOffset();
+            const hoyLocal = new Date(hoy.getTime() - (offset * 60 * 1000));
+            const fechaHoy = hoyLocal.toISOString().split('T')[0];
+
+            try {
+                // Buscamos las reservas del día de hoy
+                const { data: reservas, error } = await window._supabase
+                    .from('reservas')
+                    .select('*')
+                    .eq('fecha', fechaHoy);
+
+                if (error) throw error;
+
+                const listaEspera = document.getElementById('listaEspera');
+
+                if (!reservas || reservas.length === 0) {
+                    document.getElementById('totalTurnos').innerText = "Total: 0";
+                    document.getElementById('actualNombre').innerText = "Libre";
+                    document.getElementById('actualServicio').innerText = "Sin citas para hoy";
+                    document.getElementById('actualHora').innerText = "--:--";
+                    listaEspera.innerHTML = '<div class="no-data">💈 No hay más turnos hoy.</div>';
+                    return;
+                }
+
+                // Las ordenamos cronológicamente usando tu lógica
+                reservas.sort((a, b) => horaAMinutos(a.hora) - horaAMinutos(b.hora));
+
+                // Total de citas del día
+                document.getElementById('totalTurnos').innerText = `Total: ${reservas.length}`;
+
+                // El primer turno va al monitor grande "Atendiendo Ahora"
+                const primero = reservas[0];
+                document.getElementById('actualNombre').innerText = primero.cliente || "Cliente";
+                document.getElementById('actualServicio').innerText = primero.servicio || "Corte de Pelo";
+                document.getElementById('actualHora').innerText = primero.hora;
+
+                // El resto se lista a la derecha
+                const siguientes = reservas.slice(1);
+                if (siguientes.length === 0) {
+                    listaEspera.innerHTML = '<div class="no-data">Próximo turno libre</div>';
+                } else {
+                    let htmlSiguientes = "";
+                    siguientes.forEach(cita => {
+                        htmlSiguientes += `
+                            <div class="item-reserva">
+                                <div class="info-cliente">
+                                    <span class="info-nombre">${cita.cliente || "Cliente"}</span>
+                                    <span class="info-servicio">✂️ ${cita.servicio || "Servicio"}</span>
+                                </div>
+                                <span class="info-hora">${cita.hora}</span>
+                            </div>
+                        `;
+                    });
+                    listaEspera.innerHTML = htmlSiguientes;
+                }
+
+            } catch (err) {
+                console.error("Error cargando datos para la TV:", err);
+            }
+        }
+
+        // ========================================================
+        // ESCUCHADOR EN TIEMPO REAL (REALTIME DE SUPABASE)
+        // ========================================================
+        // Se activa con CUALQUIER evento (Citas nuevas, canceladas o modificadas)
+        window._supabase
+            .channel('cambios-tv')
+            .on(
+                'postgres_changes', 
+                { 
+                    event: '*', // Escucha INSERT, UPDATE y DELETE
+                    schema: 'public', 
+                    table: 'reservas' 
+                }, 
+                () => {
+                    console.log("Cambio detectado. Actualizando pantalla de la TV...");
+                    actualizarPantallaTV();
+                }
+            )
+            .subscribe();
+
+        // Carga inicial al encender la pantalla
+        actualizarPantallaTV();
+
+        // Respaldo: Fuerza un refresco total cada 1 minuto por si acaso
+        setInterval(actualizarPantallaTV, 60000);
+    </script>
+</body>
+</html>
