@@ -431,21 +431,20 @@ let CIERRE_MINUTOS = 20 * 60;      // Por defecto 8:00 PM
 function ajustarHorarioCierre(fechaSeleccionada) {
     if (!fechaSeleccionada) return;
     
-    // Rompemos el texto "2026-06-06" en [2026, 06, 06]
+    // Separamos el texto de la fecha para evitar errores de zona horaria
     const partes = fechaSeleccionada.split('-');
-    // Creamos la fecha usando año, mes (0-11) y día local exacto
     const fechaObjeto = new Date(partes[0], partes[1] - 1, partes[2]);
     
     const numeroDia = fechaObjeto.getDay(); // 0 = Domingo, 1 = Lunes, ..., 6 = Sábado
 
-    // Si es Lunes (1) a Jueves (4) -> Cierra a las 8:00 PM (1200 minutos)
+    // Si es Lunes (1) a Jueves (4)
     if (numeroDia >= 1 && numeroDia <= 4) {
-        CIERRE_MINUTOS = 20 * 60;  
+        CIERRE_MINUTOS = 20 * 60;  // ⏰ Cierra a las 8:00 PM
         console.log("Horario ajustado para Lunes-Jueves: Cierre a las 8:00 PM");
     } else {
-        // Si es Viernes (5), Sábado (6) o Domingo (0) -> Cierra a las 11:00 PM (1380 minutos)
-        CIERRE_MINUTOS = 23 * 60;  
-        console.log("Horario ajustado para Fin de Semana: Cierre a las 11:00 PM");
+        // Si es Viernes (5), Sábado (6) o Domingo (0)
+        CIERRE_MINUTOS = 24 * 60;  // ⏰ Cierra a las 12:00 AM (Medianoche)
+        console.log("Horario ajustado para Fin de Semana: Cierre a las 12:00 AM");
     }
 }
 
