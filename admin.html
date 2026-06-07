@@ -23,6 +23,12 @@
         .admin-container { max-width: 800px; margin: 0 auto; background: var(--white); border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); overflow: hidden; }
         header { background-color: var(--primary-color); color: var(--white); padding: 20px; text-align: center; border-bottom: 4px solid var(--accent-color); }
         header h1 { margin: 0; font-size: 1.5rem; color: var(--accent-color); letter-spacing: 1px; }
+        
+        /* Estilos de la nueva barra de permisos */
+        .permisos-bar { padding: 12px; text-align: center; font-weight: bold; border-bottom: 2px solid #ffeeba; display: none; transition: all 0.3s; }
+        .btn-permisos { background: var(--primary-color); color: var(--accent-color); border: 2px solid var(--accent-color); padding: 6px 15px; margin-left: 10px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 0.85rem; }
+        .btn-permisos:hover { background: var(--accent-color); color: var(--primary-color); }
+        
         .controls { padding: 20px; background: #eee; display: flex; gap: 15px; align-items: center; justify-content: center; flex-wrap: wrap; }
         .btn-refresh { background: var(--primary-color); color: var(--white); border: 2px solid var(--accent-color); padding: 10px 20px; border-radius: 10px; cursor: pointer; font-weight: bold; transition: all 0.3s; }
         .btn-refresh:hover { background: var(--accent-color); color: var(--primary-color); }
@@ -48,6 +54,12 @@
             <h1>PANEL DE ADMINISTRACIÓN</h1>
             <p style="margin: 5px 0 0 0; opacity: 0.8; font-size: 0.9rem;">Monitoreo y Recordatorios de Citas</p>
         </header>
+        
+        <div id="barra-permisos" class="permisos-bar">
+            <span id="texto-permisos">⚠️ Las notificaciones están inactivas en este navegador.</span>
+            <button id="btn-activar-permisos" class="btn-permisos">🔔 Activar Alertas</button>
+        </div>
+
         <div class="controls">
             <label><b>Ver citas del día:</b></label>
             <input type="date" id="filtro-fecha" class="input-date">
@@ -74,6 +86,9 @@ window.onload = function() {
     const selectorFecha = document.getElementById('filtro-fecha');
     const btnCargar = document.getElementById('btn-cargar');
     const listaCitas = document.getElementById('lista-citas');
+    const barraPermisos = document.getElementById('barra-permisos');
+    const btnActivarPermisos = document.getElementById('btn-activar-permisos');
+    const textoPermisos = document.getElementById('texto-permisos');
 
     let notificacionesEnviadas = new Set();
 
@@ -83,17 +98,49 @@ window.onload = function() {
             .catch(err => console.error('Error al registrar Service Worker:', err));
     }
 
-    // SOLICITAR PERMISOS AL ENTRAR
-    if ("Notification" in window) {
-        if (Notification.permission === "default") {
-            Notification.requestPermission().then(permiso => {
-                console.log("Estado del permiso de notificación:", permiso);
-                if (permiso === "granted") {
-                    alert("¡Genial! Notificaciones activadas con éxito.");
-                }
-            });
+    // ========================================================
+    // GESTIÓN INTELIGENTE DE PERMISOS (MANUAL Y AUTOMÁTICA)
+    // ========================================================
+    function comprobarPermisos() {
+        if (!("Notification" in window)) {
+            barraPermisos.style.display = "block";
+            barraPermisos.style.background = "#f8d7da";
+            textoPermisos.innerHTML = "❌ Este navegador no soporta alertas de escritorio.";
+            btnActivarPermisos.style.display = "none";
+            return;
+        }
+
+        if (Notification.permission === "granted") {
+            barraPermisos.style.display = "none"; // Todo bien, ocultamos la barra
+        } else if (Notification.permission === "denied") {
+            barraPermisos.style.display = "block";
+            barraPermisos.style.background = "#f8d7da";
+            barraPermisos.style.color = "#721c24";
+            textoPermisos.innerHTML = "❌ <b>Notificaciones bloqueadas de forma manual.</b> Dale clic al candado de arriba al lado de la URL y cambia 'Bloquear' por 'Permitir'.";
+            btnActivarPermisos.style.display = "none";
+        } else {
+            // Permiso "default" (no ha decidido)
+            barraPermisos.style.display = "block";
+            barraPermisos.style.background = "#fff3cd";
+            barraPermisos.style.color = "#856404";
+            textoPermisos.innerHTML = "🔔 Las alertas en tiempo real necesitan tu autorización:";
+            btnActivarPermisos.style.display = "inline-block";
         }
     }
+
+    btnActivarPermisos.addEventListener('click', function() {
+        Notification.requestPermission().then(permiso => {
+            comprobarPermisos();
+            if (permiso === "granted") {
+                alert("¡Genial! Alertas activadas con éxito.");
+                lanzarNotificacionPush("💈 ¡Prueba Exitosa!", "El panel está conectado correctamente.");
+            }
+        });
+    });
+
+    // Ejecutar comprobación inicial
+    comprobarPermisos();
+
 
     const hoy = new Date();
     const offset = hoy.getTimezoneOffset();
@@ -217,7 +264,7 @@ window.onload = function() {
     }, 60000); 
 
     // ========================================================
-    // ESCUCHADOR EN TIEMPO REAL (CORREGIDO PARA ALERTAS INSTANTÁNEAS)
+    // ESCUCHADOR EN TIEMPO REAL 
     // ========================================================
     window._supabase
         .channel('cambios-reservas')
@@ -231,13 +278,11 @@ window.onload = function() {
             (payload) => {
                 const nuevaCita = payload.new;
                 
-                // 🔥 ¡AQUÍ ESTÁ LA MAGIA! Lanza la alerta al instante sin importar en qué fecha estés parado en el panel
                 lanzarNotificacionPush(
                     "💈 ¡Nueva Reserva Recibida!",
                     `Cliente: ${nuevaCita.cliente || 'Alguien'} agendó para el ${nuevaCita.fecha} a las ${nuevaCita.hora}.`
                 );
 
-                // Si estás visualizando justo el día de esa nueva cita, refresca la lista en pantalla
                 if (selectorFecha.value === nuevaCita.fecha) {
                     window.cargarAgenda();
                 }
