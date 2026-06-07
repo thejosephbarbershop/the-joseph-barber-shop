@@ -1,8 +1,10 @@
- <html lang="es">
+<html lang="es">
 <head>
     <link rel="icon" type="image/png" sizes="192x192" href="https://ibb.co/LzbTQvbL?v=2">
-    
     <link rel="apple-touch-icon" sizes="180x180" href="https://ibb.co/LzbTQvbL?v=2">
+    
+    <link rel="manifest" href="manifest.json">
+    
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
     <title>Reserva tu Cita - The Joseph Barbershop</title>
@@ -424,14 +426,13 @@ const MARGEN_LIMPIEZA = 5;         // 5 minutos entre citas
 let CIERRE_MINUTOS = 20 * 60;      // Por defecto 8:00 PM
 
 // ==========================================
-// 🛠️ FUNCIÓN PARA CAMBIAR EL HORARIO DE CIERRE SEGÚN EL DÍA
+// 🛠️ FUNCIÓN PARA CAMBIAR EL HORARIO DE CIERRE SEGÚN EL DÍA (CORREGIDA)
 // ==========================================
 function ajustarHorarioCierre(fechaSeleccionada) {
     if (!fechaSeleccionada) return;
     
-    // Rompemos el texto "2026-06-06" en [2026, 06, 06]
     const partes = fechaSeleccionada.split('-');
-    // Creamos la fecha usando año, mes (0-11) y día local exacto
+    // Pasamos los argumentos por separado para obligar a JavaScript a interpretarlo en hora local exacta
     const fechaObjeto = new Date(partes[0], partes[1] - 1, partes[2]);
     
     const numeroDia = fechaObjeto.getDay(); // 0 = Domingo, 1 = Lunes, ..., 6 = Sábado
@@ -441,9 +442,9 @@ function ajustarHorarioCierre(fechaSeleccionada) {
         CIERRE_MINUTOS = 20 * 60;  
         console.log("Horario ajustado para Lunes-Jueves: Cierre a las 8:00 PM");
     } else {
-        // Si es Viernes (5), Sábado (6) o Domingo (0) -> Cierra a las 11:00 PM (1380 minutos)
-        CIERRE_MINUTOS = 23 * 60;  
-        console.log("Horario ajustado para Fin de Semana: Cierre a las 11:00 PM");
+        // Si es Viernes (5), Sábado (6) o Domingo (0) -> Cierra a las 12:00 AM Medianoche (1440 minutos)
+        CIERRE_MINUTOS = 24 * 60;  
+        console.log("Horario ajustado para Fin de Semana: Cierre a las 12:00 AM");
     }
 }
 
