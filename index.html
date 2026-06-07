@@ -1,16 +1,17 @@
+<!DOCTYPE html>
 <html lang="es">
 <head>
-    <link rel="icon" type="image/png" sizes="192x192" href="https://ibb.co/LzbTQvbL?v=2">
-    <link rel="apple-touch-icon" sizes="180x180" href="https://ibb.co/LzbTQvbL?v=2">
-    
-    <link rel="manifest" href="manifest.json">
-    
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
     <title>Reserva tu Cita - The Joseph Barbershop</title>
+
+    <link rel="icon" type="image/png" sizes="192x192" href="https://ibb.co/LzbTQvbL?v=2">
+    <link rel="apple-touch-icon" sizes="180x180" href="https://ibb.co/LzbTQvbL?v=2">
+    <link rel="manifest" href="manifest.json">
     
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+    
     <style>
         :root {
             --primary-color: #1a1a1a;   /* Negro Barbería */
@@ -398,375 +399,373 @@
     </div>
 
     <script>
-// Inicializamos EmailJS con tu llave pública
-emailjs.init("GQ0nATFCZx9T_S2wV");
+        // Inicializamos EmailJS con tu llave pública
+        emailjs.init("GQ0nATFCZx9T_S2wV");
 
-const SUPABASE_URL = "https://xnfmqumhhxpkrigizvlu.supabase.co";
-const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhuZm1xdW1oaHhwa3JpZ2l6dmx1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5MTE3NjgsImV4cCI6MjA5NTQ4Nzc2OH0.zNSZ4Nw2Iz2IieExt9SErJddPseWb65Hxedg5ZGZCvI";
+        const SUPABASE_URL = "https://xnfmqumhhxpkrigizvlu.supabase.co";
+        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhuZm1xdW1oaHhwa3JpZ2l6dmx1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5MTE3NjgsImV4cCI6MjA5NTQ4Nzc2OH0.zNSZ4Nw2Iz2IieExt9SErJddPseWb65Hxedg5ZGZCvI";
 
-const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// --- SELECCIÓN DE ELEMENTOS DEL DOM ---
-const inputFecha = document.getElementById('fecha');
-const contenedorHoras = document.getElementById('contenedor-horas');
-const opcionesBarbero = document.querySelectorAll('.barbero-opcion');
-const formulario = document.getElementById('reserva-form');
-const opcionesServicio = document.querySelectorAll('input[name="servicio"]');
+        // --- SELECCIÓN DE ELEMENTOS DEL DOM ---
+        const inputFecha = document.getElementById('fecha');
+        const contenedorHoras = document.getElementById('contenedor-horas');
+        const opcionesBarbero = document.querySelectorAll('.barbero-opcion');
+        const formulario = document.getElementById('reserva-form');
+        const opcionesServicio = document.querySelectorAll('input[name="servicio"]');
 
-const urlParams = new URLSearchParams(window.location.search);
-const idACancelar = urlParams.get('cancelar');
-const moduloReserva = document.getElementById('reserva-form');
-const moduloCancelar = document.getElementById('modulo-cancelar');
-const btnEjecutarCancelar = document.getElementById('btn-ejecutar-cancelar');
-const txtStatus = document.getElementById('mensaje-status');
+        const urlParams = new URLSearchParams(window.location.search);
+        const idACancelar = urlParams.get('cancelar');
+        const moduloReserva = document.getElementById('reserva-form');
+        const moduloCancelar = document.getElementById('modulo-cancelar');
+        const btnEjecutarCancelar = document.getElementById('btn-ejecutar-cancelar');
+        const txtStatus = document.getElementById('mensaje-status');
 
-// --- PARÁMETROS DE CONFIGURACIÓN DE ATENCIÓN ---
-const APERTURA_MINUTOS = 8 * 60;   // 08:00 AM en minutos totales
-const MARGEN_LIMPIEZA = 5;         // 5 minutos entre citas
-let CIERRE_MINUTOS = 20 * 60;      // Por defecto 8:00 PM
+        // --- PARÁMETROS DE CONFIGURACIÓN DE ATENCIÓN ---
+        const APERTURA_MINUTOS = 8 * 60;   // 08:00 AM en minutos totales
+        const MARGEN_LIMPIEZA = 5;         // 5 minutos entre citas
+        let CIERRE_MINUTOS = 20 * 60;      // Por defecto 8:00 PM
 
-// ==========================================
-// 🛠️ FUNCIÓN PARA CAMBIAR EL HORARIO DE CIERRE SEGÚN EL DÍA (CORREGIDA)
-// ==========================================
-function ajustarHorarioCierre(fechaSeleccionada) {
-    if (!fechaSeleccionada) return;
-    
-    const partes = fechaSeleccionada.split('-');
-    // Pasamos los argumentos por separado para obligar a JavaScript a interpretarlo en hora local exacta
-    const fechaObjeto = new Date(partes[0], partes[1] - 1, partes[2]);
-    
-    const numeroDia = fechaObjeto.getDay(); // 0 = Domingo, 1 = Lunes, ..., 6 = Sábado
+        // ==========================================
+        // 🛠️ FUNCIÓN PARA CAMBIAR EL HORARIO DE CIERRE SEGÚN EL DÍA
+        // ==========================================
+        function ajustarHorarioCierre(fechaSeleccionada) {
+            if (!fechaSeleccionada) return;
+            
+            const partes = fechaSeleccionada.split('-');
+            const fechaObjeto = new Date(partes[0], partes[1] - 1, partes[2]);
+            const numeroDia = fechaObjeto.getDay(); // 0 = Domingo, 1 = Lunes, ..., 6 = Sábado
 
-    // Si es Lunes (1) a Jueves (4) -> Cierra a las 8:00 PM (1200 minutos)
-    if (numeroDia >= 1 && numeroDia <= 4) {
-        CIERRE_MINUTOS = 20 * 60;  
-        console.log("Horario ajustado para Lunes-Jueves: Cierre a las 8:00 PM");
-    } else {
-        // Si es Viernes (5), Sábado (6) o Domingo (0) -> Cierra a las 12:00 AM Medianoche (1440 minutos)
-        CIERRE_MINUTOS = 24 * 60;  
-        console.log("Horario ajustado para Fin de Semana: Cierre a las 12:00 AM");
-    }
-}
+            // Si es Lunes (1) a Jueves (4) -> Cierra a las 8:00 PM (1200 minutos)
+            if (numeroDia >= 1 && numeroDia <= 4) {
+                CIERRE_MINUTOS = 20 * 60;  
+                console.log("Horario ajustado para Lunes-Jueves: Cierre a las 8:00 PM");
+            } else {
+                // Si es Viernes (5), Sábado (6) o Domingo (0) -> Cierra a las 12:00 AM Medianoche (1440 minutos)
+                CIERRE_MINUTOS = 24 * 60;  
+                console.log("Horario ajustado para Fin de Semana: Cierre a las 12:00 AM");
+            }
+        }
 
-// ==========================================
-// 🎯 ESCUCHADORES PARA RECALCULAR HORARIOS
-// ==========================================
-if (inputFecha) {
-    inputFecha.addEventListener('change', function() {
-        ajustarHorarioCierre(this.value);
-        actualizarHorariosDisponibles();
-    });
-}
+        // ==========================================
+        // 🎯 ESCUCHADORES PARA RECALCULAR HORARIOS
+        // ==========================================
+        if (inputFecha) {
+            inputFecha.addEventListener('change', function() {
+                ajustarHorarioCierre(this.value);
+                actualizarHorariosDisponibles();
+            });
+        }
 
-opcionesBarbero.forEach(radio => radio.addEventListener('change', actualizarHorariosDisponibles));
-opcionesServicio.forEach(radio => radio.addEventListener('change', actualizarHorariosDisponibles));
+        opcionesBarbero.forEach(radio => radio.addEventListener('change', actualizarHorariosDisponibles));
+        opcionesServicio.forEach(radio => radio.addEventListener('change', actualizarHorariosDisponibles));
 
-// --- SISTEMA DE AUTOCOMPLETADO (Al cargar la página) ---
-document.addEventListener("DOMContentLoaded", function() {
-    const nombreGuardado = localStorage.getItem("barberia_nombre");
-    const telefonoGuardado = localStorage.getItem("barberia_telefono");
+        // --- SISTEMA DE AUTOCOMPLETADO (Al cargar la página) ---
+        document.addEventListener("DOMContentLoaded", function() {
+            const nombreGuardado = localStorage.getItem("barberia_nombre");
+            const telefonoGuardado = localStorage.getItem("barberia_telefono");
 
-    if (nombreGuardado) {
-        document.getElementById("client-name").value = nombreGuardado;
-    }
-    if (telefonoGuardado) {
-        document.getElementById("client-phone").value = telefonoGuardado;
-    }
-});
-
-// Control inicial del módulo de cancelación
-if (idACancelar) {
-    moduloReserva.classList.add('hidden');
-    moduloCancelar.classList.remove('hidden');
-    document.getElementById('header-title').innerText = "CANCELAR ESPACIO";
-    document.getElementById('header-subtitle').innerText = "Gestión de citas - The Joseph Barbershop";
-    obtenerDetallesCita(idACancelar);
-}
-
-// Configurar límite mínimo de fecha (Hoy local)
-const hoyObjeto = new Date();
-const offset = hoyObjeto.getTimezoneOffset();
-const hoyLocal = new Date(hoyObjeto.getTime() - (offset * 60 * 1000));
-const hoyString = hoyLocal.toISOString().split('T')[0];
-if (inputFecha) inputFecha.min = hoyString;
-
-// --- UTILIDADES MATEMÁTICAS DE TIEMPO ---
-function convertirStringAMinutos(horaStr) {
-    let [time, modifier] = horaStr.split(' ');
-    let [hours, minutes] = time.split(':').map(Number);
-    if (hours === 12 && modifier === 'AM') hours = 0;
-    if (modifier === 'PM' && hours !== 12) hours += 12;
-    return (hours * 60) + minutes;
-}
-
-function convertirMinutosAString12h(minutosTotales) {
-    let horas = Math.floor(minutosTotales / 60);
-    let minutes = minutosTotales % 60;
-    let ampm = horas >= 12 ? 'PM' : 'AM';
-    horas = horas % 12;
-    horas = horas ? horas : 12; 
-    let strMinutos = String(minutes).padStart(2, '0');
-    let strHoras = String(horas).padStart(2, '0');
-    return `${strHoras}:${strMinutos} ${ampm}`;
-}
-
-function generarObjetoFecha(fechaStr, minutosTotales) {
-    let horas = Math.floor(minutosTotales / 60);
-    let minutos = minutosTotales % 60; 
-    return new Date(`${fechaStr}T${String(horas).padStart(2, '0')}:${String(minutos).padStart(2, '0')}:00`);
-}
-
-// ==========================================
-// 🎯 MOTOR CENTRAL: CÁLCULO Y GENERACIÓN DINÁMICA
-// ==========================================
-async function actualizarHorariosDisponibles() {
-    const fechaSeleccionada = inputFecha.value;
-    const barberoSeleccionadoInput = document.querySelector('input[name="barbero"]:checked');
-    const servicioSeleccionadoInput = document.querySelector('input[name="servicio"]:checked');
-    
-    if (!fechaSeleccionada || !barberoSeleccionadoInput) return;
-    
-    const duracionServicioSolicitado = servicioSeleccionadoInput ? parseInt(servicioSeleccionadoInput.getAttribute('data-duracion'), 10) : 45;
-    const barberoSeleccionado = barberoSeleccionadoInput.value;
-    const ahora = new Date();
-
-    contenedorHoras.innerHTML = '<div class="texto-alerta">Calculando agenda perfecta...</div>';
-
-    try {
-        const { data: reservas, error } = await _supabase
-            .from('reservas')
-            .select('hora, duracion')
-            .eq('fecha', fechaSeleccionada)
-            .eq('barbero', barberoSeleccionado);
-
-        if (error) throw error;
-
-        let rangosOcupados = [];
-        reservas.forEach(reserva => {
-            if (!reserva.hora) return;
-            let inicio = convertirStringAMinutos(reserva.hora);
-            let fin = inicio + (reserva.duracion || 30);
-            rangosOcupados.push({ inicio, fin });
+            if (nombreGuardado) {
+                document.getElementById("client-name").value = nombreGuardado;
+            }
+            if (telefonoGuardado) {
+                document.getElementById("client-phone").value = telefonoGuardado;
+            }
         });
 
-        rangosOcupados.sort((a, b) => a.inicio - b.inicio);
+        // Control inicial del módulo de cancelación
+        if (idACancelar) {
+            moduloReserva.classList.add('hidden');
+            moduloCancelar.classList.remove('hidden');
+            document.getElementById('header-title').innerText = "CANCELAR ESPACIO";
+            document.getElementById('header-subtitle').innerText = "Gestión de citas - The Joseph Barbershop";
+            obtenerDetallesCita(idACancelar);
+        }
 
-        let htmlBotones = "";
-        let minutoPuntero = APERTURA_MINUTOS;
-        let indexBotones = 1;
+        // Configurar límite mínimo de fecha (Hoy local)
+        const hoyObjeto = new Date();
+        const offset = hoyObjeto.getTimezoneOffset();
+        const hoyLocal = new Date(hoyObjeto.getTime() - (offset * 60 * 1000));
+        const hoyString = hoyLocal.toISOString().split('T')[0];
+        if (inputFecha) inputFecha.min = hoyString;
 
-        while (minutoPuntero + duracionServicioSolicitado <= CIERRE_MINUTOS) {
-            let colisiona = false;
-            let inicioPropuesto = minutoPuntero;
-            let finPropuesto = minutoPuntero + duracionServicioSolicitado;
+        // --- UTILIDADES MATEMÁTICAS DE TIEMPO ---
+        function convertirStringAMinutos(horaStr) {
+            let [time, modifier] = horaStr.split(' ');
+            let [hours, minutes] = time.split(':').map(Number);
+            if (hours === 12 && modifier === 'AM') hours = 0;
+            if (modifier === 'PM' && hours !== 12) hours += 12;
+            return (hours * 60) + minutes;
+        }
 
-            for (let rango of rangosOcupados) {
-                if (inicioPropuesto < rango.fin && finPropuesto > rango.inicio) {
-                    colisiona = true;
-                    minutoPuntero = rango.fin + MARGEN_LIMPIEZA;
-                    break;
+        function convertirMinutosAString12h(minutosTotales) {
+            let horas = Math.floor(minutosTotales / 60);
+            let minutes = minutosTotales % 60;
+            let ampm = horas >= 12 ? 'PM' : 'AM';
+            horas = horas % 12;
+            horas = horas ? horas : 12; 
+            let strMinutos = String(minutes).padStart(2, '0');
+            let strHoras = String(horas).padStart(2, '0');
+            return `${strHoras}:${strMinutos} ${ampm}`;
+        }
+
+        function generarObjetoFecha(fechaStr, minutosTotales) {
+            let horas = Math.floor(minutosTotales / 60);
+            let minutos = minutes = minutosTotales % 60; 
+            return new Date(`${fechaStr}T${String(horas).padStart(2, '0')}:${String(minutos).padStart(2, '0')}:00`);
+        }
+
+        // ==========================================
+        // 🎯 MOTOR CENTRAL: CÁLCULO Y GENERACIÓN DINÁMICA
+        // ==========================================
+        async function actualizarHorariosDisponibles() {
+            const fechaSeleccionada = inputFecha.value;
+            const barberoSeleccionadoInput = document.querySelector('input[name="barbero"]:checked');
+            const servicioSeleccionadoInput = document.querySelector('input[name="servicio"]:checked');
+            
+            if (!fechaSeleccionada || !barberoSeleccionadoInput) return;
+            
+            const duracionServicioSolicitado = servicioSeleccionadoInput ? parseInt(servicioSeleccionadoInput.getAttribute('data-duracion'), 10) : 45;
+            const barberoSeleccionado = barberoSeleccionadoInput.value;
+            const ahora = new Date();
+
+            contenedorHoras.innerHTML = '<div class="texto-alerta">Calculando agenda perfecta...</div>';
+
+            try {
+                const { data: reservas, error } = await _supabase
+                    .from('reservas')
+                    .select('hora, duracion')
+                    .eq('fecha', fechaSeleccionada)
+                    .eq('barbero', barberoSeleccionado);
+
+                if (error) throw error;
+
+                let rangosOcupados = [];
+                reservas.forEach(reserva => {
+                    if (!reserva.hora) return;
+                    let inicio = convertirStringAMinutos(reserva.hora);
+                    let fin = inicio + (reserva.duracion || 30);
+                    rangosOcupados.push({ inicio, fin });
+                });
+
+                rangosOcupados.sort((a, b) => a.inicio - b.inicio);
+
+                let htmlBotones = "";
+                let minutoPuntero = APERTURA_MINUTOS;
+                let indexBotones = 1;
+
+                while (minutoPuntero + duracionServicioSolicitado <= CIERRE_MINUTOS) {
+                    let colisiona = false;
+                    let inicioPropuesto = minutoPuntero;
+                    let finPropuesto = minutoPuntero + duracionServicioSolicitado;
+
+                    for (let rango of rangosOcupados) {
+                        if (inicioPropuesto < rango.fin && finPropuesto > rango.inicio) {
+                            colisiona = true;
+                            minutoPuntero = rango.fin + MARGEN_LIMPIEZA;
+                            break;
+                        }
+                    }
+
+                    if (!colisiona) {
+                        let stringHora12h = convertirMinutosAString12h(minutoPuntero);
+                        let objetoFechaBoton = generarObjetoFecha(fechaSeleccionada, minutoPuntero);
+                        let esPasada = objetoFechaBoton < ahora;
+
+                        if (!esPasada) {
+                            htmlBotones += `
+                                <div>
+                                    <input type="radio" id="dyn-hr-${indexBotones}" name="hora" value="${stringHora12h}" class="selector-item" required>
+                                    <label for="dyn-hr-${indexBotones}" class="selector-label">
+                                        <span class="item-name">${stringHora12h}</span>
+                                        <span class="item-desc">Disponible</span>
+                                    </label>
+                                </div>`;
+                            indexBotones++;
+                        }
+                        
+                        minutoPuntero += duracionServicioSolicitado + MARGEN_LIMPIEZA;
+                    }
                 }
+
+                if (htmlBotones === "") {
+                    contenedorHoras.innerHTML = '<div class="texto-alerta" style="color: var(--danger-color);">No quedan bloques libres para este servicio hoy.</div>';
+                } else {
+                    contenedorHoras.innerHTML = htmlBotones;
+                }
+
+            } catch (err) {
+                console.error("Error consultando horarios:", err.message);
+                contenedorHoras.innerHTML = '<div class="texto-alerta" style="color: var(--danger-color);">Error al sincronizar agenda.</div>';
             }
+        }
 
-            if (!colisiona) {
-                let stringHora12h = convertirMinutosAString12h(minutoPuntero);
-                let objetoFechaBoton = generarObjetoFecha(fechaSeleccionada, minutoPuntero);
-                let esPasada = objetoFechaBoton < ahora;
+        // ==========================================
+        // 💾 PROCESAR ENVIÓ DE FORMULARIO DE RESERVA
+        // ==========================================
+        formulario.addEventListener('submit', async (e) => {
+            e.preventDefault();
 
-                if (!esPasada) {
-                    htmlBotones += `
-                        <div>
-                            <input type="radio" id="dyn-hr-${indexBotones}" name="hora" value="${stringHora12h}" class="selector-item" required>
-                            <label for="dyn-hr-${indexBotones}" class="selector-label">
-                                <span class="item-name">${stringHora12h}</span>
-                                <span class="item-desc">Disponible</span>
-                            </label>
-                        </div>`;
-                    indexBotones++;
+            const nombre = document.getElementById('client-name').value;
+            const telefono = document.getElementById('client-phone').value;
+            const servicioInput = document.querySelector('input[name="servicio"]:checked');
+            const servicio = servicioInput.value;
+            const duracion = parseInt(servicioInput.getAttribute('data-duracion'), 10) || 30;
+            const barbero = document.querySelector('input[name="barbero"]:checked').value;
+            const fecha = inputFecha.value;
+            
+            const horaSeleccionadaInput = document.querySelector('input[name="hora"]:checked');
+            if (!horaSeleccionadaInput) {
+                alert("Por favor, selecciona un horario.");
+                return;
+            }
+            const hora = horaSeleccionadaInput.value;
+
+            const nuevaPestana = window.open('about:blank', '_blank');
+
+            try {
+                const { data: duplicados } = await _supabase
+                    .from('reservas')
+                    .select('hora, duracion')
+                    .eq('fecha', fecha)
+                    .eq('barbero', barbero);
+
+                const inicioNuevaCitaMin = convertirStringAMinutos(hora);
+                const finNuevaCitaMin = inicioNuevaCitaMin + duracion;
+                let sobreescrito = false;
+
+                if (duplicados) {
+                    for (let d of duplicados) {
+                        let dInicio = convertirStringAMinutos(d.hora);
+                        let dFin = dInicio + (d.duracion || 30);
+                        if (inicioNuevaCitaMin < dFin && finNuevaCitaMin > dInicio) {
+                            sobreescrito = true;
+                            break;
+                        }
+                    }
                 }
+
+                if (sobreescrito) {
+                    if (nuevaPestana) nuevaPestana.close();
+                    alert("¡Lo sentimos! Ese bloque horario acaba de ser ocupado. Por favor elige otra hora recalculada.");
+                    actualizarHorariosDisponibles();
+                    return;
+                }
+
+                const { data: nuevaReserva, error } = await _supabase
+                    .from('reservas')
+                    .insert([{ 
+                        fecha: fecha, 
+                        hora: hora, 
+                        barbero: barbero, 
+                        duracion: duracion,
+                        cliente: nombre,
+                        telefono: telefono,
+                        servicio: servicio
+                    }])
+                    .select();
+
+                if (error) throw error;
+
+                localStorage.setItem("barberia_nombre", nombre);
+                localStorage.setItem("barberia_telefono", telefono);
+
+                var datosParaCorreo = {
+                    nombre_cliente: nombre,
+                    telefono: telefono,
+                    hora_cita: `${hora} el día ${fecha} con ${barbero}`
+                };
+
+                emailjs.send("service_z2lbr3y", "template_7phspmb", datosParaCorreo)
+                    .then(function(res) {
+                        console.log("Notificación por correo enviada con éxito.");
+                    }, function(err) {
+                        console.error("Error al mandar el correo de EmailJS:", err);
+                    });
+
+                const idGenerado = nuevaReserva[0].id;
+                const urlBase = window.location.origin + window.location.pathname;
+                const enlaceCancelar = `${urlBase}?cancelar=${idGenerado}`;
+
+                const telefonoBarberia = "18299702130"; 
+                const mensaje = `💈 *NUEVA CITA - THE JOSEPH BARBERSHOP* 💈\n\n👤 *Cliente:* ${nombre}\n📞 *Teléfono:* ${telefono}\n✂️ *Servicio:* ${servicio} (${duracion} min)\n🧔 *Barbero:* ${barbero}\n📅 *Fecha:* ${fecha}\n⏰ *Hora:* ${hora}\n\n_¡Por favor confirma mi espacio!_\n\n❌ *Para cancelar o cambiar tu espacio haz clic aquí:* \n${enlaceCancelar}`;
                 
-                minutoPuntero += duracionServicioSolicitado + MARGEN_LIMPIEZA;
-            }
-        }
-
-        if (htmlBotones === "") {
-            contenedorHoras.innerHTML = '<div class="texto-alerta" style="color: var(--danger-color);">No quedan bloques libres para este servicio hoy.</div>';
-        } else {
-            contenedorHoras.innerHTML = htmlBotones;
-        }
-
-    } catch (err) {
-        console.error("Error consultando horarios:", err.message);
-        contenedorHoras.innerHTML = '<div class="texto-alerta" style="color: var(--danger-color);">Error al sincronizar agenda.</div>';
-    }
-}
-
-// ==========================================
-// 💾 PROCESAR ENVIÓ DE FORMULARIO DE RESERVA
-// ==========================================
-formulario.addEventListener('submit', async (e) => {
-    e.preventDefault();
-
-    const nombre = document.getElementById('client-name').value;
-    const telefono = document.getElementById('client-phone').value;
-    const servicioInput = document.querySelector('input[name="servicio"]:checked');
-    const servicio = servicioInput.value;
-    const duracion = parseInt(servicioInput.getAttribute('data-duracion'), 10) || 30;
-    const barbero = document.querySelector('input[name="barbero"]:checked').value;
-    const fecha = inputFecha.value;
-    
-    const horaSeleccionadaInput = document.querySelector('input[name="hora"]:checked');
-    if (!horaSeleccionadaInput) {
-        alert("Por favor, selecciona un horario.");
-        return;
-    }
-    const hora = horaSeleccionadaInput.value;
-
-    const nuevaPestana = window.open('about:blank', '_blank');
-
-    try {
-        const { data: duplicados } = await _supabase
-            .from('reservas')
-            .select('hora, duracion')
-            .eq('fecha', fecha)
-            .eq('barbero', barbero);
-
-        const inicioNuevaCitaMin = convertirStringAMinutos(hora);
-        const finNuevaCitaMin = inicioNuevaCitaMin + duracion;
-        let sobreescrito = false;
-
-        if (duplicados) {
-            for (let d of duplicados) {
-                let dInicio = convertirStringAMinutos(d.hora);
-                let dFin = dInicio + (d.duracion || 30);
-                if (inicioNuevaCitaMin < dFin && finNuevaCitaMin > dInicio) {
-                    sobreescrito = true;
-                    break;
+                const urlWhatsapp = `https://wa.me/${telefonoBarberia}?text=${encodeURIComponent(mensaje)}`;
+                
+                if (nuevaPestana) {
+                    nuevaPestana.location.href = urlWhatsapp;
+                } else {
+                    window.open(urlWhatsapp, '_blank');
                 }
+                actualizarHorariosDisponibles();
+
+            } catch (err) {
+                if (nuevaPestana) nuevaPestana.close();
+                alert("Hubo un percance guardando tu espacio: " + err.message);
+            }
+        });
+
+        // ==========================================
+        // ❌ LÓGICA DEL MÓDULO DE CANCELACIÓN
+        // ==========================================
+        async function obtenerDetallesCita(id) {
+            try {
+                const { data: cita, error } = await _supabase
+                    .from('reservas')
+                    .select('*')
+                    .eq('id', id)
+                    .single();
+
+                if (error || !cita) {
+                    document.getElementById('cancel-info-cliente').innerText = "Cita no encontrada";
+                    document.getElementById('cancel-info-cliente').style.color = "var(--danger-color)";
+                    txtStatus.innerText = "Este enlace no es válido o la cita ya fue cancelada previamente.";
+                    txtStatus.style.color = "var(--danger-color)";
+                    return;
+                }
+
+                document.getElementById('cancel-info-cliente').innerText = cita.cliente || "No especificado";
+                document.getElementById('cancel-info-servicio').innerText = cita.servicio || "No especificado";
+                document.getElementById('cancel-info-barbero').innerText = cita.barbero;
+                document.getElementById('cancel-info-fecha').innerText = cita.fecha;
+                document.getElementById('cancel-info-hora').innerText = `${cita.hora} (${cita.duracion || 30} min)`;
+                
+                btnEjecutarCancelar.disabled = false;
+
+            } catch (err) {
+                txtStatus.innerText = "Error de conexión al cargar la cita.";
+                txtStatus.style.color = "var(--danger-color)";
             }
         }
 
-        if (sobreescrito) {
-            if (nuevaPestana) nuevaPestana.close();
-            alert("¡Lo sentimos! Ese bloque horario acaba de ser ocupado. Por favor elige otra hora recalculada.");
-            actualizarHorariosDisponibles();
-            return;
-        }
+        btnEjecutarCancelar.addEventListener('click', async () => {
+            btnEjecutarCancelar.disabled = true;
+            txtStatus.innerText = "Procesando la liberación de tu espacio...";
+            txtStatus.style.color = "var(--primary-color)";
 
-        const { data: nuevaReserva, error } = await _supabase
-            .from('reservas')
-            .insert([{ 
-                fecha: fecha, 
-                hora: hora, 
-                barbero: barbero, 
-                duracion: duracion,
-                cliente: nombre,
-                telefono: telefono,
-                servicio: servicio
-            }])
-            .select();
+            try {
+                const { error } = await _supabase
+                    .from('reservas')
+                    .delete()
+                    .eq('id', idACancelar);
 
-        if (error) throw error;
+                if (error) throw error;
 
-        localStorage.setItem("barberia_nombre", nombre);
-        localStorage.setItem("barberia_telefono", telefono);
+                txtStatus.innerText = "¡Tu cita ha sido cancelada exitosamente! El bloque de horario ya se encuentra disponible para otros clientes.";
+                txtStatus.style.color = "#20ba59";
+                
+                document.getElementById('cancel-info-cliente').innerText = "-";
+                document.getElementById('cancel-info-servicio').innerText = "-";
+                document.getElementById('cancel-info-barbero').innerText = "-";
+                document.getElementById('cancel-info-fecha').innerText = "-";
+                document.getElementById('cancel-info-hora').innerText = "-";
 
-        var datosParaCorreo = {
-            nombre_cliente: nombre,
-            telefono: telefono,
-            hora_cita: `${hora} el día ${fecha} con ${barbero}`
-        };
-
-        emailjs.send("service_z2lbr3y", "template_7phspmb", datosParaCorreo)
-            .then(function(res) {
-                console.log("Notificación por correo enviada con éxito.");
-            }, function(err) {
-                console.error("Error al mandar el correo de EmailJS:", err);
-            });
-
-        const idGenerado = nuevaReserva[0].id;
-        const urlBase = window.location.origin + window.location.pathname;
-        const enlaceCancelar = `${urlBase}?cancelar=${idGenerado}`;
-
-        const telefonoBarberia = "18299702130"; 
-        const mensaje = `💈 *NUEVA CITA - THE JOSEPH BARBERSHOP* 💈\n\n👤 *Cliente:* ${nombre}\n📞 *Teléfono:* ${telefono}\n✂️ *Servicio:* ${servicio} (${duracion} min)\n🧔 *Barbero:* ${barbero}\n📅 *Fecha:* ${fecha}\n⏰ *Hora:* ${hora}\n\n_¡Por favor confirma mi espacio!_\n\n❌ *Para cancelar o cambiar tu espacio haz clic aquí:* \n${enlaceCancelar}`;
-        
-        const urlWhatsapp = `https://wa.me/${telefonoBarberia}?text=${encodeURIComponent(mensaje)}`;
-        
-        if (nuevaPestana) {
-            nuevaPestana.location.href = urlWhatsapp;
-        } else {
-            window.open(urlWhatsapp, '_blank');
-        }
-        actualizarHorariosDisponibles();
-
-    } catch (err) {
-        if (nuevaPestana) nuevaPestana.close();
-        alert("Hubo un percance guardando tu espacio: " + err.message);
-    }
-});
-
-// ==========================================
-// ❌ LÓGICA DEL MÓDULO DE CANCELACIÓN
-// ==========================================
-async function obtenerDetallesCita(id) {
-    try {
-        const { data: cita, error } = await _supabase
-            .from('reservas')
-            .select('*')
-            .eq('id', id)
-            .single();
-
-        if (error || !cita) {
-            document.getElementById('cancel-info-cliente').innerText = "Cita no encontrada";
-            document.getElementById('cancel-info-cliente').style.color = "var(--danger-color)";
-            txtStatus.innerText = "Este enlace no es válido o la cita ya fue cancelada previamente.";
-            txtStatus.style.color = "var(--danger-color)";
-            return;
-        }
-
-        document.getElementById('cancel-info-cliente').innerText = cita.cliente || "No especificado";
-        document.getElementById('cancel-info-servicio').innerText = cita.servicio || "No especificado";
-        document.getElementById('cancel-info-barbero').innerText = cita.barbero;
-        document.getElementById('cancel-info-fecha').innerText = cita.fecha;
-        document.getElementById('cancel-info-hora').innerText = `${cita.hora} (${cita.duracion || 30} min)`;
-        
-        btnEjecutarCancelar.disabled = false;
-
-    } catch (err) {
-        txtStatus.innerText = "Error de conexión al cargar la cita.";
-        txtStatus.style.color = "var(--danger-color)";
-    }
-}
-
-btnEjecutarCancelar.addEventListener('click', async () => {
-    btnEjecutarCancelar.disabled = true;
-    txtStatus.innerText = "Procesando la liberación de tu espacio...";
-    txtStatus.style.color = "var(--primary-color)";
-
-    try {
-        const { error } = await _supabase
-            .from('reservas')
-            .delete()
-            .eq('id', idACancelar);
-
-        if (error) throw error;
-
-        txtStatus.innerText = "¡Tu cita ha sido cancelada exitosamente! El bloque de horario ya se encuentra disponible para otros clientes.";
-        txtStatus.style.color = "#20ba59";
-        
-        document.getElementById('cancel-info-cliente').innerText = "-";
-        document.getElementById('cancel-info-servicio').innerText = "-";
-        document.getElementById('cancel-info-barbero').innerText = "-";
-        document.getElementById('cancel-info-fecha').innerText = "-";
-        document.getElementById('cancel-info-hora').innerText = "-";
-
-    } catch (err) {
-        btnEjecutarCancelar.disabled = false;
-        txtStatus.innerText = "Error al intentar cancelar: " + err.message;
-        txtStatus.style.color = "var(--danger-color)";
-    }
-});
+            } catch (err) {
+                btnEjecutarCancelar.disabled = false;
+                txtStatus.innerText = "Error al intentar cancelar: " + err.message;
+                txtStatus.style.color = "var(--danger-color)";
+            }
+        });
     </script>
 </body>
 </html>
