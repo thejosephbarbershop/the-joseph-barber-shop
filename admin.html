@@ -83,7 +83,7 @@ window.onload = function() {
             .catch(err => console.error('Error al registrar Service Worker:', err));
     }
 
-   // SOLICITAR PERMISOS AL ENTRAR (FORZADO)
+    // SOLICITAR PERMISOS AL ENTRAR
     if ("Notification" in window) {
         if (Notification.permission === "default") {
             Notification.requestPermission().then(permiso => {
@@ -92,8 +92,6 @@ window.onload = function() {
                     alert("¡Genial! Notificaciones activadas con éxito.");
                 }
             });
-        } else if (Notification.permission === "denied") {
-            console.warn("Las notificaciones están bloqueadas en este navegador de forma manual.");
         }
     }
 
@@ -132,8 +130,6 @@ window.onload = function() {
     window.cargarAgenda = async function() {
         const fechaSeleccionada = selectorFecha.value;
         if (!fechaSeleccionada) return;
-        
-        listaCitas.innerHTML = '<div class="no-data">🔍 Buscando citas en tiempo real...</div>';
         
         try {
             const { data: reservas, error } = await window._supabase
@@ -220,8 +216,8 @@ window.onload = function() {
         }
     }, 60000); 
 
-  // ========================================================
-    // ESCUCHADOR EN TIEMPO REAL (SOLO PARA ACTUALIZAR LA PANTALLA)
+    // ========================================================
+    // ESCUCHADOR EN TIEMPO REAL (CORREGIDO PARA ALERTAS INSTANTÁNEAS)
     // ========================================================
     window._supabase
         .channel('cambios-reservas')
@@ -235,7 +231,13 @@ window.onload = function() {
             (payload) => {
                 const nuevaCita = payload.new;
                 
-                // Si estás viendo el día de esa cita, refresca la lista visualmente
+                // 🔥 ¡AQUÍ ESTÁ LA MAGIA! Lanza la alerta al instante sin importar en qué fecha estés parado en el panel
+                lanzarNotificacionPush(
+                    "💈 ¡Nueva Reserva Recibida!",
+                    `Cliente: ${nuevaCita.cliente || 'Alguien'} agendó para el ${nuevaCita.fecha} a las ${nuevaCita.hora}.`
+                );
+
+                // Si estás visualizando justo el día de esa nueva cita, refresca la lista en pantalla
                 if (selectorFecha.value === nuevaCita.fecha) {
                     window.cargarAgenda();
                 }
