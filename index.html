@@ -9,26 +9,30 @@
     <link rel="apple-touch-icon" sizes="180x180" href="https://ibb.co/LzbTQvbL?v=2">
     <link rel="manifest" href="manifest.json">
     
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
     
     <style>
         :root {
-            --primary-color: #1a1a1a;   /* Negro Barbería */
-            --accent-color: #d4af37;    /* Dorado Premium */
-            --bg-color: #f4f7f6;
-            --text-color: #333;
-            --white: #ffffff;
-            --whatsapp-color: #25d366; /* Verde WhatsApp */
-            --danger-color: #de3b3b;   /* Rojo Cancelación */
+            --bg-main: #0b0c10;         /* Fondo oscuro profundo */
+            --bg-card: #1f2833;         /* Gris azulado oscuro premium */
+            --accent-gold: #c5a880;     /* Dorado champaña (más elegante) */
+            --text-main: #ffffff;
+            --text-muted: #c5c6c7;
+            --danger-color: #e74c3c;
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text-main);
             margin: 0;
-            padding: 10px;
+            padding: 15px;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -38,173 +42,269 @@
 
         .app-container {
             width: 100%;
-            max-width: 430px;
-            background-color: var(--white);
-            border-radius: 25px;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+            max-width: 450px;
+            background-color: #151a21;
+            border-radius: 20px;
             overflow: hidden;
             display: flex;
             flex-direction: column;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6);
         }
 
         header {
-            background-color: var(--primary-color);
-            color: var(--white);
-            padding: 30px 20px;
+            background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.8)), url('https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&q=80&w=600') center/cover;
+            padding: 45px 20px;
             text-align: center;
-            border-bottom: 4px solid var(--accent-color);
+            border-bottom: 2px solid var(--accent-gold);
         }
 
         header h1 {
             margin: 0;
-            font-size: 1.6rem;
-            font-weight: bold;
+            font-size: 1.8rem;
+            font-weight: 700;
             letter-spacing: 2px;
-            color: var(--accent-color);
+            color: #fff;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.8);
         }
 
         header p {
-            margin: 5px 0 0 0;
+            margin: 8px 0 0 0;
             font-size: 0.85rem;
-            opacity: 0.7;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            color: var(--accent-gold);
+            font-weight: 600;
         }
 
         .form-content, .cancel-content {
-            padding: 20px 20px 100px 20px !important;
+            padding: 25px 20px 110px 20px !important;
             max-height: 70vh;
             overflow-y: auto;
         }
 
         .form-section {
-            margin-bottom: 25px;
+            margin-bottom: 30px;
         }
 
         .section-title {
-            font-size: 0.85rem;
-            color: #777;
+            font-size: 0.9rem;
+            color: var(--accent-gold);
             text-transform: uppercase;
             letter-spacing: 1.5px;
-            margin-bottom: 12px;
+            margin-bottom: 15px;
             display: block;
-            font-weight: bold;
+            font-weight: 600;
         }
 
         .input-field {
             width: 100%;
-            padding: 12px;
-            border: 2px solid #eee;
+            padding: 15px;
+            background-color: var(--bg-card);
+            border: 1px solid #2f3b4c;
             border-radius: 12px;
-            font-size: 1rem;
+            font-size: 0.95rem;
+            font-family: 'Poppins', sans-serif;
             box-sizing: border-box;
-            margin-bottom: 10px;
-            transition: border-color 0.3s;
+            margin-bottom: 12px;
+            color: var(--text-main);
+            transition: all 0.3s ease;
         }
 
         .input-field:focus {
             outline: none;
-            border-color: var(--accent-color);
+            border-color: var(--accent-gold);
+            box-shadow: 0 0 10px rgba(197, 168, 128, 0.2);
         }
 
-        .selector-group {
+        input[type="date"]::-webkit-calendar-picker-indicator {
+            filter: invert(1);
+        }
+
+        /* DISEÑO DE TARJETAS DE SERVICIOS CON IMÁGENES */
+        .services-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .service-card-label {
+            display: flex;
+            align-items: center;
+            position: relative;
+            border-radius: 14px;
+            overflow: hidden;
+            cursor: pointer;
+            border: 1px solid #2f3b4c;
+            height: 85px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        /* Capa oscura interna de la imagen para legibilidad */
+        .service-card-label::before {
+            content: '';
+            position: absolute;
+            top:0; left:0; width:100%; height:100%;
+            background: linear-gradient(90deg, rgba(11,12,16,0.9) 40%, rgba(11,12,16,0.4) 100%);
+            z-index: 1;
+            transition: all 0.3s ease;
+        }
+
+        .service-info {
+            position: relative;
+            z-index: 2;
+            padding-left: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .service-name {
+            font-weight: 600;
+            font-size: 1.05rem;
+            color: #fff;
+        }
+
+        .service-desc {
+            font-size: 0.8rem;
+            color: var(--accent-gold);
+            margin-top: 2px;
+        }
+
+        /* Comportamiento al seleccionar Servicio */
+        .selector-item:checked + .service-card-label {
+            border-color: var(--accent-gold);
+            transform: scale(1.02);
+            box-shadow: 0 0 15px rgba(197, 168, 128, 0.3);
+        }
+
+        .selector-item:checked + .service-card-label::before {
+            background: linear-gradient(90deg, rgba(31,40,51,0.95) 50%, rgba(31,40,51,0.6) 100%);
+        }
+
+        /* DISEÑO DE SELECCIÓN DE BARBEROS CON AVATAR */
+        .barbers-group {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 12px;
+            gap: 15px;
         }
 
-        .selector-item {
-            display: none;
-        }
-
-        .selector-label {
-            display: block;
-            background-color: var(--white);
-            border: 2px solid #eee;
-            border-radius: 14px;
-            padding: 15px 10px;
+        .barber-card-label {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: var(--bg-card);
+            border: 1px solid #2f3b4c;
+            border-radius: 16px;
+            padding: 20px 10px;
             text-align: center;
             cursor: pointer;
-            transition: all 0.25s ease;
-            height: 100%;
-            box-sizing: border-box;
+            transition: all 0.3s ease;
         }
 
-        .selector-label:hover {
-            border-color: var(--accent-color);
-            background-color: #fffdf7;
+        .barber-avatar {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-bottom: 12px;
+            border: 2px solid #2f3b4c;
+            transition: all 0.3s ease;
         }
 
-        .selector-item:checked + .selector-label {
-            border-color: var(--accent-color);
-            background-color: var(--primary-color);
-            color: var(--white);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-        }
-
-        .selector-item:checked + .selector-label .item-desc {
-            color: var(--accent-color);
-        }
-
-        .item-name {
-            display: block;
-            font-weight: bold;
+        .barber-name {
+            font-weight: 600;
             font-size: 0.95rem;
+            color: #fff;
         }
 
-        .item-desc {
+        .barber-role {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        /* Comportamiento al seleccionar Barbero */
+        .selector-item:checked + .barber-card-label {
+            border-color: var(--accent-gold);
+            background-color: #242d38;
+        }
+
+        .selector-item:checked + .barber-card-label .barber-avatar {
+            border-color: var(--accent-gold);
+            transform: scale(1.08);
+        }
+
+        /* HORARIOS (BOTONES LIMPIOS) */
+        .hours-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr); /* 3 por fila para optimizar espacio */
+            gap: 10px;
+        }
+
+        .hour-label {
             display: block;
-            font-size: 0.8rem;
-            color: #666;
-            margin-top: 4px;
+            background-color: var(--bg-card);
+            border: 1px solid #2f3b4c;
+            border-radius: 10px;
+            padding: 12px 5px;
+            text-align: center;
+            cursor: pointer;
+            font-size: 0.9rem;
             font-weight: 500;
+            transition: all 0.2s ease;
         }
 
+        .selector-item:checked + .hour-label {
+            background-color: var(--accent-gold);
+            color: #000;
+            font-weight: 600;
+            border-color: var(--accent-gold);
+        }
+
+        /* BOTONES DE ACCIÓN */
         .confirm-btn {
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 10px;
             width: calc(100% - 40px);
-            max-width: 390px;
+            max-width: 410px;
             padding: 16px;
-            color: var(--white);
+            font-family: 'Poppins', sans-serif;
+            color: #000000;
             border: none;
             border-radius: 14px;
-            font-size: 1.1rem;
-            font-weight: bold;
+            font-size: 1rem;
+            font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s ease;
             text-transform: uppercase;
             letter-spacing: 1px;
             position: fixed;
-            bottom: 20px;
+            bottom: 25px;
             left: 50%;
             transform: translateX(-50%);
             z-index: 999;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
+            transition: all 0.3s ease;
         }
 
-        .btn-whatsapp {
-            background-color: var(--whatsapp-color);
-            box-shadow: 0 -4px 15px rgba(0, 0, 0, 0.1), 0 4px 10px rgba(37, 211, 102, 0.3);
+        .btn-gold {
+            background-color: var(--accent-gold);
         }
 
-        .btn-whatsapp:hover {
-            background-color: #20ba59;
+        .btn-gold:hover {
+            background-color: #dbbc93;
             transform: translateX(-50%) translateY(-2px);
         }
 
         .btn-danger {
             background-color: var(--danger-color);
-            box-shadow: 0 -4px 15px rgba(0, 0, 0, 0.1), 0 4px 10px rgba(222, 59, 59, 0.3);
-        }
-
-        .btn-danger:hover {
-            background-color: #c43030;
-            transform: translateX(-50%) translateY(-2px);
+            color: #fff;
         }
 
         .btn-danger:disabled {
-            background-color: #ccc !important;
-            color: #fff !important;
+            background-color: #222 !important;
+            color: #555 !important;
+            border: 1px solid #333 !important;
             cursor: not-allowed !important;
             box-shadow: none !important;
             transform: translateX(-50%) !important;
@@ -215,40 +315,87 @@
         }
 
         .info-card {
-            background-color: #f9f9f9;
-            border: 2px solid #eee;
-            border-radius: 16px;
+            background-color: var(--bg-card);
+            border: 1px dashed #444;
+            border-radius: 12px;
             padding: 20px;
-            text-align: left;
             margin-top: 15px;
         }
 
         .info-line {
-            margin-bottom: 12px;
-            font-size: 0.95rem;
-        }
-
-        .info-line:last-child {
-            margin-bottom: 0;
+            margin-bottom: 10px;
+            font-size: 0.9rem;
+            color: var(--text-muted);
         }
 
         .info-line strong {
-            color: var(--primary-color);
-        }
-
-        #mensaje-status {
-            margin-top: 20px;
-            font-weight: bold;
-            font-size: 1rem;
+            color: #fff;
         }
 
         .texto-alerta {
-            grid-column: span 2;
+            grid-column: span 3;
             text-align: center;
-            font-size: 0.9rem;
-            color: #888;
+            font-size: 0.85rem;
+            color: var(--text-muted);
             padding: 15px 0;
         }
+        /* --- ESTILOS DE LOS BOTONES DE HORARIOS --- */
+.hora-boton-contenedor {
+    position: relative;
+    width: 100%;
+}
+
+/* Escondemos el círculo de radio por defecto */
+.hora-radio-oculto {
+    position: absolute;
+    opacity: 0;
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+    margin: 0;
+    z-index: 2;
+}
+
+/* Aspecto inicial del botón de hora */
+.hora-boton-label {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 12px 8px;
+    background: #1e1e24; /* Color de fondo oscuro elegante */
+    color: #ffffff;
+    border: 2px solid #3a3a42;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: bold;
+    text-align: center;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    user-select: none;
+}
+
+/* Pequeño texto para el AM/PM */
+.ampm-sub {
+    font-size: 10px;
+    opacity: 0.6;
+    margin-top: 2px;
+}
+
+/* Efecto cuando pasas el mouse por encima (Hover) */
+.hora-boton-label:hover {
+    background: #2a2a35;
+    border-color: #cca43b; /* Color dorado/barbería */
+}
+
+/* ¡ESTADO SELECCIONADO! Cuando el cliente hace clic en el botón */
+.hora-radio-oculto:checked + .hora-boton-label {
+    background: #cca43b; /* Fondo dorado o tu color primario */
+    color: #000000;      /* Texto oscuro para contraste */
+    border-color: #ffffff;
+    box-shadow: 0 0 10px rgba(204, 164, 59, 0.5);
+    transform: scale(1.03); /* Se agranda un poquito */
+}
     </style>
 </head>
 <body>
@@ -256,130 +403,137 @@
     <div class="app-container">
         <header>
             <h1 id="header-title">THE JOSEPH BARBERSHOP</h1>
-            <p id="header-subtitle">Citas y Reservas por WhatsApp</p>
+            <p id="header-subtitle">RESERVA TU EXPERIENCIA</p>
         </header>
 
         <form id="reserva-form" class="form-content">
             
             <div class="form-section">
-                <span class="section-title">Tus Datos</span>
+                <span class="section-title">1. Tus Datos de Contacto</span>
                 <input type="text" id="client-name" class="input-field" placeholder="Nombre completo" required>
-                <input type="tel" id="client-phone" class="input-field" placeholder="Número de teléfono" required>
+                <input type="tel" id="client-phone" class="input-field" placeholder="Número de WhatsApp" required>
             </div>
 
             <div class="form-section">
-                <span class="section-title">Selecciona un Servicio</span>
-                <div class="selector-group">
+                <span class="section-title">2. Selecciona el Servicio</span>
+                <div class="services-grid">
+                    
+                    <!-- Corte de pelo -->
                     <div>
                         <input type="radio" id="srv1" name="servicio" value="Corte de pelo" data-duracion="45" class="selector-item" required>
-                        <label for="srv1" class="selector-label">
-                            <span class="item-name">Corte de pelo</span>
-                            <span class="item-desc">45 min • Estándar</span>
+                        <label for="srv1" class="service-card-label" style="background: url('https://images.unsplash.com/photo-1621605815971-fbc98d665033?auto=format&fit=crop&q=80&w=300') center/cover;">
+                            <div class="service-info">
+                                <span class="service-name">Corte de Pelo</span>
+                                <span class="service-desc">45 min • Estilo profesional</span>
+                            </div>
                         </label>
                     </div>
+
+                    <!-- Cerquillo -->
                     <div>
                         <input type="radio" id="srv2" name="servicio" value="Cerquillo" data-duracion="30" class="selector-item">
-                        <label for="srv2" class="selector-label">
-                            <span class="item-name">Cerquillo</span>
-                            <span class="item-desc">30 min • Marcado</span>
+                        <label for="srv2" class="service-card-label" style="background: url('https://images.unsplash.com/photo-1512864084360-7c0c4d0a0845?auto=format&fit=crop&q=80&w=300') center/cover;">
+                            <div class="service-info">
+                                <span class="service-name">Cerquillo</span>
+                                <span class="service-desc">30 min • Perfilado nítido</span>
+                            </div>
                         </label>
                     </div>
+
+                    <!-- Trenzado Normal -->
+                    <div>
+                        <input type="radio" id="srv4" name="servicio" value="Trenzado normal" data-duracion="60" class="selector-item">
+                        <label for="srv4" class="service-card-label" style="background: url('https://images.unsplash.com/photo-1605497746445-97d1b0a9eaf4?auto=format&fit=crop&q=80&w=300') center/cover;">
+                            <div class="service-info">
+                                <span class="service-name">Trenzado Normal</span>
+                                <span class="service-desc">60 min • Diseño a mano</span>
+                            </div>
+                        </label>
+                    </div>
+
+                    <!-- Trenzado con Pelo -->
+                    <div>
+                        <input type="radio" id="srv5" name="servicio" value="Trenzado con pelo" data-duracion="360" class="selector-item">
+                        <label for="srv5" class="service-card-label" style="background: url('https://images.unsplash.com/photo-1629000214131-04b77f19f2f8?auto=format&fit=crop&q=80&w=300') center/cover;">
+                            <div class="service-info">
+                                <span class="service-name">Trenzado con Pelo</span>
+                                <span class="service-desc">6 horas • Extensiones completas</span>
+                            </div>
+                        </label>
+                    </div>
+
+                    <!-- Facial -->
+                    <div>
+                        <input type="radio" id="srv6" name="servicio" value="Facial" data-duracion="60" class="selector-item">
+                        <label for="srv6" class="service-card-label" style="background: url('https://images.unsplash.com/photo-1515377905703-c4788e51af15?auto=format&fit=crop&q=80&w=300') center/cover;">
+                            <div class="service-info">
+                                <span class="service-name">Facial</span>
+                                <span class="service-desc">60 min • Limpieza e hidratación</span>
+                            </div>
+                        </label>
+                    </div>
+
+                    <!-- Más opciones simplificadas -->
                     <div>
                         <input type="radio" id="srv3" name="servicio" value="Haircut niños" data-duracion="45" class="selector-item">
-                        <label for="srv3" class="selector-label">
-                            <span class="item-name">Haircut niños</span>
-                            <span class="item-desc">45 min • &lt; 12 años</span>
+                        <label for="srv3" class="service-card-label" style="background: url('https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&q=80&w=300') center/cover;">
+                            <div class="service-info">
+                                <span class="service-name">Haircut Niños</span>
+                                <span class="service-desc">45 min • Menores de 12 años</span>
+                            </div>
                         </label>
                     </div>
-                    <div>
-                        <input type="radio" id="srv4" name="servicio" value="Trenzado normal" data-duracion="1 hora" class="selector-item">
-                        <label for="srv4" class="selector-label">
-                            <span class="item-name">Trenzado normal</span>
-                            <span class="item-desc"> 1 hora • Estilo</span>
-                        </label>
-                    </div>
-                    <div>
-                        <input type="radio" id="srv5" name="servicio" value="Trenzado con pelo" data-duracion="6 horas" class="selector-item">
-                        <label for="srv5" class="selector-label">
-                            <span class="item-name">Trenzado con pelo</span>
-                            <span class="item-desc">6 horas • Estilo</span>
-                        </label>
-                    </div>
-                    <div>
-                        <input type="radio" id="srv6" name="servicio" value="Facial" data-duracion="1 hora" class="selector-item">
-                        <label for="srv6" class="selector-label">
-                            <span class="item-name">Facial</span>
-                            <span class="item-desc">1 hora • Estilo</span>
-                        </label>
-                    </div>
-                    <div>
-                        <input type="radio" id="srv7" name="servicio" value="Cejas" data-duracion="5" class="selector-item">
-                        <label for="srv7" class="selector-label">
-                            <span class="item-name">Cejas</span>
-                            <span class="item-desc">5 min • Perfilar</span>
-                        </label>
-                    </div>
-                    <div>
-                        <input type="radio" id="srv8" name="servicio" value="Pestañas" data-duracion="15" class="selector-item">
-                        <label for="srv8" class="selector-label">
-                            <span class="item-name">Pestañas</span>
-                            <span class="item-desc">15 min • Estilo</span>
-                        </label>
-                    </div>
-                    <div>
-                        <input type="radio" id="srv9" name="servicio" value="Mantenimiento de aire acondicionado" data-duracion="2 horas" class="selector-item">
-                        <label for="srv9" class="selector-label">
-                            <span class="item-name">Mantenimiento de aire</span>
-                            <span class="item-desc">2 horas • Soporte</span>
-                        </label>
-                    </div>
+
                 </div>
             </div>
 
             <div class="form-section">
-                <span class="section-title">Selecciona tu Barbero</span>
-                <div class="selector-group">
+                <span class="section-title">3. Selecciona tu Profesional</span>
+                <div class="barbers-group">
+                    
+                    <!-- Joseph -->
                     <div>
                         <input type="radio" id="barb1" name="barbero" value="Joseph" class="selector-item barbero-opcion" required>
-                        <label for="barb1" class="selector-label">
-                            <span class="item-name">Joseph</span>
-                            <span class="item-desc">Barbero Máster</span>
+                        <label for="barb1" class="barber-card-label">
+                            <img src="https://ibb.co/9mjT4rHq" alt="Joseph" class="barber-avatar">
+                            <span class="barber-name">Joseph</span>
+                            <span class="barber-role">Barbero Máster</span>
                         </label>
                     </div>
+
+                    <!-- Vanessa -->
                     <div>
                         <input type="radio" id="barb2" name="barbero" value="Vanessa" class="selector-item barbero-opcion">
-                        <label for="barb2" class="selector-label">
-                            <span class="item-name">Vanessa</span>
-                            <span class="item-desc">Especialista</span>
+                        <label for="barb2" class="barber-card-label">
+                            <img src="https://ibb.co/QFGTHdKY" alt="Vanessa" class="barber-avatar">
+                            <span class="barber-name">Vanessa</span>
+                            <span class="barber-role">Especialista / Trenzas</span>
                         </label>
                     </div>
+
                 </div>
             </div>
 
             <div class="form-section">
-                <span class="section-title">Selecciona el Día</span>
+                <span class="section-title">4. Elige el Día</span>
                 <input type="date" id="fecha" class="input-field" required>
             </div>
 
             <div class="form-section">
-                <span class="section-title">Selecciona la Hora</span>
-                <div class="selector-group" id="contenedor-horas">
-                    <div class="texto-alerta">Selecciona fecha y barbero para ver horarios...</div>
+                <span class="section-title">5. Horarios Disponibles</span>
+                <div class="hours-grid" id="contenedor-horas">
+                    <div class="texto-alerta">Elige fecha y barbero para calcular horarios...</div>
                 </div>
             </div>
 
-            <button type="submit" class="confirm-btn btn-whatsapp">
-                Confirmar y enviar Cita
+            <button type="submit" class="confirm-btn btn-gold">
+                Agendar Cita Premium
             </button>
         </form>
 
         <div id="modulo-cancelar" class="cancel-content hidden">
             <div class="form-section">
-                <span class="section-title" style="color: var(--danger-color);">Detalles de la Cita a Cancelar</span>
-                <p style="font-size: 0.9rem; color: #555; margin-bottom: 15px;">
-                    Verifica la información de tu espacio antes de confirmar la cancelación. Esta acción liberará el horario de forma inmediata.
-                </p>
-
+                <span class="section-title" style="color: var(--danger-color);">Cancelar Espacio</span>
                 <div class="info-card">
                     <div class="info-line"><strong>Cliente:</strong> <span id="cancel-info-cliente">Cargando...</span></div>
                     <div class="info-line"><strong>Servicio:</strong> <span id="cancel-info-servicio">-</span></div>
@@ -387,372 +541,279 @@
                     <div class="info-line"><strong>Fecha:</strong> <span id="cancel-info-fecha">-</span></div>
                     <div class="info-line"><strong>Horario:</strong> <span id="cancel-info-hora">-</span></div>
                 </div>
-                
-                <p id="mensaje-status" class="text-center"></p>
+                <p id="mensaje-status" style="text-align: center; margin-top: 15px;"></p>
             </div>
-
             <button id="btn-ejecutar-cancelar" class="confirm-btn btn-danger" disabled>
-                Confirmar Cancelación de Espacio
+                Confirmar Cancelación
             </button>
         </div>
 
     </div>
+    
 
-    <script>
-        // Inicializamos EmailJS con tu llave pública
-        emailjs.init("GQ0nATFCZx9T_S2wV");
+    <!-- AQUÍ INICIA LA INICIALIZACIÓN SEGURA DE SUPABASE -->
+   
+   <script>
+    // --- CONFIGURACIÓN DE APIS (Credenciales) ---
+    const SUPABASE_URL = "https://xnfmqumhhxpkrigizvlu.supabase.co";
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhuZm1xdW1oaHhwa3JpZ2l6dmx1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5MTE3NjgsImV4cCI6MjA5NTQ4Nzc2OH0.zNSZ4Nw2Iz2IieExt9SErJddPseWb65Hxedg5ZGZCvI";
 
-        const SUPABASE_URL = "https://xnfmqumhhxpkrigizvlu.supabase.co";
-        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhuZm1xdW1oaHhwa3JpZ2l6dmx1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5MTE3NjgsImV4cCI6MjA5NTQ4Nzc2OH0.zNSZ4Nw2Iz2IieExt9SErJddPseWb65Hxedg5ZGZCvI";
+    // Inicializamos el cliente de Supabase de forma limpia y global
+    const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    // Inicializamos EmailJS con tu llave pública
+    emailjs.init("GQ0nATFCZx9T_S2wV");
 
-        // --- SELECCIÓN DE ELEMENTOS DEL DOM ---
-        const inputFecha = document.getElementById('fecha');
-        const contenedorHoras = document.getElementById('contenedor-horas');
-        const opcionesBarbero = document.querySelectorAll('.barbero-opcion');
-        const formulario = document.getElementById('reserva-form');
-        const opcionesServicio = document.querySelectorAll('input[name="servicio"]');
+    // --- SELECCIÓN DE ELEMENTOS DEL DOM ---
+    const inputFecha = document.getElementById('fecha');
+    const contenedorHoras = document.getElementById('contenedor-horas');
+    const opcionesBarbero = document.querySelectorAll('.barbero-opcion');
+    const formulario = document.getElementById('reserva-form');
+    const opcionesServicio = document.querySelectorAll('input[name="servicio"]');
 
-        const urlParams = new URLSearchParams(window.location.search);
-        const idACancelar = urlParams.get('cancelar');
-        const moduloReserva = document.getElementById('reserva-form');
-        const moduloCancelar = document.getElementById('modulo-cancelar');
-        const btnEjecutarCancelar = document.getElementById('btn-ejecutar-cancelar');
-        const txtStatus = document.getElementById('mensaje-status');
+    const urlParams = new URLSearchParams(window.location.search);
+    const idACancelar = urlParams.get('cancelar');
+    const moduloReserva = document.getElementById('reserva-form');
+    const moduloCancelar = document.getElementById('modulo-cancelar');
+    const btnEjecutarCancelar = document.getElementById('btn-ejecutar-cancelar');
+    const txtStatus = document.getElementById('mensaje-status');
 
-        // --- PARÁMETROS DE CONFIGURACIÓN DE ATENCIÓN ---
-        const APERTURA_MINUTOS = 8 * 60;   // 08:00 AM en minutos totales
-        const MARGEN_LIMPIEZA = 5;         // 5 minutos entre citas
-        let CIERRE_MINUTOS = 20 * 60;      // Por defecto 8:00 PM
+    // --- PARÁMETROS DE CONFIGURACIÓN DE ATENCIÓN ---
+    const APERTURA_MINUTOS = 8 * 60;   // 08:00 AM en minutos totales
+    const MARGEN_LIMPIEZA = 5;         // 5 minutos entre citas
+    let CIERRE_MINUTOS = 20 * 60;      // Por defecto 8:00 PM (1200 minutos)
 
-        // ==========================================
-        // 🛠️ FUNCIÓN PARA CAMBIAR EL HORARIO DE CIERRE SEGÚN EL DÍA
-        // ==========================================
-        function ajustarHorarioCierre(fechaSeleccionada) {
-            if (!fechaSeleccionada) return;
-            
-            const partes = fechaSeleccionada.split('-');
-            const fechaObjeto = new Date(partes[0], partes[1] - 1, partes[2]);
-            const numeroDia = fechaObjeto.getDay(); // 0 = Domingo, 1 = Lunes, ..., 6 = Sábado
+    // ==========================================
+    // 🛠️ FUNCIÓN PARA CAMBIAR EL HORARIO DE CIERRE SEGÚN EL DÍA
+    // ==========================================
+    function ajustarHorarioCierre(fechaSeleccionada) {
+        if (!fechaSeleccionada) return;
+        
+        const partes = fechaSeleccionada.split('-');
+        const fechaObjeto = new Date(partes[0], partes[1] - 1, partes[2]);
+        const numeroDia = fechaObjeto.getDay(); // 0 = Domingo, 1 = Lunes, ..., 6 = Sábado
 
-            // Si es Lunes (1) a Jueves (4) -> Cierra a las 8:00 PM (1200 minutos)
-            if (numeroDia >= 1 && numeroDia <= 4) {
-                CIERRE_MINUTOS = 20 * 60;  
-                console.log("Horario ajustado para Lunes-Jueves: Cierre a las 8:00 PM");
-            } else {
-                // Si es Viernes (5), Sábado (6) o Domingo (0) -> Cierra a las 12:00 AM Medianoche (1440 minutos)
-                CIERRE_MINUTOS = 24 * 60;  
-                console.log("Horario ajustado para Fin de Semana: Cierre a las 12:00 AM");
-            }
+        // Si es Lunes (1) a Jueves (4) -> Cierra a las 8:00 PM
+        if (numeroDia >= 1 && numeroDia <= 4) {
+            CIERRE_MINUTOS = 20 * 60;  
+            console.log("Horario ajustado para Lunes-Jueves: Cierre a las 8:00 PM");
+        } else {
+            // Si es Viernes (5), Sábado (6) o Domingo (0) -> Cierra a las 12:00 AM Medianoche (1440 minutos)
+            CIERRE_MINUTOS = 24 * 60;  
+            console.log("Horario ajustado para Fin de Semana: Cierre a las 12:00 AM");
         }
+    }
 
-        // ==========================================
-        // 🎯 ESCUCHADORES PARA RECALCULAR HORARIOS
-        // ==========================================
-        if (inputFecha) {
-            inputFecha.addEventListener('change', function() {
-                ajustarHorarioCierre(this.value);
-                actualizarHorariosDisponibles();
-            });
-        }
-
-        opcionesBarbero.forEach(radio => radio.addEventListener('change', actualizarHorariosDisponibles));
-        opcionesServicio.forEach(radio => radio.addEventListener('change', actualizarHorariosDisponibles));
-
-        // --- SISTEMA DE AUTOCOMPLETADO (Al cargar la página) ---
-        document.addEventListener("DOMContentLoaded", function() {
-            const nombreGuardado = localStorage.getItem("barberia_nombre");
-            const telefonoGuardado = localStorage.getItem("barberia_telefono");
-
-            if (nombreGuardado) {
-                document.getElementById("client-name").value = nombreGuardado;
-            }
-            if (telefonoGuardado) {
-                document.getElementById("client-phone").value = telefonoGuardado;
-            }
+    // ==========================================
+    // 🎯 ESCUCHADORES PARA RECALCULAR HORARIOS
+    // ==========================================
+    if (inputFecha) {
+        inputFecha.addEventListener('change', function() {
+            ajustarHorarioCierre(this.value);
+            actualizarHorariosDisponibles();
         });
+    }
 
-        // Control inicial del módulo de cancelación
-        if (idACancelar) {
-            moduloReserva.classList.add('hidden');
-            moduloCancelar.classList.remove('hidden');
-            document.getElementById('header-title').innerText = "CANCELAR ESPACIO";
-            document.getElementById('header-subtitle').innerText = "Gestión de citas - The Joseph Barbershop";
-            obtenerDetallesCita(idACancelar);
+    opcionesBarbero.forEach(radio => radio.addEventListener('change', actualizarHorariosDisponibles));
+    opcionesServicio.forEach(radio => radio.addEventListener('change', actualizarHorariosDisponibles));
+
+    // --- SISTEMA DE AUTOCOMPLETADO (Al cargar la página) ---
+    document.addEventListener("DOMContentLoaded", function() {
+        const nombreGuardado = localStorage.getItem("barberia_nombre");
+        const telefonoGuardado = localStorage.getItem("barberia_telefono");
+
+        if (nombreGuardado && document.getElementById("client-name")) {
+            document.getElementById("client-name").value = nombreGuardado;
         }
-
-        // Configurar límite mínimo de fecha (Hoy local)
-        const hoyObjeto = new Date();
-        const offset = hoyObjeto.getTimezoneOffset();
-        const hoyLocal = new Date(hoyObjeto.getTime() - (offset * 60 * 1000));
-        const hoyString = hoyLocal.toISOString().split('T')[0];
-        if (inputFecha) inputFecha.min = hoyString;
-
-        // --- UTILIDADES MATEMÁTICAS DE TIEMPO ---
-        function convertirStringAMinutos(horaStr) {
-            let [time, modifier] = horaStr.split(' ');
-            let [hours, minutes] = time.split(':').map(Number);
-            if (hours === 12 && modifier === 'AM') hours = 0;
-            if (modifier === 'PM' && hours !== 12) hours += 12;
-            return (hours * 60) + minutes;
+        if (telefonoGuardado && document.getElementById("client-phone")) {
+            document.getElementById("client-phone").value = telefonoGuardado;
         }
+    });
 
-        function convertirMinutosAString12h(minutosTotales) {
-            let horas = Math.floor(minutosTotales / 60);
-            let minutes = minutosTotales % 60;
-            let ampm = horas >= 12 ? 'PM' : 'AM';
-            horas = horas % 12;
-            horas = horas ? horas : 12; 
-            let strMinutos = String(minutes).padStart(2, '0');
-            let strHoras = String(horas).padStart(2, '0');
-            return `${strHoras}:${strMinutos} ${ampm}`;
+    // Control inicial del módulo de cancelación
+    if (idACancelar) {
+        if (moduloReserva) moduloReserva.classList.add('hidden');
+        if (moduloCancelar) moduloCancelar.classList.remove('hidden');
+        
+        const headerTitle = document.getElementById('header-title');
+        const headerSubtitle = document.getElementById('header-subtitle');
+        if (headerTitle) headerTitle.innerText = "CANCELAR ESPACIO";
+        if (headerSubtitle) headerSubtitle.innerText = "Gestión de citas - The Joseph Barbershop";
+        
+        obtenerDetallesCita(idACancelar);
+    }
+
+    // Configurar límite mínimo de fecha (Hoy local)
+    const hoyObjeto = new Date();
+    const offset = hoyObjeto.getTimezoneOffset();
+    const hoyLocal = new Date(hoyObjeto.getTime() - (offset * 60 * 1000));
+    const hoyString = hoyLocal.toISOString().split('T')[0];
+    if (inputFecha) inputFecha.min = hoyString;
+
+    // --- UTILIDADES MATEMÁTICAS DE TIEMPO ---
+    function convertirStringAMinutos(horaStr) {
+        let [time, modifier] = horaStr.split(' ');
+        let [hours, minutes] = time.split(':').map(Number);
+        if (hours === 12 && modifier === 'AM') hours = 0;
+        if (modifier === 'PM' && hours !== 12) hours += 12;
+        return (hours * 60) + minutes;
+    }
+
+    function convertirMinutosAString12h(minutosTotales) {
+        let horas = Math.floor(minutosTotales / 60);
+        let minutes = minutosTotales % 60;
+        let ampm = horas >= 12 ? 'PM' : 'AM';
+        horas = horas % 12;
+        horas = horas ? horas : 12; 
+        let strMinutos = String(minutes).padStart(2, '0');
+        let strHoras = String(horas).padStart(2, '0');
+        return `${strHoras}:${strMinutos} ${ampm}`;
+    }
+
+    function generarObjetoFecha(fechaStr, minutosTotales) {
+        let horas = Math.floor(minutosTotales / 60);
+        let minutos = minutosTotales % 60;
+        // Manejo especial si el cierre llega a las 24:00 (Medianoche del día siguiente de manera controlada)
+        if (horas >= 24) {
+            horas = 23;
+            minutos = 59;
         }
+        return new Date(`${fechaStr}T${String(horas).padStart(2, '0')}:${String(minutos).padStart(2, '0')}:00`);
+    }
 
-      function generarObjetoFecha(fechaStr, minutosTotales) {
-            let horas = Math.floor(minutosTotales / 60);
-            let minutos = minutosTotales % 60; // Corrección de la doble asignación
-            return new Date(`${fechaStr}T${String(horas).padStart(2, '0')}:${String(minutos).padStart(2, '0')}:00`);
-        }
-        // ==========================================
-        // 🎯 MOTOR CENTRAL: CÁLCULO Y GENERACIÓN DINÁMICA
-        // ==========================================
-        async function actualizarHorariosDisponibles() {
-            const fechaSeleccionada = inputFecha.value;
-            const barberoSeleccionadoInput = document.querySelector('input[name="barbero"]:checked');
-            const servicioSeleccionadoInput = document.querySelector('input[name="servicio"]:checked');
-            
-            if (!fechaSeleccionada || !barberoSeleccionadoInput) return;
-            
-            const duracionServicioSolicitado = servicioSeleccionadoInput ? parseInt(servicioSeleccionadoInput.getAttribute('data-duracion'), 10) : 45;
-            const barberoSeleccionado = barberoSeleccionadoInput.value;
-            const ahora = new Date();
+    // ==========================================
+    // 🎯 MOTOR CENTRAL: CÁLCULO Y GENERACIÓN DINÁMICA (Botonera Estilizada)
+    // ==========================================
+    async function actualizarHorariosDisponibles() {
+        const fechaSeleccionada = inputFecha.value;
+        const barberoSeleccionadoInput = document.querySelector('input[name="barbero"]:checked');
+        const servicioSeleccionadoInput = document.querySelector('input[name="servicio"]:checked');
+        
+        if (!fechaSeleccionada || !barberoSeleccionadoInput) return;
+        
+        const duracionServicioSolicitado = servicioSeleccionadoInput ? parseInt(servicioSeleccionadoInput.getAttribute('data-duracion'), 10) : 45;
+        const barberoSeleccionado = barberoSeleccionadoInput.value;
+        const ahora = new Date();
 
-            contenedorHoras.innerHTML = '<div class="texto-alerta">Calculando agenda perfecta...</div>';
+        // Aplicamos estilos de cuadrícula modernos al contenedor principal
+        contenedorHoras.style.display = "grid";
+        contenedorHoras.style.gridTemplateColumns = "repeat(auto-fill, minmax(100px, 1fr))";
+        contenedorHoras.style.gap = "10px";
+        contenedorHoras.style.padding = "10px 0";
+        contenedorHoras.innerHTML = '<div class="texto-alerta" style="grid-column: 1/-1;">Calculando agenda perfecta...</div>';
 
-            try {
-                const { data: reservas, error } = await _supabase
-                    .from('reservas')
-                    .select('hora, duracion')
-                    .eq('fecha', fechaSeleccionada)
-                    .eq('barbero', barberoSeleccionado);
+        try {
+            const { data: reservas, error } = await _supabase
+                .from('reservas')
+                .select('hora, duracion')
+                .eq('fecha', fechaSeleccionada)
+                .eq('barbero', barberoSeleccionado);
 
-                if (error) throw error;
+            if (error) throw error;
 
-                let rangosOcupados = [];
-                reservas.forEach(reserva => {
-                    if (!reserva.hora) return;
-                    let inicio = convertirStringAMinutos(reserva.hora);
-                    let fin = inicio + (reserva.duracion || 30);
-                    rangosOcupados.push({ inicio, fin });
-                });
+            let rangosOcupados = [];
+            reservas.forEach(reserva => {
+                if (!reserva.hora) return;
+                let inicio = convertirStringAMinutos(reserva.hora);
+                let fin = inicio + (reserva.duracion || 30);
+                rangosOcupados.push({ inicio, fin });
+            });
 
-                rangosOcupados.sort((a, b) => a.inicio - b.inicio);
+            rangosOcupados.sort((a, b) => a.inicio - b.inicio);
 
-                let htmlBotones = "";
-                let minutoPuntero = APERTURA_MINUTOS;
-                let indexBotones = 1;
+            let htmlBotones = "";
+            let minutoPuntero = APERTURA_MINUTOS;
+            let indexBotones = 1;
 
-                while (minutoPuntero + duracionServicioSolicitado <= CIERRE_MINUTOS) {
-                    let colisiona = false;
-                    let inicioPropuesto = minutoPuntero;
-                    let finPropuesto = minutoPuntero + duracionServicioSolicitado;
+            while (minutoPuntero + duracionServicioSolicitado <= CIERRE_MINUTOS) {
+                let colisiona = false;
+                let inicioPropuesto = minutoPuntero;
+                let finPropuesto = minutoPuntero + duracionServicioSolicitado;
 
-                    for (let rango of rangosOcupados) {
-                        if (inicioPropuesto < rango.fin && finPropuesto > rango.inicio) {
-                            colisiona = true;
-                            minutoPuntero = rango.fin + MARGEN_LIMPIEZA;
-                            break;
-                        }
-                    }
-
-                    if (!colisiona) {
-                        let stringHora12h = convertirMinutosAString12h(minutoPuntero);
-                        let objetoFechaBoton = generarObjetoFecha(fechaSeleccionada, minutoPuntero);
-                        let esPasada = objetoFechaBoton < ahora;
-
-                        if (!esPasada) {
-                            htmlBotones += `
-                                <div>
-                                    <input type="radio" id="dyn-hr-${indexBotones}" name="hora" value="${stringHora12h}" class="selector-item" required>
-                                    <label for="dyn-hr-${indexBotones}" class="selector-label">
-                                        <span class="item-name">${stringHora12h}</span>
-                                        <span class="item-desc">Disponible</span>
-                                    </label>
-                                </div>`;
-                            indexBotones++;
-                        }
-                        
-                        minutoPuntero += duracionServicioSolicitado + MARGEN_LIMPIEZA;
+                for (let rango of rangosOcupados) {
+                    if (inicioPropuesto < rango.fin && finPropuesto > rango.inicio) {
+                        colisiona = true;
+                        minutoPuntero = rango.fin + MARGEN_LIMPIEZA;
+                        break;
                     }
                 }
 
-                if (htmlBotones === "") {
-                    contenedorHoras.innerHTML = '<div class="texto-alerta" style="color: var(--danger-color);">No quedan bloques libres para este servicio hoy.</div>';
-                } else {
-                    contenedorHoras.innerHTML = htmlBotones;
-                }
+                if (!colisiona) {
+                    let stringHora12h = convertirMinutosAString12h(minutoPuntero);
+                    let objetoFechaBoton = generarObjetoFecha(fechaSeleccionada, minutoPuntero);
+                    let esPasada = objetoFechaBoton < ahora;
 
-            } catch (err) {
-                console.error("Error consultando horarios:", err.message);
-                contenedorHoras.innerHTML = '<div class="texto-alerta" style="color: var(--danger-color);">Error al sincronizar agenda.</div>';
+                    if (!esPasada) {
+                        // Generamos una estructura de botón interactiva mediante Radio Inputs camuflados
+                        htmlBotones += `
+                            <div class="hora-boton-contenedor">
+                                <input type="radio" id="dyn-hr-${indexBotones}" name="hora" value="${stringHora12h}" class="hora-radio-oculto" required>
+                                <label for="dyn-hr-${indexBotones}" class="hora-boton-label">
+                                    ${stringHora12h.replace(" AM", "").replace(" PM", "")} 
+                                    <span class="ampm-sub">${stringHora12h.includes("PM") ? "PM" : "AM"}</span>
+                                </label>
+                            </div>`;
+                        indexBotones++;
+                    }
+                    
+                    minutoPuntero += duracionServicioSolicitado + MARGEN_LIMPIEZA;
+                }
             }
+
+            if (htmlBotones === "") {
+                contenedorHoras.innerHTML = '<div class="texto-alerta" style="grid-column: 1/-1; color: var(--danger-color);">No quedan bloques libres para este servicio hoy.</div>';
+            } else {
+                contenedorHoras.innerHTML = htmlBotones;
+            }
+
+        } catch (err) {
+            console.error("Error consultando horarios:", err.message);
+            contenedorHoras.innerHTML = '<div class="texto-alerta" style="grid-column: 1/-1; color: var(--danger-color);">Error al sincronizar agenda.</div>';
         }
+    }
+    // ==========================================
+    // ❌ LÓGICA DEL MÓDULO DE CANCELACIÓN
+    // ==========================================
+    async function obtenerDetallesCita(id) {
+        try {
+            const { data: cita, error } = await _supabase
+                .from('reservas')
+                .select('*')
+                .eq('id', id)
+                .single();
 
-        // ==========================================
-        // 💾 PROCESAR ENVIÓ DE FORMULARIO DE RESERVA
-        // ==========================================
-        formulario.addEventListener('submit', async (e) => {
-            e.preventDefault();
-
-            const nombre = document.getElementById('client-name').value;
-            const telefono = document.getElementById('client-phone').value;
-            const servicioInput = document.querySelector('input[name="servicio"]:checked');
-            const servicio = servicioInput.value;
-            const duracion = parseInt(servicioInput.getAttribute('data-duracion'), 10) || 30;
-            const barbero = document.querySelector('input[name="barbero"]:checked').value;
-            const fecha = inputFecha.value;
-            
-            const horaSeleccionadaInput = document.querySelector('input[name="hora"]:checked');
-            if (!horaSeleccionadaInput) {
-                alert("Por favor, selecciona un horario.");
+            if (error || !cita) {
+                document.getElementById('cancel-info-cliente').innerText = "Cita no encontrada";
+                document.getElementById('cancel-info-cliente').style.color = "var(--danger-color)";
+                txtStatus.innerText = "Este enlace no es válido o la cita ya fue cancelada previamente.";
+                txtStatus.style.color = "var(--danger-color)";
                 return;
             }
-            const hora = horaSeleccionadaInput.value;
 
-            const nuevaPestana = window.open('about:blank', '_blank');
+            document.getElementById('cancel-info-cliente').innerText = cita.cliente || "No especificado";
+            document.getElementById('cancel-info-servicio').innerText = cita.servicio || "No especificado";
+            document.getElementById('cancel-info-barbero').innerText = cita.barbero;
+            document.getElementById('cancel-info-fecha').innerText = cita.fecha;
+            document.getElementById('cancel-info-hora').innerText = `${cita.hora} (${cita.duracion || 30} min)`;
+            
+            if (btnEjecutarCancelar) btnEjecutarCancelar.disabled = false;
 
-            try {
-                const { data: duplicados } = await _supabase
-                    .from('reservas')
-                    .select('hora, duracion')
-                    .eq('fecha', fecha)
-                    .eq('barbero', barbero);
-
-                const inicioNuevaCitaMin = convertirStringAMinutos(hora);
-                const finNuevaCitaMin = inicioNuevaCitaMin + duracion;
-                let sobreescrito = false;
-
-                if (duplicados) {
-                    for (let d of duplicados) {
-                        let dInicio = convertirStringAMinutos(d.hora);
-                        let dFin = dInicio + (d.duracion || 30);
-                        if (inicioNuevaCitaMin < dFin && finNuevaCitaMin > dInicio) {
-                            sobreescrito = true;
-                            break;
-                        }
-                    }
-                }
-
-                if (sobreescrito) {
-                    if (nuevaPestana) nuevaPestana.close();
-                    alert("¡Lo sentimos! Ese bloque horario acaba de ser ocupado. Por favor elige otra hora recalculada.");
-                    actualizarHorariosDisponibles();
-                    return;
-                }
-
-                const { data: nuevaReserva, error } = await _supabase
-                    .from('reservas')
-                    .insert([{ 
-                        fecha: fecha, 
-                        hora: hora, 
-                        barbero: barbero, 
-                        duracion: duracion,
-                        cliente: nombre,
-                        telefono: telefono,
-                        servicio: servicio
-                    }])
-                    .select();
-
-                if (error) throw error;
-
-                localStorage.setItem("barberia_nombre", nombre);
-                localStorage.setItem("barberia_telefono", telefono);
-
-                var datosParaCorreo = {
-                    nombre_cliente: nombre,
-                    telefono: telefono,
-                    hora_cita: `${hora} el día ${fecha} con ${barbero}`
-                };
-
-                emailjs.send("service_z2lbr3y", "template_7phspmb", datosParaCorreo)
-                    .then(function(res) {
-                        console.log("Notificación por correo enviada con éxito.");
-                    }, function(err) {
-                        console.error("Error al mandar el correo de EmailJS:", err);
-                    });
-
-                const idGenerado = nuevaReserva[0].id;
-                const urlBase = window.location.origin + window.location.pathname;
-                const enlaceCancelar = `${urlBase}?cancelar=${idGenerado}`;
-
-                const telefonoBarberia = "18299702130"; 
-                const mensaje = `💈 *NUEVA CITA - THE JOSEPH BARBERSHOP* 💈\n\n👤 *Cliente:* ${nombre}\n📞 *Teléfono:* ${telefono}\n✂️ *Servicio:* ${servicio} (${duracion} min)\n🧔 *Barbero:* ${barbero}\n📅 *Fecha:* ${fecha}\n⏰ *Hora:* ${hora}\n\n_¡Por favor confirma mi espacio!_\n\n❌ *Para cancelar o cambiar tu espacio haz clic aquí:* \n${enlaceCancelar}`;
-                
-                const urlWhatsapp = `https://wa.me/${telefonoBarberia}?text=${encodeURIComponent(mensaje)}`;
-                
-                if (nuevaPestana) {
-                    nuevaPestana.location.href = urlWhatsapp;
-                } else {
-                    window.open(urlWhatsapp, '_blank');
-                }
-                actualizarHorariosDisponibles();
-
-            } catch (err) {
-                if (nuevaPestana) nuevaPestana.close();
-                alert("Hubo un percance guardando tu espacio: " + err.message);
-            }
-        });
-
-        // ==========================================
-        // ❌ LÓGICA DEL MÓDULO DE CANCELACIÓN
-        // ==========================================
-        async function obtenerDetallesCita(id) {
-            try {
-                const { data: cita, error } = await _supabase
-                    .from('reservas')
-                    .select('*')
-                    .eq('id', id)
-                    .single();
-
-                if (error || !cita) {
-                    document.getElementById('cancel-info-cliente').innerText = "Cita no encontrada";
-                    document.getElementById('cancel-info-cliente').style.color = "var(--danger-color)";
-                    txtStatus.innerText = "Este enlace no es válido o la cita ya fue cancelada previamente.";
-                    txtStatus.style.color = "var(--danger-color)";
-                    return;
-                }
-
-                document.getElementById('cancel-info-cliente').innerText = cita.cliente || "No especificado";
-                document.getElementById('cancel-info-servicio').innerText = cita.servicio || "No especificado";
-                document.getElementById('cancel-info-barbero').innerText = cita.barbero;
-                document.getElementById('cancel-info-fecha').innerText = cita.fecha;
-                document.getElementById('cancel-info-hora').innerText = `${cita.hora} (${cita.duracion || 30} min)`;
-                
-                btnEjecutarCancelar.disabled = false;
-
-            } catch (err) {
-                txtStatus.innerText = "Error de conexión al cargar la cita.";
-                txtStatus.style.color = "var(--danger-color)";
-            }
+        } catch (err) {
+            txtStatus.innerText = "Error de conexión al cargar la cita.";
+            txtStatus.style.color = "var(--danger-color)";
         }
+    }
 
-        // ==========================================
-        // ❌ ACCIÓN DE CANCELACIÓN DEFINITIVA
-        // ==========================================
+    // ==========================================
+    // ❌ ACCIÓN DE CANCELACIÓN DEFINITIVA
+    // ==========================================
+    if (btnEjecutarCancelar) {
         btnEjecutarCancelar.addEventListener('click', async () => {
             btnEjecutarCancelar.disabled = true;
             txtStatus.innerText = "Procesando la liberación de tu espacio...";
             txtStatus.style.color = "var(--primary-color)";
 
             try {
-                // Obtenemos los datos de la cita antes de borrarla para la notificación de WhatsApp opcional
-                const cliente = document.getElementById('cancel-info-cliente').innerText;
-                const servicio = document.getElementById('cancel-info-servicio').innerText;
-                const barbero = document.getElementById('cancel-info-barbero').innerText;
-                const fecha = document.getElementById('cancel-info-fecha').innerText;
-                const hora = document.getElementById('cancel-info-hora').innerText;
-
                 const { error } = await _supabase
                     .from('reservas')
                     .delete()
@@ -760,14 +821,12 @@
 
                 if (error) throw error;
 
-                // Modificamos la interfaz para reflejar el éxito absoluto
                 txtStatus.innerText = "¡Tu cita ha sido cancelada exitosamente! El bloque de horario ya se encuentra disponible para otros clientes.";
                 txtStatus.style.color = "var(--whatsapp-color)";
                 
-                // Desactivamos visualmente la tarjeta de información antigua
-                document.querySelector('.info-card').style.opacity = "0.5";
+                const infoCard = document.querySelector('.info-card');
+                if (infoCard) infoCard.style.opacity = "0.5";
                 
-                // Opcional: Redirigir al formulario principal limpio después de 4 segundos
                 setTimeout(() => {
                     window.location.href = window.location.origin + window.location.pathname;
                 }, 4000);
@@ -778,10 +837,12 @@
                 txtStatus.style.color = "var(--danger-color)";
                 btnEjecutarCancelar.disabled = false;
             }
-            // ... Aquí termina todo el código que ya tenías antes ...
-    // No borres nada de lo que está arriba.
+        });
+    }
 
-    // 👇 Pegas la nueva función justo aquí:
+    // ==========================================
+    // 🕒 FUNCIÓN COMPLEMENTARIA DE FORMATO
+    // ==========================================
     function formatearDuracion(minutosTotales) {
         if (!minutosTotales || minutosTotales <= 0) return "0 min";
 
@@ -799,8 +860,6 @@
         const textoHora = horas === 1 ? `${horas} hora` : `${horas} horas`;
         return `${textoHora} y ${minutosRestantes} min`;
     }
-
-        });
-    </script>
+</script>
 </body>
 </html>
