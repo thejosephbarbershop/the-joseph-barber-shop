@@ -647,14 +647,13 @@
 
 function generarObjetoFecha(fechaStr, minutosTotales) {
     let horas = Math.floor(minutosTotales / 60);
-    let minutos = minutosTotales % 60;
+    let minutos = minutosTotales % 60; // Aquí corregimos 'minutesTotales' por 'minutosTotales'
     if (horas >= 24) { 
         horas = 23; 
         minutos = 59; 
     }
     return new Date(`${fechaStr}T${String(horas).padStart(2, '0')}:${String(minutos).padStart(2, '0')}:00`);
-
-    }
+}
 
     // --- GENERADOR DE BOTONES ---
     async function actualizarHorariosDisponibles() {
