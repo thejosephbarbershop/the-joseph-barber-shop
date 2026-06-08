@@ -558,7 +558,7 @@ window.onload = async function() {
     const btnEjecutarCancelar = document.getElementById("btn-ejecutar-cancelar");
     const txtStatus = document.getElementById("mensaje-status");
 
-    // VARIABLES DE TIEMPO DINÁMICAS (Cambiadas a 'let' para permitir actualizaciones)
+    // VARIABLES DE TIEMPO DINÁMICAS
     let APERTURA_MINUTOS = 8 * 60;   
     let CIERRE_MINUTOS = 20 * 60;      
     let MARGEN_LIMPIEZA = 5;         
@@ -660,7 +660,7 @@ window.onload = async function() {
     }
 
     opcionesServicio.forEach(radio => radio.addEventListener("change", actualizarHorariosDisponibles));
-
+   
     // Cargar datos locales guardados del cliente
     const nombreGuardado = localStorage.getItem("barberia_nombre");
     const telefonoGuardado = localStorage.getItem("barberia_telefono");
