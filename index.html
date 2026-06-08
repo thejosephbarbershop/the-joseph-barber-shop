@@ -399,6 +399,7 @@
     </style>
 </head>
 <body>
+        
 <div class="app-container">
     <header>
         <h1 id="header-title">THE JOSEPH BARBERSHOP</h1>
@@ -700,16 +701,16 @@ window.onload = async function() {
 
     function convertirMinutosAString12h(minutosTotales) {
         let horas = Math.floor(minutosTotales / 60);
-        let minutes = minutosTotales % 60;
+        let minutes = minutesTotales % 60;
         let ampm = horas >= 12 ? "PM" : "AM";
         horas = horas % 12;
         horas = horas ? horas : 12; 
         return `${String(horas).padStart(2, "0")}:${String(minutes).padStart(2, "0")} ${ampm}`;
     }
 
-    function generarObjetoFecha(fechaStr, minutosTotales) {
-        let horas = Math.floor(minutosTotales / 60);
-        let minutos = minutosTotales % 60;
+    function generarObjetoFecha(fechaStr, minutesTotales) {
+        let horas = Math.floor(minutesTotales / 60);
+        let minutos = minutesTotales % 60;
         if (horas >= 24) { 
             horas = 23; 
             minutos = 59; 
@@ -717,7 +718,7 @@ window.onload = async function() {
         return new Date(`${fechaStr}T${String(horas).padStart(2, '0')}:${String(minutos).padStart(2, '0')}:00`);
     }
 
-    // --- GENERADOR DE BOTONES DE HORA (OPTIMIZADO Y SIN ERRORES) ---
+    // --- GENERADOR DE BOTONES DE HORA ---
     async function actualizarHorariosDisponibles() {
         const fechaSeleccionada = inputFecha ? inputFecha.value : "";
         const barberoSeleccionadoInput = document.querySelector('input[name="barbero"]:checked');
@@ -850,9 +851,10 @@ window.onload = async function() {
                     return;
                 }
 
+                // NUEVO AJUSTE: Insertamos tanto "nombre" como "cliente" para no romper el panel admin
                 const { data: nuevaReserva, error: errorInsert } = await window._supabase
                     .from("reservas")
-                    .insert([{ fecha, hora, barbero, duracion, cliente: nombre, telefono, servicio }])
+                    .insert([{ fecha, hora, barbero, duracion, nombre: nombre, cliente: nombre, telefono, servicio }])
                     .select();
 
                 if (errorInsert) throw errorInsert;
@@ -890,7 +892,7 @@ window.onload = async function() {
         try {
             const { data: cita, error } = await window._supabase.from("reservas").select("*").eq("id", id).single();
             if (error || !cita) return;
-            if(document.getElementById("cancel-info-cliente")) document.getElementById("cancel-info-cliente").innerText = cita.cliente;
+            if(document.getElementById("cancel-info-cliente")) document.getElementById("cancel-info-cliente").innerText = cita.cliente || cita.nombre;
             if(document.getElementById("cancel-info-servicio")) document.getElementById("cancel-info-servicio").innerText = cita.servicio;
             if(document.getElementById("cancel-info-barbero")) document.getElementById("cancel-info-barbero").innerText = cita.barbero;
             if(document.getElementById("cancel-info-fecha")) document.getElementById("cancel-info-fecha").innerText = cita.fecha;
