@@ -607,51 +607,57 @@ window.onload = function() {
             console.error("Error cargando barberos:", err);
         }
     }
+// Ajustar horarios dinámicamente desde Supabase (Versión Corregida)
+async function ajustarHorarioCierre(fechaSeleccionada) {
+    if (!fechaSeleccionada) return;
+    
+    try {
+        // Consultamos la única fila de configuración (id: 1) usando la variable correcta
+        const { data: config, error } = await _supabase
+            .from('configuracion')
+            .select('*')
+            .limit(1)
+            .single();
 
-    // Ajustar horarios dinámicamente desde Supabase
-    async function ajustarHorarioCierre(fechaSeleccionada) {
-        if (!fechaSeleccionada) return;
+        if (error) throw error;
         
-        try {
-            const { data: config } = await window._supabase.from('configuracion').select('*');
+        // Valores por defecto si la base de datos no responde
+        let horaAperturaStr = "08:00 AM";
+        let horaCierreSemanaStr = "08:00 PM";
+        let horaCierreFindeStr = "12:00 AM";
+
+        if (config) {
+            // Leemos directamente desde las columnas de la tabla
+            horaAperturaStr = config.apertura || horaAperturaStr;
+            horaCierreSemanaStr = config.cierre_semana || horaCierreSemanaStr;
+            horaCierreFindeStr = config.cierre_finde || horaCierreFindeStr;
             
-            let horaAperturaStr = "08:00 AM";
-            let horaCierreSemanaStr = "08:00 PM";
-            let horaCierreFindeStr = "12:00 AM";
-
-            if (config) {
-                config.forEach(c => {
-                    if (c.clave === 'apertura') horaAperturaStr = c.valor;
-                    if (c.clave === 'cierre_semana') horaCierreSemanaStr = c.valor;
-                    if (c.clave === 'cierre_finde') horaCierreFindeStr = c.valor;
-                });
+            // Si el admin configuró el margen de limpieza, lo actualizamos también
+            if (config.margen_limpieza) {
+                MARGEN_LIMPIEZA = parseInt(config.margen_limpieza, 10);
             }
-
-            APERTURA_MINUTOS = convertirStringAMinutos(horaAperturaStr);
-
-            const partes = fechaSeleccionada.split("-");
-            const fechaObjeto = new Date(partes[0], partes[1] - 1, partes[2]);
-            const numeroDia = fechaObjeto.getDay(); 
-
-            if (numeroDia >= 1 && numeroDia <= 4) { // Lunes a Jueves
-                CIERRE_MINUTOS = convertirStringAMinutos(horaCierreSemanaStr);
-            } else { // Viernes a Domingo
-                CIERRE_MINUTOS = convertirStringAMinutos(horaCierreFindeStr);
-            }
-        } catch (e) {
-            console.error("Error al leer configuración de horarios:", e);
         }
+
+        // Convertimos la apertura a minutos totales
+        APERTURA_MINUTOS = convertirStringAMinutos(horaAperturaStr);
+
+        // Calculamos el día de la semana
+        const partes = fechaSeleccionada.split("-");
+        const fechaObjeto = new Date(partes[0], partes[1] - 1, partes[2]);
+        const numeroDia = fechaObjeto.getDay(); 
+
+        if (numeroDia >= 1 && numeroDia <= 4) { // Lunes a Jueves
+            CIERRE_MINUTOS = convertirStringAMinutos(horaCierreSemanaStr);
+        } else { // Viernes a Domingo
+            CIERRE_MINUTOS = convertirStringAMinutos(horaCierreFindeStr);
+        }
+        
+        console.log(`⏰ Agenda ajustada -> Apertura: ${horaAperturaStr}, Cierre Hoy: ${numeroDia >= 1 && numeroDia <= 4 ? horaCierreSemanaStr : horaCierreFindeStr}`);
+
+    } catch (e) {
+        console.error("Error al leer configuración de horarios:", e.message);
     }
-
-    if (inputFecha) {
-        inputFecha.addEventListener("change", async function() {
-            await ajustarHorarioCierre(this.value);
-            actualizarHorariosDisponibles();
-        });
-    }
-
-    opcionesServicio.forEach(radio => radio.addEventListener("change", actualizarHorariosDisponibles));
-
+}
     // Cargar datos locales del cliente
     const nombreGuardado = localStorage.getItem("barberia_nombre");
     const telephoneGuardado = localStorage.getItem("barberia_telefono");
