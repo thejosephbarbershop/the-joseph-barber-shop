@@ -563,7 +563,7 @@ window.onload = async function() {
     let CIERRE_MINUTOS = 20 * 60;      
     let MARGEN_LIMPIEZA = 5;         
 
-    // --- NUEVO: CONFIGURACIÓN DINÁMICA DE HORARIOS DESDE SUPABASE ---
+    // --- CONFIGURACIÓN DINÁMICA DE HORARIOS DESDE SUPABASE ---
     async function ajustarHorarioCierre(fechaSeleccionada) {
         let horaAperturaStr = "08:00 AM";
         let horaCierreSemanaStr = "08:00 PM";
@@ -660,7 +660,7 @@ window.onload = async function() {
     }
 
     opcionesServicio.forEach(radio => radio.addEventListener("change", actualizarHorariosDisponibles));
-   
+
     // Cargar datos locales guardados del cliente
     const nombreGuardado = localStorage.getItem("barberia_nombre");
     const telefonoGuardado = localStorage.getItem("barberia_telefono");
@@ -717,15 +717,12 @@ window.onload = async function() {
         return new Date(`${fechaStr}T${String(horas).padStart(2, '0')}:${String(minutos).padStart(2, '0')}:00`);
     }
 
-    // --- GENERADOR DE BOTONES DE HORA ---
-   // --- GENERADOR DE BOTONES DE HORA (CORREGIDO) ---
+    // --- GENERADOR DE BOTONES DE HORA (OPTIMIZADO Y SIN ERRORES) ---
     async function actualizarHorariosDisponibles() {
-        const inputFecha = document.getElementById("fecha");
         const fechaSeleccionada = inputFecha ? inputFecha.value : "";
         const barberoSeleccionadoInput = document.querySelector('input[name="barbero"]:checked');
         const servicioSeleccionadoInput = document.querySelector('input[name="servicio"]:checked');
         
-        // Si falta la fecha o el barbero, volvemos a mostrar el mensaje de alerta inicial de forma limpia
         if (!fechaSeleccionada || !barberoSeleccionadoInput) {
             if (contenedorHoras) {
                 contenedorHoras.style.display = "block";
@@ -734,7 +731,7 @@ window.onload = async function() {
             return;
         }
         
-        const duracionServicioSolicitado = servicioSeleccionadoInput ? parseInt(servicioServicioInput.getAttribute("data-duracion"), 10) : 45;
+        const duracionServicioSolicitado = servicioSeleccionadoInput ? parseInt(servicioSeleccionadoInput.getAttribute("data-duracion"), 10) : 45;
         const barberoSeleccionado = barberoSeleccionadoInput.value;
         const ahora = new Date();
 
@@ -797,17 +794,12 @@ window.onload = async function() {
                 }
             }
 
-            contenedorHoras.innerHTML = htmlBotones || "<div class='texto-alerta'>No quedan bloques disponibles para este día.</div>";
+            contenedorHoras.innerHTML = htmlBotones || "<div class='texto-alerta'>No quedan bloques hoy.</div>";
 
         } catch (err) {
-            console.error("Error en agenda:", err);
-            contenedorHoras.style.display = "block";
-            contenedorHoras.innerHTML = "<div class='texto-alerta' style='color: var(--danger-color);'>Error al sincronizar agenda. Intenta de nuevo.</div>";
-        }
-    }
-        } catch (err) {
             console.error(err);
-            contenedorHoras.innerHTML = "<div>Error al sincronizar agenda.</div>";
+            contenedorHoras.style.display = "block";
+            contenedorHoras.innerHTML = "<div class='texto-alerta'>Error al sincronizar agenda.</div>";
         }
     }
 
@@ -917,6 +909,6 @@ window.onload = async function() {
         });
     }
 };
-</script>
+</script>                            
 </body>
 </html>
