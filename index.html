@@ -600,7 +600,7 @@
         } else {
             // Si es Viernes (5), Sábado (6) o Domingo (0) -> Cierra a las 12:00 AM Medianoche (1440 minutos)
             CIERRE_MINUTOS = 24 * 60;  
-            console.log("Horario ajustado para Fin de Semana: Cierre a las 12:00 AM");
+            console.log("Horario adjusted para Fin de Semana: Cierre a las 12:00 AM");
         }
     }
 
@@ -661,7 +661,7 @@
 
     function convertirMinutosAString12h(minutosTotales) {
         let horas = Math.floor(minutosTotales / 60);
-        let minutes = minutosTotales % 60;
+        let minutes = minutesTotales % 60;
         let ampm = horas >= 12 ? 'PM' : 'AM';
         horas = horas % 12;
         horas = horas ? horas : 12; 
@@ -670,9 +670,9 @@
         return `${strHoras}:${strMinutos} ${ampm}`;
     }
 
-    function generarObjetoFecha(fechaStr, minutosTotales) {
-        let horas = Math.floor(minutosTotales / 60);
-        let minutos = minutosTotales % 60;
+    function generarObjetoFecha(fechaStr, minutesTotales) {
+        let horas = Math.floor(minutesTotales / 60);
+        let minutos = minutesTotales % 60;
         if (horas >= 24) {
             horas = 23;
             minutos = 59;
@@ -770,11 +770,11 @@
     }
 
     // ==========================================
-    // 💾 PROCESAR ENVÍO DE FORMULARIO DE RESERVA (Añadido & Asegurado)
+    // 💾 PROCESAR ENVÍO DE FORMULARIO DE RESERVA
     // ==========================================
     if (formulario) {
         formulario.addEventListener('submit', async (e) => {
-            e.preventDefault(); // Detener inmediatamente recargas involuntarias
+            e.preventDefault(); 
 
             const nombre = document.getElementById('client-name').value;
             const telefono = document.getElementById('client-phone').value;
@@ -803,7 +803,6 @@
             }
             const hora = horaSeleccionadaInput.value;
 
-            // Preparamos la pestaña para WhatsApp (evita bloqueos de ventanas emergentes)
             const nuevaPestana = window.open('about:blank', '_blank');
 
             try {
@@ -855,7 +854,6 @@
                 if (errorInsert) throw new Error("Supabase rechazó los datos: " + errorInsert.message);
                 if (!nuevaReserva || nuevaReserva.length === 0) throw new Error("Se guardó en base de datos pero no se generó el ID de confirmación.");
 
-                // Memorizar credenciales del usuario
                 localStorage.setItem("barberia_nombre", nombre);
                 localStorage.setItem("barberia_telefono", telefono);
 
@@ -911,24 +909,34 @@
                 .single();
 
             if (error || !cita) {
-                document.getElementById('cancel-info-cliente').innerText = "Cita no encontrada";
-                document.getElementById('cancel-info-cliente').style.color = "var(--danger-color)";
-                txtStatus.innerText = "Este enlace no es válido o la cita ya fue cancelada previamente.";
-                txtStatus.style.color = "var(--danger-color)";
+                if(document.getElementById('cancel-info-cliente')) {
+                    document.getElementById('cancel-info-cliente').innerText = "Cita no encontrada";
+                    document.getElementById('cancel-info-cliente').style.color = "var(--danger-color)";
+                }
+                if(txtStatus) {
+                    txtStatus.innerText = "Este enlace no es válido o la cita ya fue cancelada previamente.";
+                    txtStatus.style.color = "var(--danger-color)";
+                }
                 return;
             }
 
-            document.getElementById('cancel-info-cliente').innerText = cita.cliente || "No especificado";
-            document.getElementById('cancel-info-servicio').innerText = cita.servicio || "No especificado";
-            document.getElementById('cancel-info-barbero').innerText = cita.barbero;
-            document.getElementById('cancel-info-fecha').innerText = cita.fecha;
-            document.getElementById('cancel-info-hora').innerText = `${cita.hora} (${cita.duracion || 30} min)`;
+            if(document.getElementById('cancel-info-cliente')) document.getElementById('cancel-info-cliente').innerText = cita.cliente || "No especificado";
+            if(document.getElementById('cancel-info-servicio')) document.getElementById('cancel-info-servicio').innerText = cita.servicio || "No especificado";
+            if(document.getElementById('cancel-info-barbero')) document.getElementById('cancel-info-barbero').innerText = cita.barbero;
+            if(document.getElementById('cancel-info-fecha')) document.getElementById('cancel-info-fecha').innerText = cita.fecha;
+            if(document.getElementById('cancel-info-hora')) document.getElementById('cancel-info-hora').innerText = `${cita.hora} (${cita.duracion || 30} min)`;
             
             if (btnEjecutarCancelar) btnEjecutarCancelar.disabled = false;
 
         } catch (err) {
-            txtStatus.innerText = "Error de conexión al cargar la cita.";
-            txtStatus
-</script>
+            if(txtStatus) txtStatus.innerText = "Error de conexión al cargar la cita.";
+            console.error(err);
+        }
+    }
+
+    if (btnEjecutarCancelar) {
+        btnEjecutarCancelar.addEventListener('click', async () => {
+            try {
+                const { error } = await _supabase.from('reservas').delete().eq('id
 </body>
 </html>
