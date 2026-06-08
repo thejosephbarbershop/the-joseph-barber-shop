@@ -608,40 +608,41 @@ window.onload = function() {
         }
     }
 // Ajustar horarios dinámicamente desde Supabase (Versión Corregida)
+// --- NUEVO: CONFIGURACIÓN INTEGRADA Y SEGURA ---
 async function ajustarHorarioCierre(fechaSeleccionada) {
-    if (!fechaSeleccionada) return;
-    
+    // Valores de respaldo por si Supabase no responde
+    let horaAperturaStr = "08:00 AM";
+    let horaCierreSemanaStr = "08:00 PM";
+    let horaCierreFindeStr = "12:00 AM";
+
     try {
-        // Consultamos la única fila de configuración (id: 1) usando la variable correcta
+        // Hacemos la petición a Supabase de forma segura
         const { data: config, error } = await _supabase
             .from('configuracion')
             .select('*')
             .limit(1)
-            .single();
+            .maybeSingle(); // maybeSingle evita errores si la tabla está vacía
 
-        if (error) throw error;
-        
-        // Valores por defecto si la base de datos no responde
-        let horaAperturaStr = "08:00 AM";
-        let horaCierreSemanaStr = "08:00 PM";
-        let horaCierreFindeStr = "12:00 AM";
-
-        if (config) {
-            // Leemos directamente desde las columnas de la tabla
+        if (error) {
+            console.warn("No se pudo leer Supabase, usando horarios locales:", error.message);
+        } else if (config) {
+            // Si hay datos, los usamos
             horaAperturaStr = config.apertura || horaAperturaStr;
             horaCierreSemanaStr = config.cierre_semana || horaCierreSemanaStr;
             horaCierreFindeStr = config.cierre_finde || horaCierreFindeStr;
-            
-            // Si el admin configuró el margen de limpieza, lo actualizamos también
             if (config.margen_limpieza) {
                 MARGEN_LIMPIEZA = parseInt(config.margen_limpieza, 10);
             }
         }
+    } catch (err) {
+        console.error("Fallo crítico al conectar con Supabase:", err);
+    }
 
-        // Convertimos la apertura a minutos totales
-        APERTURA_MINUTOS = convertirStringAMinutos(horaAperturaStr);
+    // Calcular la apertura en minutos
+    APERTURA_MINUTOS = convertirStringAMinutos(horaAperturaStr);
 
-        // Calculamos el día de la semana
+    // Si el usuario ya eligió una fecha, calculamos el cierre exacto de ese día
+    if (fechaSeleccionada) {
         const partes = fechaSeleccionada.split("-");
         const fechaObjeto = new Date(partes[0], partes[1] - 1, partes[2]);
         const numeroDia = fechaObjeto.getDay(); 
@@ -651,13 +652,40 @@ async function ajustarHorarioCierre(fechaSeleccionada) {
         } else { // Viernes a Domingo
             CIERRE_MINUTOS = convertirStringAMinutos(horaCierreFindeStr);
         }
-        
-        console.log(`⏰ Agenda ajustada -> Apertura: ${horaAperturaStr}, Cierre Hoy: ${numeroDia >= 1 && numeroDia <= 4 ? horaCierreSemanaStr : horaCierreFindeStr}`);
-
-    } catch (e) {
-        console.error("Error al leer configuración de horarios:", e.message);
+    } else {
+        // Si no hay fecha elegida aún, ponemos el cierre de semana por defecto
+        CIERRE_MINUTOS = convertirStringAMinutos(horaCierreSemanaStr);
     }
 }
+
+// --- CONTROLADORES DE EVENTOS CORREGIDOS ---
+if (inputFecha) {
+    inputFecha.addEventListener("change", async function() {
+        // 1. Primero esperamos a que cargue y configure las variables de tiempo
+        await ajustarHorarioCierre(this.value);
+        // 2. Luego pintamos los botones en pantalla
+        actualizarHorariosDisponibles();
+    });
+}
+
+// Asegurar que los otros botones ejecuten el renderizado
+opcionesBarbero.forEach(radio => radio.addEventListener("change", actualizarHorariosDisponibles));
+opcionesServicio.forEach(radio => radio.addEventListener("change", actualizarHorariosDisponibles));
+
+// --- MODIFICAR TU EVENTO DOMContentLoaded ---
+document.addEventListener("DOMContentLoaded", async function() {
+    const nombreGuardado = localStorage.getItem("barberia_nombre");
+    const telefonoGuardado = localStorage.getItem("barberia_telefono");
+    if (nombreGuardado && document.getElementById("client-name")) {
+        document.getElementById("client-name").value = nombreGuardado;
+    }
+    if (telefonoGuardado && document.getElementById("client-phone")) {
+        document.getElementById("client-phone").value = telefonoGuardado;
+    }
+
+    // Inicializamos las variables de tiempo al cargar la app sin trancar el renderizado
+    await ajustarHorarioCierre(inputFecha ? inputFecha.value : null);
+});
     // Cargar datos locales del cliente
     const nombreGuardado = localStorage.getItem("barberia_nombre");
     const telephoneGuardado = localStorage.getItem("barberia_telefono");
