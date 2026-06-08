@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -400,155 +400,171 @@
 </head>
 <body>
 
-   <div class="app-container">
-    <header>
-        <h1 id="header-title">THE JOSEPH BARBERSHOP</h1>
-        <p id="header-subtitle">RESERVA TU EXPERIENCIA</p>
-    </header>
+    <div class="app-container">
+        <header>
+            <h1 id="header-title">THE JOSEPH BARBERSHOP</h1>
+            <p id="header-subtitle">RESERVA TU EXPERIENCIA</p>
+        </header>
 
-    <form id="reserva-form" class="form-content">
-        
-        <div class="form-section">
-            <span class="section-title">1. Tus Datos de Contacto</span>
-            <input type="text" id="client-name" class="input-field" placeholder="Nombre completo" required>
-            <input type="tel" id="client-phone" class="input-field" placeholder="Número de WhatsApp" required>
-        </div>
-
-        <div class="form-section">
-            <span class="section-title">2. Selecciona el Servicio</span>
-            <div class="services-grid">
-                
-                <!-- Corte de pelo -->
-                <div>
-                    <input type="radio" id="srv1" name="servicio" value="Corte de pelo" data-duracion="45" class="selector-item" required>
-                    <label for="srv1" class="service-card-label" style="background: url('https://images.unsplash.com/photo-1621605815971-fbc98d665033?auto=format&fit=crop&q=80&w=300') center/cover;">
-                        <div class="service-info">
-                            <span class="service-name">Corte de Pelo</span>
-                            <span class="service-desc">45 min • Estilo profesional</span>
-                        </div>
-                    </label>
-                </div>
-
-                <!-- Cerquillo -->
-                <div>
-                    <input type="radio" id="srv2" name="servicio" value="Cerquillo" data-duracion="30" class="selector-item">
-                    <label for="srv2" class="service-card-label" style="background: url('https://images.unsplash.com/photo-1512864084360-7c0c4d0a0845?auto=format&fit=crop&q=80&w=300') center/cover;">
-                        <div class="service-info">
-                            <span class="service-name">Cerquillo</span>
-                            <span class="service-desc">30 min • Perfilado nítido</span>
-                        </div>
-                    </label>
-                </div>
-
-                <!-- Trenzado Normal -->
-                <div>
-                    <input type="radio" id="srv4" name="servicio" value="Trenzado normal" data-duracion="60" class="selector-item">
-                    <label for="srv4" class="service-card-label" style="background: url('https://images.unsplash.com/photo-1605497746445-97d1b0a9eaf4?auto=format&fit=crop&q=80&w=300') center/cover;">
-                        <div class="service-info">
-                            <span class="service-name">Trenzado Normal</span>
-                            <span class="service-desc">60 min • Diseño a mano</span>
-                        </div>
-                    </label>
-                </div>
-
-                <!-- Trenzado con Pelo -->
-                <div>
-                    <input type="radio" id="srv5" name="servicio" value="Trenzado con pelo" data-duracion="360" class="selector-item">
-                    <label for="srv5" class="service-card-label" style="background: url('https://images.unsplash.com/photo-1629000214131-04b77f19f2f8?auto=format&fit=crop&q=80&w=300') center/cover;">
-                        <div class="service-info">
-                            <span class="service-name">Trenzado con Pelo</span>
-                            <span class="service-desc">6 horas • Extensiones completas</span>
-                        </div>
-                    </label>
-                </div>
-
-                <!-- Facial -->
-                <div>
-                    <input type="radio" id="srv6" name="servicio" value="Facial" data-duracion="60" class="selector-item">
-                    <label for="srv6" class="service-card-label" style="background: url('https://images.unsplash.com/photo-1515377905703-c4788e51af15?auto=format&fit=crop&q=80&w=300') center/cover;">
-                        <div class="service-info">
-                            <span class="service-name">Facial</span>
-                            <span class="service-desc">60 min • Limpieza e hidratación</span>
-                        </div>
-                    </label>
-                </div>
-
-                <!-- Más opciones simplificadas -->
-                <div>
-                    <input type="radio" id="srv3" name="servicio" value="Haircut niños" data-duracion="45" class="selector-item">
-                    <label for="srv3" class="service-card-label" style="background: url('https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&q=80&w=300') center/cover;">
-                        <div class="service-info">
-                            <span class="service-name">Haircut Niños</span>
-                            <span class="service-desc">45 min • Menores de 12 años</span>
-                        </div>
-                    </label>
-                </div>
-
+        <form id="reserva-form" class="form-content">
+            
+            <div class="form-section">
+                <span class="section-title">1. Tus Datos de Contacto</span>
+                <input type="text" id="client-name" class="input-field" placeholder="Nombre completo" required>
+                <input type="tel" id="client-phone" class="input-field" placeholder="Número de WhatsApp" required>
             </div>
-        </div>
 
-        <div class="form-section">
-            <span class="section-title">3. Selecciona tu Profesional</span>
-            <div class="barbers-group" id="contenedor-barberos">
-                <p style="color: #aaa; font-size: 14px;">Cargando proveedores disponibles...</p>
+            <div class="form-section">
+                <span class="section-title">2. Selecciona el Servicio</span>
+                <div class="services-grid">
+                    
+                    <!-- Corte de pelo -->
+                    <div>
+                        <input type="radio" id="srv1" name="servicio" value="Corte de pelo" data-duracion="45" class="selector-item" required>
+                        <label for="srv1" class="service-card-label" style="background: url('https://images.unsplash.com/photo-1621605815971-fbc98d665033?auto=format&fit=crop&q=80&w=300') center/cover;">
+                            <div class="service-info">
+                                <span class="service-name">Corte de Pelo</span>
+                                <span class="service-desc">45 min • Estilo profesional</span>
+                            </div>
+                        </label>
+                    </div>
+
+                    <!-- Cerquillo -->
+                    <div>
+                        <input type="radio" id="srv2" name="servicio" value="Cerquillo" data-duracion="30" class="selector-item">
+                        <label for="srv2" class="service-card-label" style="background: url('https://images.unsplash.com/photo-1512864084360-7c0c4d0a0845?auto=format&fit=crop&q=80&w=300') center/cover;">
+                            <div class="service-info">
+                                <span class="service-name">Cerquillo</span>
+                                <span class="service-desc">30 min • Perfilado nítido</span>
+                            </div>
+                        </label>
+                    </div>
+
+                    <!-- Trenzado Normal -->
+                    <div>
+                        <input type="radio" id="srv4" name="servicio" value="Trenzado normal" data-duracion="60" class="selector-item">
+                        <label for="srv4" class="service-card-label" style="background: url('https://images.unsplash.com/photo-1605497746445-97d1b0a9eaf4?auto=format&fit=crop&q=80&w=300') center/cover;">
+                            <div class="service-info">
+                                <span class="service-name">Trenzado Normal</span>
+                                <span class="service-desc">60 min • Diseño a mano</span>
+                            </div>
+                        </label>
+                    </div>
+
+                    <!-- Trenzado con Pelo -->
+                    <div>
+                        <input type="radio" id="srv5" name="servicio" value="Trenzado con pelo" data-duracion="360" class="selector-item">
+                        <label for="srv5" class="service-card-label" style="background: url('https://images.unsplash.com/photo-1629000214131-04b77f19f2f8?auto=format&fit=crop&q=80&w=300') center/cover;">
+                            <div class="service-info">
+                                <span class="service-name">Trenzado con Pelo</span>
+                                <span class="service-desc">6 horas • Extensiones completas</span>
+                            </div>
+                        </label>
+                    </div>
+
+                    <!-- Facial -->
+                    <div>
+                        <input type="radio" id="srv6" name="servicio" value="Facial" data-duracion="60" class="selector-item">
+                        <label for="srv6" class="service-card-label" style="background: url('https://images.unsplash.com/photo-1515377905703-c4788e51af15?auto=format&fit=crop&q=80&w=300') center/cover;">
+                            <div class="service-info">
+                                <span class="service-name">Facial</span>
+                                <span class="service-desc">60 min • Limpieza e hidratación</span>
+                            </div>
+                        </label>
+                    </div>
+
+                    <!-- Más opciones simplificadas -->
+                    <div>
+                        <input type="radio" id="srv3" name="servicio" value="Haircut niños" data-duracion="45" class="selector-item">
+                        <label for="srv3" class="service-card-label" style="background: url('https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&q=80&w=300') center/cover;">
+                            <div class="service-info">
+                                <span class="service-name">Haircut Niños</span>
+                                <span class="service-desc">45 min • Menores de 12 años</span>
+                            </div>
+                        </label>
+                    </div>
+
+                </div>
             </div>
-        </div>
 
-        <div class="form-section">
-            <span class="section-title">4. Elige el Día</span>
-            <input type="date" id="fecha" class="input-field" required>
-        </div>
+            <div class="form-section">
+                <span class="section-title">3. Selecciona tu Profesional</span>
+                <div class="barbers-group">
+                    
+                    <!-- Joseph -->
+                    <div>
+                        <input type="radio" id="barb1" name="barbero" value="Joseph" class="selector-item barbero-opcion" required>
+                        <label for="barb1" class="barber-card-label">
+                            <img src="https://ibb.co/9mjT4rHq" alt="Joseph" class="barber-avatar">
+                            <span class="barber-name">Joseph</span>
+                            <span class="barber-role">Barbero Máster</span>
+                        </label>
+                    </div>
 
-        <div class="form-section">
-            <span class="section-title">5. Horarios Disponibles</span>
-            <div class="hours-grid" id="contenedor-horas">
-                <div class="texto-alerta">Elige fecha y barbero para calcular horarios...</div>
+                    <!-- Vanessa -->
+                    <div>
+                        <input type="radio" id="barb2" name="barbero" value="Vanessa" class="selector-item barbero-opcion">
+                        <label for="barb2" class="barber-card-label">
+                            <img src="https://ibb.co/QFGTHdKY" alt="Vanessa" class="barber-avatar">
+                            <span class="barber-name">Vanessa</span>
+                            <span class="barber-role">Especialista / Trenzas</span>
+                        </label>
+                    </div>
+
+                </div>
             </div>
-        </div>
 
-        <button type="submit" class="confirm-btn btn-gold">
-            Agendar Cita Premium
-        </button>
-    </form>
-
-    <div id="modulo-cancelar" class="cancel-content hidden">
-        <div class="form-section">
-            <span class="section-title" style="color: var(--danger-color);">Cancelar Espacio</span>
-            <div class="info-card">
-                <div class="info-line"><strong>Cliente:</strong> <span id="cancel-info-cliente">Cargando...</span></div>
-                <div class="info-line"><strong>Servicio:</strong> <span id="cancel-info-servicio">-</span></div>
-                <div class="info-line"><strong>Barbero:</strong> <span id="cancel-info-barbero">-</span></div>
-                <div class="info-line"><strong>Fecha:</strong> <span id="cancel-info-fecha">-</span></div>
-                <div class="info-line"><strong>Horario:</strong> <span id="cancel-info-hora">-</span></div>
+            <div class="form-section">
+                <span class="section-title">4. Elige el Día</span>
+                <input type="date" id="fecha" class="input-field" required>
             </div>
-            <p id="mensaje-status" style="text-align: center; margin-top: 15px;"></p>
+
+            <div class="form-section">
+                <span class="section-title">5. Horarios Disponibles</span>
+                <div class="hours-grid" id="contenedor-horas">
+                    <div class="texto-alerta">Elige fecha y barbero para calcular horarios...</div>
+                </div>
+            </div>
+
+            <button type="submit" class="confirm-btn btn-gold">
+                Agendar Cita Premium
+            </button>
+        </form>
+
+        <div id="modulo-cancelar" class="cancel-content hidden">
+            <div class="form-section">
+                <span class="section-title" style="color: var(--danger-color);">Cancelar Espacio</span>
+                <div class="info-card">
+                    <div class="info-line"><strong>Cliente:</strong> <span id="cancel-info-cliente">Cargando...</span></div>
+                    <div class="info-line"><strong>Servicio:</strong> <span id="cancel-info-servicio">-</span></div>
+                    <div class="info-line"><strong>Barbero:</strong> <span id="cancel-info-barbero">-</span></div>
+                    <div class="info-line"><strong>Fecha:</strong> <span id="cancel-info-fecha">-</span></div>
+                    <div class="info-line"><strong>Horario:</strong> <span id="cancel-info-hora">-</span></div>
+                </div>
+                <p id="mensaje-status" style="text-align: center; margin-top: 15px;"></p>
+            </div>
+            <button id="btn-ejecutar-cancelar" class="confirm-btn btn-danger" disabled>
+                Confirmar Cancelación
+            </button>
         </div>
-        <button id="btn-ejecutar-cancelar" class="confirm-btn btn-danger" disabled>
-            Confirmar Cancelación
-        </button>
+
     </div>
+    
 
-</div>
-
+    <!-- AQUÍ INICIA LA INICIALIZACIÓN SEGURA DE SUPABASE -->
+   
 <script>
-window.onload = function() {
     // --- CONFIGURACION DE CREDENCIALES ---
     const SUPABASE_URL = "https://xnfmqumhhxpkrigizvlu.supabase.co";
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhuZm1xdW1oaHhwa3JpZ2l6dmx1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5MTE3NjgsImV4cCI6MjA5NTQ4Nzc2OH0.zNSZ4Nw2Iz2IieExt9SErJddPseWb65Hxedg5ZGZCvI";
 
-    const miSupabase = window.supabase || (typeof supabase !== 'undefined' ? supabase : null);
-    if (!miSupabase) {
-        console.error("No se pudo cargar el SDK de Supabase");
-        return;
-    }
-
-    window._supabase = miSupabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-    if (typeof emailjs !== 'undefined') emailjs.init("GQ0nATFCZx9T_S2wV");
+    const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    emailjs.init("GQ0nATFCZx9T_S2wV");
 
     // --- ELEMENTOS DEL DOM ---
     const inputFecha = document.getElementById("fecha");
     const contenedorHoras = document.getElementById("contenedor-horas");
-    const contenedorBarberos = document.getElementById("contenedor-barberos");
+    const opcionesBarbero = document.querySelectorAll(".barbero-opcion");
     const formulario = document.getElementById("reserva-form");
     const opcionesServicio = document.querySelectorAll('input[name="servicio"]');
 
@@ -559,112 +575,42 @@ window.onload = function() {
     const btnEjecutarCancelar = document.getElementById("btn-ejecutar-cancelar");
     const txtStatus = document.getElementById("mensaje-status");
 
-    // Variables de configuración de horarios por defecto
-    let APERTURA_MINUTOS = 8 * 60;   
-    let CIERRE_MINUTOS = 20 * 60;      
+    const APERTURA_MINUTOS = 8 * 60;   
     const MARGEN_LIMPIEZA = 5;         
+    let CIERRE_MINUTOS = 20 * 60;      
 
-    // Cargar barberos activos desde la base de datos
-    async function cargarBarberosDinamicos() {
-        try {
-            const { data: barberos, error } = await window._supabase
-                .from('barberos')
-                .select('*')
-                .eq('activo', true);
-
-            if (error) throw error;
-
-            if (contenedorBarberos) {
-                if (!barberos || barberos.length === 0) {
-                    contenedorBarberos.innerHTML = "<p style='color: red;'>No hay profesionales disponibles en este momento.</p>";
-                    return;
-                }
-
-                let htmlBarberos = "";
-                barberos.forEach((b, index) => {
-                    // Generamos un avatar por defecto o marcador si no hay imagen en tu tabla
-                    let avatarUrl = b.nombre.toLowerCase().includes('vanessa') ? "https://ibb.co/QFGTHdKY" : "https://ibb.co/9mjT4rHq";
-                    let rol = b.nombre.toLowerCase().includes('vanessa') ? "Especialista / Trenzas" : "Barbero Máster";
-                    let esRequerido = index === 0 ? "required" : "";
-
-                    htmlBarberos += `
-                        <div>
-                            <input type="radio" id="dyn-barb-${b.id}" name="barbero" value="${b.nombre}" class="selector-item barbero-opcion" ${esRequerido}>
-                            <label for="dyn-barb-${b.id}" class="barber-card-label">
-                                <img src="${avatarUrl}" alt="${b.nombre}" class="barber-avatar">
-                                <span class="barber-name">${b.nombre}</span>
-                                <span class="barber-role">${rol}</span>
-                            </label>
-                        </div>`;
-                });
-            contenedorBarberos.innerHTML = htmlBarberos;
-
-                // Volvemos a escuchar los clics de los nuevos elementos agregados
-                document.querySelectorAll(".barbero-opcion").forEach(radio => {
-                    radio.addEventListener("change", actualizarHorariosDisponibles);
-                });
-            }
-        } catch (err) {
-            console.error("Error cargando barberos:", err);
-        }
-    }
-
-    // Ajustar horarios dinámicamente desde Supabase
-    async function ajustarHorarioCierre(fechaSeleccionada) {
+    function ajustarHorarioCierre(fechaSeleccionada) {
         if (!fechaSeleccionada) return;
-        
-        try {
-            const { data: config } = await window._supabase.from('configuracion').select('*');
-            
-            let horaAperturaStr = "08:00 AM";
-            let horaCierreSemanaStr = "08:00 PM";
-            let horaCierreFindeStr = "12:00 AM";
-
-            if (config) {
-                config.forEach(c => {
-                    if (c.clave === 'apertura') horaAperturaStr = c.valor;
-                    if (c.clave === 'cierre_semana') horaCierreSemanaStr = c.valor;
-                    if (c.clave === 'cierre_finde') horaCierreFindeStr = c.valor;
-                });
-            }
-
-            APERTURA_MINUTOS = convertirStringAMinutos(horaAperturaStr);
-
-            const partes = fechaSeleccionada.split("-");
-            const fechaObjeto = new Date(partes[0], partes[1] - 1, partes[2]);
-            const numeroDia = fechaObjeto.getDay(); 
-
-            if (numeroDia >= 1 && numeroDia <= 4) { // Lunes a Jueves
-                CIERRE_MINUTOS = convertirStringAMinutos(horaCierreSemanaStr);
-            } else { // Viernes a Domingo
-                CIERRE_MINUTOS = convertirStringAMinutos(horaCierreFindeStr);
-            }
-        } catch (e) {
-            console.error("Error al leer configuración de horarios:", e);
+        const partes = fechaSeleccionada.split("-");
+        const fechaObjeto = new Date(partes[0], partes[1] - 1, partes[2]);
+        const numeroDia = fechaObjeto.getDay(); 
+        if (numeroDia >= 1 && numeroDia <= 4) {
+            CIERRE_MINUTOS = 20 * 60;  
+        } else {
+            CIERRE_MINUTOS = 24 * 60;  
         }
     }
 
     if (inputFecha) {
-        inputFecha.addEventListener("change", async function() {
-            await ajustarHorarioCierre(this.value);
+        inputFecha.addEventListener("change", function() {
+            ajustarHorarioCierre(this.value);
             actualizarHorariosDisponibles();
         });
     }
 
+    opcionesBarbero.forEach(radio => radio.addEventListener("change", actualizarHorariosDisponibles));
     opcionesServicio.forEach(radio => radio.addEventListener("change", actualizarHorariosDisponibles));
 
-    // Cargar datos locales del cliente
-    const nombreGuardado = localStorage.getItem("barberia_nombre");
-    const telephoneGuardado = localStorage.getItem("barberia_telefono");
-    if (nombreGuardado && document.getElementById("client-name")) {
-        document.getElementById("client-name").value = nombreGuardado;
-    }
-    if (telephoneGuardado && document.getElementById("client-phone")) {
-        document.getElementById("client-phone").value = telephoneGuardado;
-    }
-
-    // Inicializar carga de barberos de la base de datos
-    cargarBarberosDinamicos();
+    document.addEventListener("DOMContentLoaded", function() {
+        const nombreGuardado = localStorage.getItem("barberia_nombre");
+        const telefonoGuardado = localStorage.getItem("barberia_telefono");
+        if (nombreGuardado && document.getElementById("client-name")) {
+            document.getElementById("client-name").value = nombreGuardado;
+        }
+        if (telefonoGuardado && document.getElementById("client-phone")) {
+            document.getElementById("client-phone").value = telefonoGuardado;
+        }
+    });
 
     if (idACancelar) {
         if (moduloReserva) moduloReserva.classList.add("hidden");
@@ -672,7 +618,7 @@ window.onload = function() {
         const headerTitle = document.getElementById("header-title");
         const headerSubtitle = document.getElementById("header-subtitle");
         if (headerTitle) headerTitle.innerText = "CANCELAR ESPACIO";
-        if (headerSubtitle) headerSubtitle.innerText = "Gestión de citas - The Joseph Barbershop";
+        if (headerSubtitle) headerSubtitle.innerText = "Gestion de citas - The Joseph Barbershop";
         obtenerDetallesCita(idACancelar);
     }
 
@@ -689,26 +635,27 @@ window.onload = function() {
         return (hours * 60) + minutes;
     }
 
+    // --- FORMATEADOR CORE ---
     function convertirMinutosAString12h(minutosTotales) {
         let horas = Math.floor(minutosTotales / 60);
-        let minutes = minutesTotales % 60;
+        let minutes = minutosTotales % 60;
         let ampm = horas >= 12 ? "PM" : "AM";
         horas = horas % 12;
         horas = horas ? horas : 12; 
         return `${String(horas).padStart(2, "0")}:${String(minutes).padStart(2, "0")} ${ampm}`;
     }
 
-    function generarObjetoFecha(fechaStr, minutosTotales) {
-        let horas = Math.floor(minutosTotales / 60);
-        let minutos = minutosTotales % 60;
-        if (horas >= 24) { 
-            horas = 23; 
-            minutos = 59; 
-        }
-        return new Date(`${fechaStr}T${String(horas).padStart(2, '0')}:${String(minutos).padStart(2, '0')}:00`);
+function generarObjetoFecha(fechaStr, minutosTotales) {
+    let horas = Math.floor(minutosTotales / 60);
+    let minutos = minutosTotales % 60; // Aquí corregimos 'minutesTotales' por 'minutosTotales'
+    if (horas >= 24) { 
+        horas = 23; 
+        minutos = 59; 
     }
+    return new Date(`${fechaStr}T${String(horas).padStart(2, '0')}:${String(minutos).padStart(2, '0')}:00`);
+}
 
-    // --- GENERADOR DE BOTONES DE HORA (CON BLOQUEO DE DÍAS FERIADOS/BLOQUEADOS) ---
+    // --- GENERADOR DE BOTONES ---
     async function actualizarHorariosDisponibles() {
         const fechaSeleccionada = inputFecha.value;
         const barberoSeleccionadoInput = document.querySelector('input[name="barbero"]:checked');
@@ -726,26 +673,7 @@ window.onload = function() {
         contenedorHoras.innerHTML = "<div>Calculando agenda...</div>";
 
         try {
-            // 1. VERIFICACIÓN DE DÍAS BLOQUEADOS / FERIADOS
-            const { data: diaBloqueado, error: errorDia } = await window._supabase
-                .from("dias_bloqueados")
-                .select("motivo")
-                .eq("fecha", fechaSeleccionada)
-                .maybeSingle();
-
-            if (diaBloqueado) {
-                contenedorHoras.innerHTML = `
-                    <div style="grid-column: 1/-1; color: #ff4d4d; font-weight: bold; text-align: center; padding: 20px; background: rgba(255, 77, 77, 0.1); border-radius: 8px; border: 1px solid rgba(255, 77, 77, 0.2);">
-                        🔒 Negocio cerrado para este día.<br>
-                        <span style="font-size: 14px; font-weight: normal; color: #ccc; display: inline-block; margin-top: 5px;">
-                            Motivo: ${diaBloqueado.motivo || 'Feriado / No laborable'}
-                        </span>
-                    </div>`;
-                return; // Corta la ejecución aquí para no mostrar horas
-            }
-
-            // 2. BUSCAR CITAS EXISTENTES (Lógica original)
-            const { data: reservas, error } = await window._supabase
+            const { data: reservas, error } = await _supabase
                 .from("reservas")
                 .select("hora, duracion")
                 .eq("fecha", fechaSeleccionada)
@@ -833,7 +761,7 @@ window.onload = function() {
             const nuevaPestana = window.open("about:blank", "_blank");
 
             try {
-                const { data: duplicados } = await window._supabase.from("reservas").select("hora, duracion").eq("fecha", fecha).eq("barbero", barbero);
+                const { data: duplicados } = await _supabase.from("reservas").select("hora, duracion").eq("fecha", fecha).eq("barbero", barbero);
                 let sobreescrito = false;
                 const inicioNuevaCitaMin = convertirStringAMinutos(hora);
                 const finNuevaCitaMin = inicioNuevaCitaMin + duracion;
@@ -853,7 +781,7 @@ window.onload = function() {
                     return;
                 }
 
-                const { data: nuevaReserva, error: errorInsert } = await window._supabase
+                const { data: nuevaReserva, error: errorInsert } = await _supabase
                     .from("reservas")
                     .insert([{ fecha, hora, barbero, duracion, cliente: nombre, telefono, servicio }])
                     .select();
@@ -863,11 +791,9 @@ window.onload = function() {
                 localStorage.setItem("barberia_nombre", nombre);
                 localStorage.setItem("barberia_telefono", telefono);
 
-                if (typeof emailjs !== 'undefined') {
-                    emailjs.send("service_z2lbr3y", "template_7phspmb", {
-                        nombre_cliente: nombre, telefono: telefono, hora_cita: `${hora} el día ${fecha} con ${barbero}`
-                    }).catch(e => console.log(e));
-                }
+                emailjs.send("service_z2lbr3y", "template_7phspmb", {
+                    nombre_cliente: nombre, telefono: telefono, hora_cita: `${hora} el día ${fecha} con ${barbero}`
+                }).catch(e => console.log(e));
 
                 const idGenerado = nuevaReserva[0].id;
                 const urlBase = window.location.origin + window.location.pathname;
@@ -891,7 +817,7 @@ window.onload = function() {
     // --- LOGICA DE CANCELACION ---
     async function obtenerDetallesCita(id) {
         try {
-            const { data: cita, error } = await window._supabase.from("reservas").select("*").eq("id", id).single();
+            const { data: cita, error } = await _supabase.from("reservas").select("*").eq("id", id).single();
             if (error || !cita) return;
             if(document.getElementById("cancel-info-cliente")) document.getElementById("cancel-info-cliente").innerText = cita.cliente;
             if(document.getElementById("cancel-info-servicio")) document.getElementById("cancel-info-servicio").innerText = cita.servicio;
@@ -905,13 +831,12 @@ window.onload = function() {
     if (btnEjecutarCancelar) {
         btnEjecutarCancelar.addEventListener("click", async () => {
             try {
-                await window._supabase.from("reservas").delete().eq("id", idACancelar);
+                await _supabase.from("reservas").delete().eq("id", idACancelar);
                 if (txtStatus) txtStatus.innerText = "Cita cancelada con éxito.";
                 setTimeout(() => { window.location.href = window.location.origin + window.location.pathname; }, 2000);
             } catch (err) {}
         });
     }
-};
 </script>
 </body>
 </html>
