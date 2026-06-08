@@ -82,7 +82,9 @@ window.onload = function() {
         return;
     }
 
+    // Definimos _supabase de forma global y segura
     window._supabase = miSupabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    
     const selectorFecha = document.getElementById('filtro-fecha');
     const btnCargar = document.getElementById('btn-cargar');
     const listaCitas = document.getElementById('lista-citas');
@@ -102,6 +104,8 @@ window.onload = function() {
     // GESTIÓN INTELIGENTE DE PERMISOS (MANUAL Y AUTOMÁTICA)
     // ========================================================
     function comprobarPermisos() {
+        if (!barraPermisos || !textoPermisos || !btnActivarPermisos) return;
+
         if (!("Notification" in window)) {
             barraPermisos.style.display = "block";
             barraPermisos.style.background = "#f8d7da";
@@ -111,7 +115,7 @@ window.onload = function() {
         }
 
         if (Notification.permission === "granted") {
-            barraPermisos.style.display = "none"; // Todo bien, ocultamos la barra
+            barraPermisos.style.display = "none"; 
         } else if (Notification.permission === "denied") {
             barraPermisos.style.display = "block";
             barraPermisos.style.background = "#f8d7da";
@@ -119,7 +123,6 @@ window.onload = function() {
             textoPermisos.innerHTML = "❌ <b>Notificaciones bloqueadas de forma manual.</b> Dale clic al candado de arriba al lado de la URL y cambia 'Bloquear' por 'Permitir'.";
             btnActivarPermisos.style.display = "none";
         } else {
-            // Permiso "default" (no ha decidido)
             barraPermisos.style.display = "block";
             barraPermisos.style.background = "#fff3cd";
             barraPermisos.style.color = "#856404";
@@ -128,24 +131,24 @@ window.onload = function() {
         }
     }
 
-    btnActivarPermisos.addEventListener('click', function() {
-        Notification.requestPermission().then(permiso => {
-            comprobarPermisos();
-            if (permiso === "granted") {
-                alert("¡Genial! Alertas activadas con éxito.");
-                lanzarNotificacionPush("💈 ¡Prueba Exitosa!", "El panel está conectado correctamente.");
-            }
+    if (btnActivarPermisos) {
+        btnActivarPermisos.addEventListener('click', function() {
+            Notification.requestPermission().then(permiso => {
+                comprobarPermisos();
+                if (permiso === "granted") {
+                    alert("¡Genial! Alertas activadas con éxito.");
+                    lanzarNotificacionPush("💈 ¡Prueba Exitosa!", "El panel está conectado correctamente.");
+                }
+            });
         });
-    });
+    }
 
-    // Ejecutar comprobación inicial
     comprobarPermisos();
-
 
     const hoy = new Date();
     const offset = hoy.getTimezoneOffset();
     const hoyLocal = new Date(hoy.getTime() - (offset*60*1000));
-    selectorFecha.value = hoyLocal.toISOString().split('T')[0];
+    if (selectorFecha) selectorFecha.value = hoyLocal.toISOString().split('T')[0];
 
     function horaAMinutos(horaStr) {
         if (!horaStr) return 0;
@@ -167,7 +170,6 @@ window.onload = function() {
             } else {
                 new Notification(titulo, { body: mensaje });
             }
-            
             if ("vibrate" in navigator) {
                 navigator.vibrate([200, 100, 200]);
             }
@@ -175,6 +177,7 @@ window.onload = function() {
     }
 
     window.cargarAgenda = async function() {
+        if (!selectorFecha || !listaCitas) return;
         const fechaSeleccionada = selectorFecha.value;
         if (!fechaSeleccionada) return;
         
@@ -250,12 +253,13 @@ window.onload = function() {
         }
     }
 
-    btnCargar.addEventListener('click', window.cargarAgenda);
-    selectorFecha.addEventListener('change', window.cargarAgenda);
+    if (btnCargar) btnCargar.addEventListener('click', window.cargarAgenda);
+    if (selectorFecha) selectorFecha.addEventListener('change', window.cargarAgenda);
     
     window.cargarAgenda();
 
     setInterval(() => {
+        if (!selectorFecha) return;
         const ahora = new Date();
         const esHoy = selectorFecha.value === ahora.toISOString().split('T')[0];
         if (esHoy) {
@@ -263,32 +267,27 @@ window.onload = function() {
         }
     }, 60000); 
 
-    // ========================================================
-    // ESCUCHADOR EN TIEMPO REAL 
-    // ========================================================
+    // Realtime de Supabase listo
     window._supabase
         .channel('cambios-reservas')
         .on(
             'postgres_changes', 
-            { 
-                event: 'INSERT', 
-                schema: 'public', 
-                table: 'reservas' 
-            }, 
+            { event: 'INSERT', schema: 'public', table: 'reservas' }, 
             (payload) => {
                 const nuevaCita = payload.new;
-                
                 lanzarNotificacionPush(
                     "💈 ¡Nueva Reserva Recibida!",
                     `Cliente: ${nuevaCita.cliente || 'Alguien'} agendó para el ${nuevaCita.fecha} a las ${nuevaCita.hora}.`
                 );
-
-                if (selectorFecha.value === nuevaCita.fecha) {
+                if (selectorFecha && selectorFecha.value === nuevaCita.fecha) {
                     window.cargarAgenda();
                 }
             }
         )
         .subscribe();
+
+    // HACEMOS LA LLAMADA AL NUEVO PANEL DE CONFIGURACIÓN JUSTO AQUÍ ADENTRO
+    cargarConfiguracionAdmin();
 };
 
 window.eliminarReserva = async function(idReserva) {
@@ -310,7 +309,118 @@ window.eliminarReserva = async function(idReserva) {
         console.error("Error al cancelar:", error);
         alert("No se pudo cancelar la reserva.");
     }
-}   
+}    
+
+// --- CORRECCIÓN EN LA GESTIÓN DE CONFIGURACIÓN ---
+async function cargarConfiguracionAdmin() {
+    try {
+        // Usamos window._supabase unificado
+        const { data: horarios } = await window._supabase.from('configuracion').select('*');
+        if (horarios) {
+            horarios.forEach(h => {
+                if(h.clave === 'apertura' && document.getElementById('admin-apertura')) document.getElementById('admin-apertura').value = h.valor;
+                if(h.clave === 'cierre_semana' && document.getElementById('admin-cierre-semana')) document.getElementById('admin-cierre-semana').value = h.valor;
+                if(h.clave === 'cierre_finde' && document.getElementById('admin-cierre-finde')) document.getElementById('admin-cierre-finde').value = h.valor;
+            });
+        }
+
+        const { data: barberos } = await window._supabase.from('barberos').select('*').eq('activo', true);
+        const contenedorLista = document.getElementById('lista-barberos-admin');
+        if (contenedorLista) {
+            contenedorLista.innerHTML = "";
+            if (!barberos || barberos.length === 0) {
+                contenedorLista.innerHTML = "<p style='color: #aaa; font-size: 13px;'>No hay barberos registrados.</p>";
+            } else {
+                barberos.forEach(b => {
+                    contenedorLista.innerHTML += `
+                        <div style="display: flex; justify-content: space-between; align-items: center; background: #333; padding: 8px 12px; margin-bottom: 6px; border-radius: 4px;">
+                            <span>${b.nombre}</span>
+                            <button onclick="eliminarBarberoAdmin(${b.id})" style="background: #d9534f; color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 12px;">Eliminar</button>
+                        </div>`;
+                });
+            }
+        }
+    } catch (error) {
+        console.error("Error cargando la configuración:", error);
+    }
+}
+
+// Vinculación de eventos seguros usando window._supabase
+document.addEventListener('click', async function(e) {
+    if(e.target && e.target.id === 'btn-guardar-horarios') {
+        const ap = document.getElementById('admin-apertura').value.trim();
+        const cs = document.getElementById('admin-cierre-semana').value.trim();
+        const cf = document.getElementById('admin-cierre-finde').value.trim();
+
+        if(!ap || !cs || !cf) {
+            alert("Por favor llena todos los campos de horarios.");
+            return;
+        }
+
+        await window._supabase.from('configuracion').upsert({ clave: 'apertura', valor: ap });
+        await window._supabase.from('configuracion').upsert({ clave: 'cierre_semana', valor: cs });
+        await window._supabase.from('configuracion').upsert({ clave: 'cierre_finde', valor: cf });
+
+        alert("¡Horarios actualizados correctamente!");
+    }
+
+    if(e.target && e.target.id === 'btn-anadir-barbero') {
+        const inputNombre = document.getElementById('nuevo-barbero-nombre');
+        const nombre = inputNombre.value.trim();
+        
+        if (!nombre) {
+            alert("Escribe el nombre del barbero.");
+            return;
+        }
+
+        await window._supabase.from('barberos').insert([{ nombre: nombre, activo: true }]);
+        inputNombre.value = "";
+        cargarConfiguracionAdmin();
+    }
+});
+
+window.eliminarBarberoAdmin = async function(id) {
+    if (confirm("¿Seguro que deseas eliminar este barbero del sistema?")) {
+        await window._supabase.from('barberos').update({ activo: false }).eq('id', id);
+        cargarConfiguracionAdmin();
+    }
+}
 </script>
+
+<hr style="margin: 40px 0; border-color: #333;">
+
+<div style="max-width: 800px; margin: 0 auto; font-family: Arial, sans-serif; padding: 20px; background: #1e1e1e; color: #fff; border-radius: 8px;">
+    <h2>⚙️ Configuración del Negocio</h2>
+    
+    <div style="margin-bottom: 30px; padding: 15px; background: #2a2a2a; border-radius: 6px;">
+        <h3>🕒 Modificar Horarios de Atención</h3>
+        <p style="font-size: 12px; color: #aaa;">Usa el formato exacto: HH:MM AM/PM (Ej: 08:00 AM)</p>
+        
+        <div style="margin-bottom: 10px;">
+            <label>Hora de Apertura General:</label><br>
+            <input type="text" id="admin-apertura" style="padding: 8px; margin-top: 5px; border-radius: 4px; border: none; color: #000;">
+        </div>
+        <div style="margin-bottom: 10px;">
+            <label>Cierre Regular (Lunes a Jueves):</label><br>
+            <input type="text" id="admin-cierre-semana" style="padding: 8px; margin-top: 5px; border-radius: 4px; border: none; color: #000;">
+        </div>
+        <div style="margin-bottom: 15px;">
+            <label>Cierre Fin de Semana (Viernes a Domingo):</label><br>
+            <input type="text" id="admin-cierre-finde" style="padding: 8px; margin-top: 5px; border-radius: 4px; border: none; color: #000;">
+        </div>
+        <button id="btn-guardar-horarios" style="background: #e0a96d; color: #000; font-weight: bold; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer;">Guardar Horarios</button>
+    </div>
+
+    <div style="padding: 15px; background: #2a2a2a; border-radius: 6px;">
+        <h3>🧔 Gestión de Barberos / Proveedores</h3>
+        <div style="margin-bottom: 15px;">
+            <input type="text" id="nuevo-barbero-nombre" placeholder="Nombre del nuevo barbero" style="padding: 8px; border-radius: 4px; border: none; width: 60%; color: #000;">
+            <button id="btn-anadir-barbero" style="background: #5cb85c; color: #fff; font-weight: bold; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer;">+ Añadir</button>
+        </div>
+        
+        <h4>Barberos en el sistema:</h4>
+        <div id="lista-barberos-admin"></div>
+    </div>
+</div>
 </body>
 </html>
