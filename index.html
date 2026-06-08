@@ -718,14 +718,23 @@ window.onload = async function() {
     }
 
     // --- GENERADOR DE BOTONES DE HORA ---
+   // --- GENERADOR DE BOTONES DE HORA (CORREGIDO) ---
     async function actualizarHorariosDisponibles() {
-        const fechaSeleccionada = inputFecha.value;
+        const inputFecha = document.getElementById("fecha");
+        const fechaSeleccionada = inputFecha ? inputFecha.value : "";
         const barberoSeleccionadoInput = document.querySelector('input[name="barbero"]:checked');
         const servicioSeleccionadoInput = document.querySelector('input[name="servicio"]:checked');
         
-        if (!fechaSeleccionada || !barberoSeleccionadoInput) return;
+        // Si falta la fecha o el barbero, volvemos a mostrar el mensaje de alerta inicial de forma limpia
+        if (!fechaSeleccionada || !barberoSeleccionadoInput) {
+            if (contenedorHoras) {
+                contenedorHoras.style.display = "block";
+                contenedorHoras.innerHTML = '<div class="texto-alerta">Elige fecha y barbero para calcular horarios...</div>';
+            }
+            return;
+        }
         
-        const duracionServicioSolicitado = servicioSeleccionadoInput ? parseInt(servicioSeleccionadoInput.getAttribute("data-duracion"), 10) : 45;
+        const duracionServicioSolicitado = servicioSeleccionadoInput ? parseInt(servicioServicioInput.getAttribute("data-duracion"), 10) : 45;
         const barberoSeleccionado = barberoSeleccionadoInput.value;
         const ahora = new Date();
 
@@ -788,8 +797,14 @@ window.onload = async function() {
                 }
             }
 
-            contenedorHoras.innerHTML = htmlBotones || "<div>No quedan bloques hoy.</div>";
+            contenedorHoras.innerHTML = htmlBotones || "<div class='texto-alerta'>No quedan bloques disponibles para este día.</div>";
 
+        } catch (err) {
+            console.error("Error en agenda:", err);
+            contenedorHoras.style.display = "block";
+            contenedorHoras.innerHTML = "<div class='texto-alerta' style='color: var(--danger-color);'>Error al sincronizar agenda. Intenta de nuevo.</div>";
+        }
+    }
         } catch (err) {
             console.error(err);
             contenedorHoras.innerHTML = "<div>Error al sincronizar agenda.</div>";
