@@ -553,7 +553,7 @@
 
     <!-- AQUÍ INICIA LA INICIALIZACIÓN SEGURA DE SUPABASE -->
    
-   <script>
+<script>
     // --- CONFIGURACIÓN DE APIS (Credenciales) ---
     const SUPABASE_URL = "https://xnfmqumhhxpkrigizvlu.supabase.co";
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhuZm1xdW1oaHhwa3JpZ2l6dmx1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5MTE3NjgsImV4cCI6MjA5NTQ4Nzc2OH0.zNSZ4Nw2Iz2IieExt9SErJddPseWb65Hxedg5ZGZCvI";
@@ -673,7 +673,6 @@
     function generarObjetoFecha(fechaStr, minutosTotales) {
         let horas = Math.floor(minutosTotales / 60);
         let minutos = minutosTotales % 60;
-        // Manejo especial si el cierre llega a las 24:00 (Medianoche del día siguiente de manera controlada)
         if (horas >= 24) {
             horas = 23;
             minutos = 59;
@@ -695,7 +694,6 @@
         const barberoSeleccionado = barberoSeleccionadoInput.value;
         const ahora = new Date();
 
-        // Aplicamos estilos de cuadrícula modernos al contenedor principal
         contenedorHoras.style.display = "grid";
         contenedorHoras.style.gridTemplateColumns = "repeat(auto-fill, minmax(100px, 1fr))";
         contenedorHoras.style.gap = "10px";
@@ -744,7 +742,6 @@
                     let esPasada = objetoFechaBoton < ahora;
 
                     if (!esPasada) {
-                        // Generamos una estructura de botón interactiva mediante Radio Inputs camuflados
                         htmlBotones += `
                             <div class="hora-boton-contenedor">
                                 <input type="radio" id="dyn-hr-${indexBotones}" name="hora" value="${stringHora12h}" class="hora-radio-oculto" required>
@@ -771,6 +768,137 @@
             contenedorHoras.innerHTML = '<div class="texto-alerta" style="grid-column: 1/-1; color: var(--danger-color);">Error al sincronizar agenda.</div>';
         }
     }
+
+    // ==========================================
+    // 💾 PROCESAR ENVÍO DE FORMULARIO DE RESERVA (Añadido & Asegurado)
+    // ==========================================
+    if (formulario) {
+        formulario.addEventListener('submit', async (e) => {
+            e.preventDefault(); // Detener inmediatamente recargas involuntarias
+
+            const nombre = document.getElementById('client-name').value;
+            const telefono = document.getElementById('client-phone').value;
+            const servicioInput = document.querySelector('input[name="servicio"]:checked');
+            
+            if (!servicioInput) {
+                alert("Por favor, selecciona un servicio.");
+                return;
+            }
+            
+            const servicio = servicioInput.value;
+            const duracion = parseInt(servicioInput.getAttribute('data-duracion'), 10) || 30;
+            
+            const barberoInput = document.querySelector('input[name="barbero"]:checked');
+            if (!barberoInput) {
+                alert("Por favor, selecciona un barbero.");
+                return;
+            }
+            const barbero = barberoInput.value;
+            const fecha = inputFecha.value;
+            
+            const horaSeleccionadaInput = document.querySelector('input[name="hora"]:checked');
+            if (!horaSeleccionadaInput) {
+                alert("Por favor, selecciona un horario de los botones disponibles.");
+                return;
+            }
+            const hora = horaSeleccionadaInput.value;
+
+            // Preparamos la pestaña para WhatsApp (evita bloqueos de ventanas emergentes)
+            const nuevaPestana = window.open('about:blank', '_blank');
+
+            try {
+                // 1. Doble verificación de seguridad contra colisiones directas
+                const { data: duplicados, error: errorDuplicados } = await _supabase
+                    .from('reservas')
+                    .select('hora, duracion')
+                    .eq('fecha', fecha)
+                    .eq('barbero', barbero);
+
+                if (errorDuplicados) throw new Error("Error al comprobar la disponibilidad: " + errorDuplicados.message);
+
+                const inicioNuevaCitaMin = convertirStringAMinutos(hora);
+                const finNuevaCitaMin = inicioNuevaCitaMin + duracion;
+                let sobreescrito = false;
+
+                if (duplicados) {
+                    for (let d of duplicados) {
+                        let dInicio = convertirStringAMinutos(d.hora);
+                        let dFin = dInicio + (d.duracion || 30);
+                        if (inicioNuevaCitaMin < dFin && finNuevaCitaMin > dInicio) {
+                            sobreescrito = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (sobreescrito) {
+                    if (nuevaPestana) nuevaPestana.close();
+                    alert("¡Lo sentimos! Ese bloque horario acaba de ser ocupado. Por favor elige otra hora.");
+                    actualizarHorariosDisponibles();
+                    return;
+                }
+
+                // 2. Inserción segura de datos en Supabase
+                const { data: nuevaReserva, error: errorInsert } = await _supabase
+                    .from('reservas')
+                    .insert([{ 
+                        fecha: fecha, 
+                        hora: hora, 
+                        barbero: barbero, 
+                        duracion: duracion,
+                        cliente: nombre,
+                        telefono: telefono,
+                        servicio: servicio
+                    }])
+                    .select();
+
+                if (errorInsert) throw new Error("Supabase rechazó los datos: " + errorInsert.message);
+                if (!nuevaReserva || nuevaReserva.length === 0) throw new Error("Se guardó en base de datos pero no se generó el ID de confirmación.");
+
+                // Memorizar credenciales del usuario
+                localStorage.setItem("barberia_nombre", nombre);
+                localStorage.setItem("barberia_telefono", telefono);
+
+                // 3. Sistema de alertas vía EmailJS
+                var datosParaCorreo = {
+                    nombre_cliente: nombre,
+                    telefono: telefono,
+                    hora_cita: `${hora} el día ${fecha} con ${barbero}`
+                };
+
+                emailjs.send("service_z2lbr3y", "template_7phspmb", datosParaCorreo)
+                    .then(function() {
+                        console.log("Correo enviado de forma exitosa.");
+                    }, function(err) {
+                        console.error("EmailJS Error al mandar correo:", err);
+                    });
+
+                // 4. Procesado del link de WhatsApp con cancelación automática
+                const idGenerado = nuevaReserva[0].id;
+                const urlBase = window.location.origin + window.location.pathname;
+                const enlaceCancelar = `${urlBase}?cancelar=${idGenerado}`;
+
+                const telefonoBarberia = "18299702130"; 
+                const mensaje = `💈 *NUEVA CITA - THE JOSEPH BARBERSHOP* 💈\n\n👤 *Cliente:* ${nombre}\n📞 *Teléfono:* ${telefono}\n✂️ *Servicio:* ${servicio} (${duracion} min)\n🧔 *Barbero:* ${barbero}\n📅 *Fecha:* ${fecha}\n⏰ *Hora:* ${hora}\n\n_¡Por favor confirma mi espacio!_\n\n❌ *Para cancelar o cambiar tu espacio haz clic aquí:* \n${enlaceCancelar}`;
+                
+                const urlWhatsapp = `https://wa.me/${telefonoBarberia}?text=${encodeURIComponent(mensaje)}`;
+                
+                if (nuevaPestana) {
+                    nuevaPestana.location.href = urlWhatsapp;
+                } else {
+                    window.open(urlWhatsapp, '_blank');
+                }
+                
+                actualizarHorariosDisponibles();
+
+            } catch (err) {
+                if (nuevaPestana) nuevaPestana.close();
+                console.error("Error detectado en el submit:", err);
+                alert("No se pudo procesar la cita de forma segura. Detalle técnico: " + err.message);
+            }
+        });
+    }
+
     // ==========================================
     // ❌ LÓGICA DEL MÓDULO DE CANCELACIÓN
     // ==========================================
@@ -800,66 +928,7 @@
 
         } catch (err) {
             txtStatus.innerText = "Error de conexión al cargar la cita.";
-            txtStatus.style.color = "var(--danger-color)";
-        }
-    }
-
-    // ==========================================
-    // ❌ ACCIÓN DE CANCELACIÓN DEFINITIVA
-    // ==========================================
-    if (btnEjecutarCancelar) {
-        btnEjecutarCancelar.addEventListener('click', async () => {
-            btnEjecutarCancelar.disabled = true;
-            txtStatus.innerText = "Procesando la liberación de tu espacio...";
-            txtStatus.style.color = "var(--primary-color)";
-
-            try {
-                const { error } = await _supabase
-                    .from('reservas')
-                    .delete()
-                    .eq('id', idACancelar);
-
-                if (error) throw error;
-
-                txtStatus.innerText = "¡Tu cita ha sido cancelada exitosamente! El bloque de horario ya se encuentra disponible para otros clientes.";
-                txtStatus.style.color = "var(--whatsapp-color)";
-                
-                const infoCard = document.querySelector('.info-card');
-                if (infoCard) infoCard.style.opacity = "0.5";
-                
-                setTimeout(() => {
-                    window.location.href = window.location.origin + window.location.pathname;
-                }, 4000);
-
-            } catch (err) {
-                console.error("Error al cancelar la cita:", err.message);
-                txtStatus.innerText = "Hubo un problema al cancelar tu espacio. Por favor, inténtalo de nuevo.";
-                txtStatus.style.color = "var(--danger-color)";
-                btnEjecutarCancelar.disabled = false;
-            }
-        });
-    }
-
-    // ==========================================
-    // 🕒 FUNCIÓN COMPLEMENTARIA DE FORMATO
-    // ==========================================
-    function formatearDuracion(minutosTotales) {
-        if (!minutosTotales || minutosTotales <= 0) return "0 min";
-
-        const horas = Math.floor(minutosTotales / 60);
-        const minutosRestantes = minutosTotales % 60;
-
-        if (horas > 0 && minutosRestantes === 0) {
-            return horas === 1 ? `${horas} hora` : `${horas} horas`;
-        }
-        
-        if (horas === 0 && minutosRestantes > 0) {
-            return `${minutosRestantes} min`;
-        }
-        
-        const textoHora = horas === 1 ? `${horas} hora` : `${horas} horas`;
-        return `${textoHora} y ${minutosRestantes} min`;
-    }
+            txtStatus
 </script>
 </body>
 </html>
