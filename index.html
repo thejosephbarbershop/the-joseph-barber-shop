@@ -597,7 +597,7 @@ window.onload = function() {
                             </label>
                         </div>`;
                 });
-                contenedorBarberos.innerHTML = htmlBarberos;
+            contenedorBarberos.innerHTML = htmlBarberos;
 
                 // Volvemos a escuchar los clics de los nuevos elementos agregados
                 document.querySelectorAll(".barbero-opcion").forEach(radio => {
@@ -691,7 +691,7 @@ window.onload = function() {
 
     function convertirMinutosAString12h(minutosTotales) {
         let horas = Math.floor(minutosTotales / 60);
-        let minutes = minutosTotales % 60;
+        let minutes = minutesTotales % 60;
         let ampm = horas >= 12 ? "PM" : "AM";
         horas = horas % 12;
         horas = horas ? horas : 12; 
@@ -708,7 +708,7 @@ window.onload = function() {
         return new Date(`${fechaStr}T${String(horas).padStart(2, '0')}:${String(minutos).padStart(2, '0')}:00`);
     }
 
-    // --- GENERADOR DE BOTONES DE HORA ---
+    // --- GENERADOR DE BOTONES DE HORA (CON BLOQUEO DE DÍAS FERIADOS/BLOQUEADOS) ---
     async function actualizarHorariosDisponibles() {
         const fechaSeleccionada = inputFecha.value;
         const barberoSeleccionadoInput = document.querySelector('input[name="barbero"]:checked');
@@ -726,6 +726,25 @@ window.onload = function() {
         contenedorHoras.innerHTML = "<div>Calculando agenda...</div>";
 
         try {
+            // 1. VERIFICACIÓN DE DÍAS BLOQUEADOS / FERIADOS
+            const { data: diaBloqueado, error: errorDia } = await window._supabase
+                .from("dias_bloqueados")
+                .select("motivo")
+                .eq("fecha", fechaSeleccionada)
+                .maybeSingle();
+
+            if (diaBloqueado) {
+                contenedorHoras.innerHTML = `
+                    <div style="grid-column: 1/-1; color: #ff4d4d; font-weight: bold; text-align: center; padding: 20px; background: rgba(255, 77, 77, 0.1); border-radius: 8px; border: 1px solid rgba(255, 77, 77, 0.2);">
+                        🔒 Negocio cerrado para este día.<br>
+                        <span style="font-size: 14px; font-weight: normal; color: #ccc; display: inline-block; margin-top: 5px;">
+                            Motivo: ${diaBloqueado.motivo || 'Feriado / No laborable'}
+                        </span>
+                    </div>`;
+                return; // Corta la ejecución aquí para no mostrar horas
+            }
+
+            // 2. BUSCAR CITAS EXISTENTES (Lógica original)
             const { data: reservas, error } = await window._supabase
                 .from("reservas")
                 .select("hora, duracion")
@@ -896,4 +915,3 @@ window.onload = function() {
 </script>
 </body>
 </html>
-
