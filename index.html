@@ -528,9 +528,8 @@
     </div>
 
 </div>
-
 <script>
-window.onload = function() {
+window.onload = async function() {
     // --- CONFIGURACION DE CREDENCIALES ---
     const SUPABASE_URL = "https://xnfmqumhhxpkrigizvlu.supabase.co";
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhuZm1xdW1oaHhwa3JpZ2l6dmx1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5MTE3NjgsImV4cCI6MjA5NTQ4Nzc2OH0.zNSZ4Nw2Iz2IieExt9SErJddPseWb65Hxedg5ZGZCvI";
@@ -541,6 +540,7 @@ window.onload = function() {
         return;
     }
 
+    // Inicializamos la variable en el objeto global obligatoriamente
     window._supabase = miSupabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     if (typeof emailjs !== 'undefined') emailjs.init("GQ0nATFCZx9T_S2wV");
 
@@ -558,10 +558,54 @@ window.onload = function() {
     const btnEjecutarCancelar = document.getElementById("btn-ejecutar-cancelar");
     const txtStatus = document.getElementById("mensaje-status");
 
-    // Variables de configuración de horarios por defecto
+    // VARIABLES DE TIEMPO DINÁMICAS (Cambiadas a 'let' para permitir actualizaciones)
     let APERTURA_MINUTOS = 8 * 60;   
     let CIERRE_MINUTOS = 20 * 60;      
-    const MARGEN_LIMPIEZA = 5;         
+    let MARGEN_LIMPIEZA = 5;         
+
+    // --- NUEVO: CONFIGURACIÓN DINÁMICA DE HORARIOS DESDE SUPABASE ---
+    async function ajustarHorarioCierre(fechaSeleccionada) {
+        let horaAperturaStr = "08:00 AM";
+        let horaCierreSemanaStr = "08:00 PM";
+        let horaCierreFindeStr = "12:00 AM";
+
+        try {
+            const { data: config, error } = await window._supabase
+                .from('configuracion')
+                .select('*')
+                .limit(1)
+                .maybeSingle();
+
+            if (error) {
+                console.warn("No se pudo leer Supabase, usando horarios locales:", error.message);
+            } else if (config) {
+                horaAperturaStr = config.apertura || horaAperturaStr;
+                horaCierreSemanaStr = config.cierre_semana || horaCierreSemanaStr;
+                horaCierreFindeStr = config.cierre_finde || horaCierreFindeStr;
+                if (config.margen_limpieza) {
+                    MARGEN_LIMPIEZA = parseInt(config.margen_limpieza, 10);
+                }
+            }
+        } catch (err) {
+            console.error("Fallo crítico al conectar con Supabase para configuración:", err);
+        }
+
+        APERTURA_MINUTOS = convertirStringAMinutos(horaAperturaStr);
+
+        if (fechaSeleccionada) {
+            const partes = fechaSeleccionada.split("-");
+            const fechaObjeto = new Date(partes[0], partes[1] - 1, partes[2]);
+            const numeroDia = fechaObjeto.getDay(); 
+
+            if (numeroDia >= 1 && numeroDia <= 4) { // Lunes a Jueves
+                CIERRE_MINUTOS = convertirStringAMinutos(horaCierreSemanaStr);
+            } else { // Viernes a Domingo
+                CIERRE_MINUTOS = convertirStringAMinutos(horaCierreFindeStr);
+            }
+        } else {
+            CIERRE_MINUTOS = convertirStringAMinutos(horaCierreSemanaStr);
+        }
+    }
 
     // Cargar barberos activos desde la base de datos
     async function cargarBarberosDinamicos() {
@@ -581,7 +625,6 @@ window.onload = function() {
 
                 let htmlBarberos = "";
                 barberos.forEach((b, index) => {
-                    // Generamos un avatar por defecto o marcador si no hay imagen en tu tabla
                     let avatarUrl = b.nombre.toLowerCase().includes('vanessa') ? "https://ibb.co/QFGTHdKY" : "https://ibb.co/9mjT4rHq";
                     let rol = b.nombre.toLowerCase().includes('vanessa') ? "Especialista / Trenzas" : "Barbero Máster";
                     let esRequerido = index === 0 ? "required" : "";
@@ -607,73 +650,18 @@ window.onload = function() {
             console.error("Error cargando barberos:", err);
         }
     }
-// Ajustar horarios dinámicamente desde Supabase (Versión Corregida)
-// --- NUEVO: CONFIGURACIÓN INTEGRADA Y SEGURA ---
-async function ajustarHorarioCierre(fechaSeleccionada) {
-    // Valores de respaldo por si Supabase no responde
-    let horaAperturaStr = "08:00 AM";
-    let horaCierreSemanaStr = "08:00 PM";
-    let horaCierreFindeStr = "12:00 AM";
 
-    try {
-        // Hacemos la petición a Supabase de forma segura
-        const { data: config, error } = await _supabase
-            .from('configuracion')
-            .select('*')
-            .limit(1)
-            .maybeSingle(); // maybeSingle evita errores si la tabla está vacía
-
-        if (error) {
-            console.warn("No se pudo leer Supabase, usando horarios locales:", error.message);
-        } else if (config) {
-            // Si hay datos, los usamos
-            horaAperturaStr = config.apertura || horaAperturaStr;
-            horaCierreSemanaStr = config.cierre_semana || horaCierreSemanaStr;
-            horaCierreFindeStr = config.cierre_finde || horaCierreFindeStr;
-            if (config.margen_limpieza) {
-                MARGEN_LIMPIEZA = parseInt(config.margen_limpieza, 10);
-            }
-        }
-    } catch (err) {
-        console.error("Fallo crítico al conectar con Supabase:", err);
+    // --- CONTROLADORES DE EVENTOS ---
+    if (inputFecha) {
+        inputFecha.addEventListener("change", async function() {
+            await ajustarHorarioCierre(this.value);
+            actualizarHorariosDisponibles();
+        });
     }
 
-    // Calcular la apertura en minutos
-    APERTURA_MINUTOS = convertirStringAMinutos(horaAperturaStr);
+    opcionesServicio.forEach(radio => radio.addEventListener("change", actualizarHorariosDisponibles));
 
-    // Si el usuario ya eligió una fecha, calculamos el cierre exacto de ese día
-    if (fechaSeleccionada) {
-        const partes = fechaSeleccionada.split("-");
-        const fechaObjeto = new Date(partes[0], partes[1] - 1, partes[2]);
-        const numeroDia = fechaObjeto.getDay(); 
-
-        if (numeroDia >= 1 && numeroDia <= 4) { // Lunes a Jueves
-            CIERRE_MINUTOS = convertirStringAMinutos(horaCierreSemanaStr);
-        } else { // Viernes a Domingo
-            CIERRE_MINUTOS = convertirStringAMinutos(horaCierreFindeStr);
-        }
-    } else {
-        // Si no hay fecha elegida aún, ponemos el cierre de semana por defecto
-        CIERRE_MINUTOS = convertirStringAMinutos(horaCierreSemanaStr);
-    }
-}
-
-// --- CONTROLADORES DE EVENTOS CORREGIDOS ---
-if (inputFecha) {
-    inputFecha.addEventListener("change", async function() {
-        // 1. Primero esperamos a que cargue y configure las variables de tiempo
-        await ajustarHorarioCierre(this.value);
-        // 2. Luego pintamos los botones en pantalla
-        actualizarHorariosDisponibles();
-    });
-}
-
-// Asegurar que los otros botones ejecuten el renderizado
-opcionesBarbero.forEach(radio => radio.addEventListener("change", actualizarHorariosDisponibles));
-opcionesServicio.forEach(radio => radio.addEventListener("change", actualizarHorariosDisponibles));
-
-// --- MODIFICAR TU EVENTO DOMContentLoaded ---
-document.addEventListener("DOMContentLoaded", async function() {
+    // Cargar datos locales guardados del cliente
     const nombreGuardado = localStorage.getItem("barberia_nombre");
     const telefonoGuardado = localStorage.getItem("barberia_telefono");
     if (nombreGuardado && document.getElementById("client-name")) {
@@ -683,21 +671,9 @@ document.addEventListener("DOMContentLoaded", async function() {
         document.getElementById("client-phone").value = telefonoGuardado;
     }
 
-    // Inicializamos las variables de tiempo al cargar la app sin trancar el renderizado
+    // Inicialización del estado de la app en orden secuencial obligatorio
+    await cargarBarberosDinamicos();
     await ajustarHorarioCierre(inputFecha ? inputFecha.value : null);
-});
-    // Cargar datos locales del cliente
-    const nombreGuardado = localStorage.getItem("barberia_nombre");
-    const telephoneGuardado = localStorage.getItem("barberia_telefono");
-    if (nombreGuardado && document.getElementById("client-name")) {
-        document.getElementById("client-name").value = nombreGuardado;
-    }
-    if (telephoneGuardado && document.getElementById("client-phone")) {
-        document.getElementById("client-phone").value = telephoneGuardado;
-    }
-
-    // Inicializar carga de barberos de la base de datos
-    cargarBarberosDinamicos();
 
     if (idACancelar) {
         if (moduloReserva) moduloReserva.classList.add("hidden");
