@@ -292,21 +292,21 @@
                         </label>
                     </div>
                     <div>
-                        <input type="radio" id="srv4" name="servicio" value="Trenzado normal" data-duracion="1 hora" class="selector-item">
+                        <input type="radio" id="srv4" name="servicio" value="Trenzado normal" data-duracion="60" class="selector-item">
                         <label for="srv4" class="selector-label">
                             <span class="item-name">Trenzado normal</span>
                             <span class="item-desc"> 1 hora • Estilo</span>
                         </label>
                     </div>
                     <div>
-                        <input type="radio" id="srv5" name="servicio" value="Trenzado con pelo" data-duracion="6 horas" class="selector-item">
+                        <input type="radio" id="srv5" name="servicio" value="Trenzado con pelo" data-duracion="360" class="selector-item">
                         <label for="srv5" class="selector-label">
                             <span class="item-name">Trenzado con pelo</span>
                             <span class="item-desc">6 horas • Estilo</span>
                         </label>
                     </div>
                     <div>
-                        <input type="radio" id="srv6" name="servicio" value="Facial" data-duracion="1 hora" class="selector-item">
+                        <input type="radio" id="srv6" name="servicio" value="Facial" data-duracion="60" class="selector-item">
                         <label for="srv6" class="selector-label">
                             <span class="item-name">Facial</span>
                             <span class="item-desc">1 hora • Estilo</span>
@@ -327,7 +327,7 @@
                         </label>
                     </div>
                     <div>
-                        <input type="radio" id="srv9" name="servicio" value="Mantenimiento de aire acondicionado" data-duracion="2 horas" class="selector-item">
+                        <input type="radio" id="srv9" name="servicio" value="Mantenimiento de aire acondicionado" data-duracion="120" class="selector-item">
                         <label for="srv9" class="selector-label">
                             <span class="item-name">Mantenimiento de aire</span>
                             <span class="item-desc">2 horas • Soporte</span>
@@ -509,11 +509,12 @@
             return `${strHoras}:${strMinutos} ${ampm}`;
         }
 
-      function generarObjetoFecha(fechaStr, minutosTotales) {
+        function generarObjetoFecha(fechaStr, minutosTotales) {
             let horas = Math.floor(minutosTotales / 60);
-            let minutos = minutosTotales % 60; // Corrección de la doble asignación
+            let minutos = minutosTotales % 60; 
             return new Date(`${fechaStr}T${String(horas).padStart(2, '0')}:${String(minutos).padStart(2, '0')}:00`);
         }
+
         // ==========================================
         // 🎯 MOTOR CENTRAL: CÁLCULO Y GENERACIÓN DINÁMICA
         // ==========================================
@@ -746,13 +747,6 @@
             txtStatus.style.color = "var(--primary-color)";
 
             try {
-                // Obtenemos los datos de la cita antes de borrarla para la notificación de WhatsApp opcional
-                const cliente = document.getElementById('cancel-info-cliente').innerText;
-                const servicio = document.getElementById('cancel-info-servicio').innerText;
-                const barbero = document.getElementById('cancel-info-barbero').innerText;
-                const fecha = document.getElementById('cancel-info-fecha').innerText;
-                const hora = document.getElementById('cancel-info-hora').innerText;
-
                 const { error } = await _supabase
                     .from('reservas')
                     .delete()
@@ -760,14 +754,11 @@
 
                 if (error) throw error;
 
-                // Modificamos la interfaz para reflejar el éxito absoluto
                 txtStatus.innerText = "¡Tu cita ha sido cancelada exitosamente! El bloque de horario ya se encuentra disponible para otros clientes.";
                 txtStatus.style.color = "var(--whatsapp-color)";
                 
-                // Desactivamos visualmente la tarjeta de información antigua
                 document.querySelector('.info-card').style.opacity = "0.5";
                 
-                // Opcional: Redirigir al formulario principal limpio después de 4 segundos
                 setTimeout(() => {
                     window.location.href = window.location.origin + window.location.pathname;
                 }, 4000);
@@ -778,29 +769,28 @@
                 txtStatus.style.color = "var(--danger-color)";
                 btnEjecutarCancelar.disabled = false;
             }
-            // ... Aquí termina todo el código que ya tenías antes ...
-    // No borres nada de lo que está arriba.
-
-    // 👇 Pegas la nueva función justo aquí:
-    function formatearDuracion(minutosTotales) {
-        if (!minutosTotales || minutosTotales <= 0) return "0 min";
-
-        const horas = Math.floor(minutosTotales / 60);
-        const minutosRestantes = minutosTotales % 60;
-
-        if (horas > 0 && minutosRestantes === 0) {
-            return horas === 1 ? `${horas} hora` : `${horas} horas`;
-        }
-        
-        if (horas === 0 && minutosRestantes > 0) {
-            return `${minutosRestantes} min`;
-        }
-        
-        const textoHora = horas === 1 ? `${horas} hora` : `${horas} horas`;
-        return `${textoHora} y ${minutosRestantes} min`;
-    }
-
         });
+
+        // ==========================================
+        // 🕒 FUNCIÓN GLOBAL PARA FORMATEAR DURACIÓN 
+        // ==========================================
+        function formatearDuracion(minutosTotales) {
+            if (!minutosTotales || minutosTotales <= 0) return "0 min";
+
+            const horas = Math.floor(minutosTotales / 60);
+            const minutosRestantes = minutosTotales % 60;
+
+            if (horas > 0 && minutosRestantes === 0) {
+                return horas === 1 ? `${horas} hora` : `${horas} horas`;
+            }
+            
+            if (horas === 0 && minutosRestantes > 0) {
+                return `${minutosRestantes} min`;
+            }
+            
+            const textoHora = horas === 1 ? `${horas} hora` : `${horas} horas`;
+            return `${textoHora} y ${minutosRestantes} min`;
+        }
     </script>
 </body>
 </html>
