@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -9,30 +9,26 @@
     <link rel="apple-touch-icon" sizes="180x180" href="https://ibb.co/LzbTQvbL?v=2">
     <link rel="manifest" href="manifest.json">
     
-    <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
     
     <style>
         :root {
-            --bg-main: #0b0c10;         /* Fondo oscuro profundo */
-            --bg-card: #1f2833;         /* Gris azulado oscuro premium */
-            --accent-gold: #c5a880;     /* Dorado champaña (más elegante) */
-            --text-main: #ffffff;
-            --text-muted: #c5c6c7;
-            --danger-color: #e74c3c;
+            --primary-color: #1a1a1a;   /* Negro Barbería */
+            --accent-color: #d4af37;    /* Dorado Premium */
+            --bg-color: #f4f7f6;
+            --text-color: #333;
+            --white: #ffffff;
+            --whatsapp-color: #25d366; /* Verde WhatsApp */
+            --danger-color: #de3b3b;   /* Rojo Cancelación */
         }
 
         body {
-            font-family: 'Poppins', sans-serif;
-            background-color: var(--bg-main);
-            color: var(--text-main);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
             margin: 0;
-            padding: 15px;
+            padding: 10px;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -42,269 +38,173 @@
 
         .app-container {
             width: 100%;
-            max-width: 450px;
-            background-color: #151a21;
-            border-radius: 20px;
+            max-width: 430px;
+            background-color: var(--white);
+            border-radius: 25px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.15);
             overflow: hidden;
             display: flex;
             flex-direction: column;
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6);
         }
 
         header {
-            background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.8)), url('https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&q=80&w=600') center/cover;
-            padding: 45px 20px;
+            background-color: var(--primary-color);
+            color: var(--white);
+            padding: 30px 20px;
             text-align: center;
-            border-bottom: 2px solid var(--accent-gold);
+            border-bottom: 4px solid var(--accent-color);
         }
 
         header h1 {
             margin: 0;
-            font-size: 1.8rem;
-            font-weight: 700;
+            font-size: 1.6rem;
+            font-weight: bold;
             letter-spacing: 2px;
-            color: #fff;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+            color: var(--accent-color);
         }
 
         header p {
-            margin: 8px 0 0 0;
+            margin: 5px 0 0 0;
             font-size: 0.85rem;
-            text-transform: uppercase;
-            letter-spacing: 3px;
-            color: var(--accent-gold);
-            font-weight: 600;
+            opacity: 0.7;
         }
 
         .form-content, .cancel-content {
-            padding: 25px 20px 110px 20px !important;
+            padding: 20px 20px 100px 20px !important;
             max-height: 70vh;
             overflow-y: auto;
         }
 
         .form-section {
-            margin-bottom: 30px;
+            margin-bottom: 25px;
         }
 
         .section-title {
-            font-size: 0.9rem;
-            color: var(--accent-gold);
+            font-size: 0.85rem;
+            color: #777;
             text-transform: uppercase;
             letter-spacing: 1.5px;
-            margin-bottom: 15px;
+            margin-bottom: 12px;
             display: block;
-            font-weight: 600;
+            font-weight: bold;
         }
 
         .input-field {
             width: 100%;
-            padding: 15px;
-            background-color: var(--bg-card);
-            border: 1px solid #2f3b4c;
+            padding: 12px;
+            border: 2px solid #eee;
             border-radius: 12px;
-            font-size: 0.95rem;
-            font-family: 'Poppins', sans-serif;
+            font-size: 1rem;
             box-sizing: border-box;
-            margin-bottom: 12px;
-            color: var(--text-main);
-            transition: all 0.3s ease;
+            margin-bottom: 10px;
+            transition: border-color 0.3s;
         }
 
         .input-field:focus {
             outline: none;
-            border-color: var(--accent-gold);
-            box-shadow: 0 0 10px rgba(197, 168, 128, 0.2);
+            border-color: var(--accent-color);
         }
 
-        input[type="date"]::-webkit-calendar-picker-indicator {
-            filter: invert(1);
-        }
-
-        /* DISEÑO DE TARJETAS DE SERVICIOS CON IMÁGENES */
-        .services-grid {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-
-        .service-card-label {
-            display: flex;
-            align-items: center;
-            position: relative;
-            border-radius: 14px;
-            overflow: hidden;
-            cursor: pointer;
-            border: 1px solid #2f3b4c;
-            height: 85px;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-        }
-
-        /* Capa oscura interna de la imagen para legibilidad */
-        .service-card-label::before {
-            content: '';
-            position: absolute;
-            top:0; left:0; width:100%; height:100%;
-            background: linear-gradient(90deg, rgba(11,12,16,0.9) 40%, rgba(11,12,16,0.4) 100%);
-            z-index: 1;
-            transition: all 0.3s ease;
-        }
-
-        .service-info {
-            position: relative;
-            z-index: 2;
-            padding-left: 20px;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .service-name {
-            font-weight: 600;
-            font-size: 1.05rem;
-            color: #fff;
-        }
-
-        .service-desc {
-            font-size: 0.8rem;
-            color: var(--accent-gold);
-            margin-top: 2px;
-        }
-
-        /* Comportamiento al seleccionar Servicio */
-        .selector-item:checked + .service-card-label {
-            border-color: var(--accent-gold);
-            transform: scale(1.02);
-            box-shadow: 0 0 15px rgba(197, 168, 128, 0.3);
-        }
-
-        .selector-item:checked + .service-card-label::before {
-            background: linear-gradient(90deg, rgba(31,40,51,0.95) 50%, rgba(31,40,51,0.6) 100%);
-        }
-
-        /* DISEÑO DE SELECCIÓN DE BARBEROS CON AVATAR */
-        .barbers-group {
+        .selector-group {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 15px;
+            gap: 12px;
         }
 
-        .barber-card-label {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            background-color: var(--bg-card);
-            border: 1px solid #2f3b4c;
-            border-radius: 16px;
-            padding: 20px 10px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
+        .selector-item {
+            display: none;
         }
 
-        .barber-avatar {
-            width: 70px;
-            height: 70px;
-            border-radius: 50%;
-            object-fit: cover;
-            margin-bottom: 12px;
-            border: 2px solid #2f3b4c;
-            transition: all 0.3s ease;
-        }
-
-        .barber-name {
-            font-weight: 600;
-            font-size: 0.95rem;
-            color: #fff;
-        }
-
-        .barber-role {
-            font-size: 0.75rem;
-            color: var(--text-muted);
-            margin-top: 2px;
-        }
-
-        /* Comportamiento al seleccionar Barbero */
-        .selector-item:checked + .barber-card-label {
-            border-color: var(--accent-gold);
-            background-color: #242d38;
-        }
-
-        .selector-item:checked + .barber-card-label .barber-avatar {
-            border-color: var(--accent-gold);
-            transform: scale(1.08);
-        }
-
-        /* HORARIOS (BOTONES LIMPIOS) */
-        .hours-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr); /* 3 por fila para optimizar espacio */
-            gap: 10px;
-        }
-
-        .hour-label {
+        .selector-label {
             display: block;
-            background-color: var(--bg-card);
-            border: 1px solid #2f3b4c;
-            border-radius: 10px;
-            padding: 12px 5px;
+            background-color: var(--white);
+            border: 2px solid #eee;
+            border-radius: 14px;
+            padding: 15px 10px;
             text-align: center;
             cursor: pointer;
-            font-size: 0.9rem;
+            transition: all 0.25s ease;
+            height: 100%;
+            box-sizing: border-box;
+        }
+
+        .selector-label:hover {
+            border-color: var(--accent-color);
+            background-color: #fffdf7;
+        }
+
+        .selector-item:checked + .selector-label {
+            border-color: var(--accent-color);
+            background-color: var(--primary-color);
+            color: var(--white);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .selector-item:checked + .selector-label .item-desc {
+            color: var(--accent-color);
+        }
+
+        .item-name {
+            display: block;
+            font-weight: bold;
+            font-size: 0.95rem;
+        }
+
+        .item-desc {
+            display: block;
+            font-size: 0.8rem;
+            color: #666;
+            margin-top: 4px;
             font-weight: 500;
-            transition: all 0.2s ease;
         }
 
-        .selector-item:checked + .hour-label {
-            background-color: var(--accent-gold);
-            color: #000;
-            font-weight: 600;
-            border-color: var(--accent-gold);
-        }
-
-        /* BOTONES DE ACCIÓN */
         .confirm-btn {
             display: flex;
             align-items: center;
             justify-content: center;
+            gap: 10px;
             width: calc(100% - 40px);
-            max-width: 410px;
+            max-width: 390px;
             padding: 16px;
-            font-family: 'Poppins', sans-serif;
-            color: #000000;
+            color: var(--white);
             border: none;
             border-radius: 14px;
-            font-size: 1rem;
-            font-weight: 600;
+            font-size: 1.1rem;
+            font-weight: bold;
             cursor: pointer;
+            transition: all 0.3s ease;
             text-transform: uppercase;
             letter-spacing: 1px;
             position: fixed;
-            bottom: 25px;
+            bottom: 20px;
             left: 50%;
             transform: translateX(-50%);
             z-index: 999;
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
-            transition: all 0.3s ease;
         }
 
-        .btn-gold {
-            background-color: var(--accent-gold);
+        .btn-whatsapp {
+            background-color: var(--whatsapp-color);
+            box-shadow: 0 -4px 15px rgba(0, 0, 0, 0.1), 0 4px 10px rgba(37, 211, 102, 0.3);
         }
 
-        .btn-gold:hover {
-            background-color: #dbbc93;
+        .btn-whatsapp:hover {
+            background-color: #20ba59;
             transform: translateX(-50%) translateY(-2px);
         }
 
         .btn-danger {
             background-color: var(--danger-color);
-            color: #fff;
+            box-shadow: 0 -4px 15px rgba(0, 0, 0, 0.1), 0 4px 10px rgba(222, 59, 59, 0.3);
+        }
+
+        .btn-danger:hover {
+            background-color: #c43030;
+            transform: translateX(-50%) translateY(-2px);
         }
 
         .btn-danger:disabled {
-            background-color: #222 !important;
-            color: #555 !important;
-            border: 1px solid #333 !important;
+            background-color: #ccc !important;
+            color: #fff !important;
             cursor: not-allowed !important;
             box-shadow: none !important;
             transform: translateX(-50%) !important;
@@ -315,221 +215,190 @@
         }
 
         .info-card {
-            background-color: var(--bg-card);
-            border: 1px dashed #444;
-            border-radius: 12px;
+            background-color: #f9f9f9;
+            border: 2px solid #eee;
+            border-radius: 16px;
             padding: 20px;
+            text-align: left;
             margin-top: 15px;
         }
 
         .info-line {
-            margin-bottom: 10px;
-            font-size: 0.9rem;
-            color: var(--text-muted);
+            margin-bottom: 12px;
+            font-size: 0.95rem;
+        }
+
+        .info-line:last-child {
+            margin-bottom: 0;
         }
 
         .info-line strong {
-            color: #fff;
+            color: var(--primary-color);
+        }
+
+        #mensaje-status {
+            margin-top: 20px;
+            font-weight: bold;
+            font-size: 1rem;
         }
 
         .texto-alerta {
-            grid-column: span 3;
+            grid-column: span 2;
             text-align: center;
-            font-size: 0.85rem;
-            color: var(--text-muted);
+            font-size: 0.9rem;
+            color: #888;
             padding: 15px 0;
         }
-        /* --- ESTILOS DE LOS BOTONES DE HORARIOS --- */
-.hora-boton-contenedor {
-    position: relative;
-    width: 100%;
-}
-
-/* Escondemos el círculo de radio por defecto */
-.hora-radio-oculto {
-    position: absolute;
-    opacity: 0;
-    width: 100%;
-    height: 100%;
-    cursor: pointer;
-    margin: 0;
-    z-index: 2;
-}
-
-/* Aspecto inicial del botón de hora */
-.hora-boton-label {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 12px 8px;
-    background: #1e1e24; /* Color de fondo oscuro elegante */
-    color: #ffffff;
-    border: 2px solid #3a3a42;
-    border-radius: 8px;
-    font-size: 14px;
-    font-weight: bold;
-    text-align: center;
-    transition: all 0.2s ease;
-    cursor: pointer;
-    user-select: none;
-}
-
-/* Pequeño texto para el AM/PM */
-.ampm-sub {
-    font-size: 10px;
-    opacity: 0.6;
-    margin-top: 2px;
-}
-
-/* Efecto cuando pasas el mouse por encima (Hover) */
-.hora-boton-label:hover {
-    background: #2a2a35;
-    border-color: #cca43b; /* Color dorado/barbería */
-}
-
-/* ¡ESTADO SELECCIONADO! Cuando el cliente hace clic en el botón */
-.hora-radio-oculto:checked + .hora-boton-label {
-    background: #cca43b; /* Fondo dorado o tu color primario */
-    color: #000000;      /* Texto oscuro para contraste */
-    border-color: #ffffff;
-    box-shadow: 0 0 10px rgba(204, 164, 59, 0.5);
-    transform: scale(1.03); /* Se agranda un poquito */
-}
     </style>
 </head>
 <body>
-        
-<div class="app-container">
-    <header>
-        <h1 id="header-title">THE JOSEPH BARBERSHOP</h1>
-        <p id="header-subtitle">RESERVA TU EXPERIENCIA</p>
-    </header>
 
-    <form id="reserva-form" class="form-content">
-        
-        <div class="form-section">
-            <span class="section-title">1. Tus Datos de Contacto</span>
-            <input type="text" id="client-name" class="input-field" placeholder="Nombre completo" required>
-            <input type="tel" id="client-phone" class="input-field" placeholder="Número de WhatsApp" required>
-        </div>
+    <div class="app-container">
+        <header>
+            <h1 id="header-title">THE JOSEPH BARBERSHOP</h1>
+            <p id="header-subtitle">Citas y Reservas por WhatsApp</p>
+        </header>
 
-        <div class="form-section">
-            <span class="section-title">2. Selecciona el Servicio</span>
-            <div class="services-grid">
+        <form id="reserva-form" class="form-content">
+            
+            <div class="form-section">
+                <span class="section-title">Tus Datos</span>
+                <input type="text" id="client-name" class="input-field" placeholder="Nombre completo" required>
+                <input type="tel" id="client-phone" class="input-field" placeholder="Número de teléfono" required>
+            </div>
+
+            <div class="form-section">
+                <span class="section-title">Selecciona un Servicio</span>
+                <div class="selector-group">
+                    <div>
+                        <input type="radio" id="srv1" name="servicio" value="Corte de pelo" data-duracion="45" class="selector-item" required>
+                        <label for="srv1" class="selector-label">
+                            <span class="item-name">Corte de pelo</span>
+                            <span class="item-desc">45 min • Estándar</span>
+                        </label>
+                    </div>
+                    <div>
+                        <input type="radio" id="srv2" name="servicio" value="Cerquillo" data-duracion="30" class="selector-item">
+                        <label for="srv2" class="selector-label">
+                            <span class="item-name">Cerquillo</span>
+                            <span class="item-desc">30 min • Marcado</span>
+                        </label>
+                    </div>
+                    <div>
+                        <input type="radio" id="srv3" name="servicio" value="Haircut niños" data-duracion="45" class="selector-item">
+                        <label for="srv3" class="selector-label">
+                            <span class="item-name">Haircut niños</span>
+                            <span class="item-desc">45 min • &lt; 12 años</span>
+                        </label>
+                    </div>
+                    <div>
+                        <input type="radio" id="srv4" name="servicio" value="Trenzado normal" data-duracion="1 hora" class="selector-item">
+                        <label for="srv4" class="selector-label">
+                            <span class="item-name">Trenzado normal</span>
+                            <span class="item-desc"> 1 hora • Estilo</span>
+                        </label>
+                    </div>
+                    <div>
+                        <input type="radio" id="srv5" name="servicio" value="Trenzado con pelo" data-duracion="6 horas" class="selector-item">
+                        <label for="srv5" class="selector-label">
+                            <span class="item-name">Trenzado con pelo</span>
+                            <span class="item-desc">6 horas • Estilo</span>
+                        </label>
+                    </div>
+                    <div>
+                        <input type="radio" id="srv6" name="servicio" value="Facial" data-duracion="1 hora" class="selector-item">
+                        <label for="srv6" class="selector-label">
+                            <span class="item-name">Facial</span>
+                            <span class="item-desc">1 hora • Estilo</span>
+                        </label>
+                    </div>
+                    <div>
+                        <input type="radio" id="srv7" name="servicio" value="Cejas" data-duracion="5" class="selector-item">
+                        <label for="srv7" class="selector-label">
+                            <span class="item-name">Cejas</span>
+                            <span class="item-desc">5 min • Perfilar</span>
+                        </label>
+                    </div>
+                    <div>
+                        <input type="radio" id="srv8" name="servicio" value="Pestañas" data-duracion="15" class="selector-item">
+                        <label for="srv8" class="selector-label">
+                            <span class="item-name">Pestañas</span>
+                            <span class="item-desc">15 min • Estilo</span>
+                        </label>
+                    </div>
+                    <div>
+                        <input type="radio" id="srv9" name="servicio" value="Mantenimiento de aire acondicionado" data-duracion="2 horas" class="selector-item">
+                        <label for="srv9" class="selector-label">
+                            <span class="item-name">Mantenimiento de aire</span>
+                            <span class="item-desc">2 horas • Soporte</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <span class="section-title">Selecciona tu Barbero</span>
+                <div class="selector-group">
+                    <div>
+                        <input type="radio" id="barb1" name="barbero" value="Joseph" class="selector-item barbero-opcion" required>
+                        <label for="barb1" class="selector-label">
+                            <span class="item-name">Joseph</span>
+                            <span class="item-desc">Barbero Máster</span>
+                        </label>
+                    </div>
+                    <div>
+                        <input type="radio" id="barb2" name="barbero" value="Vanessa" class="selector-item barbero-opcion">
+                        <label for="barb2" class="selector-label">
+                            <span class="item-name">Vanessa</span>
+                            <span class="item-desc">Especialista</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <span class="section-title">Selecciona el Día</span>
+                <input type="date" id="fecha" class="input-field" required>
+            </div>
+
+            <div class="form-section">
+                <span class="section-title">Selecciona la Hora</span>
+                <div class="selector-group" id="contenedor-horas">
+                    <div class="texto-alerta">Selecciona fecha y barbero para ver horarios...</div>
+                </div>
+            </div>
+
+            <button type="submit" class="confirm-btn btn-whatsapp">
+                Confirmar y enviar Cita
+            </button>
+        </form>
+
+        <div id="modulo-cancelar" class="cancel-content hidden">
+            <div class="form-section">
+                <span class="section-title" style="color: var(--danger-color);">Detalles de la Cita a Cancelar</span>
+                <p style="font-size: 0.9rem; color: #555; margin-bottom: 15px;">
+                    Verifica la información de tu espacio antes de confirmar la cancelación. Esta acción liberará el horario de forma inmediata.
+                </p>
+
+                <div class="info-card">
+                    <div class="info-line"><strong>Cliente:</strong> <span id="cancel-info-cliente">Cargando...</span></div>
+                    <div class="info-line"><strong>Servicio:</strong> <span id="cancel-info-servicio">-</span></div>
+                    <div class="info-line"><strong>Barbero:</strong> <span id="cancel-info-barbero">-</span></div>
+                    <div class="info-line"><strong>Fecha:</strong> <span id="cancel-info-fecha">-</span></div>
+                    <div class="info-line"><strong>Horario:</strong> <span id="cancel-info-hora">-</span></div>
+                </div>
                 
-                <!-- Corte de pelo -->
-                <div>
-                    <input type="radio" id="srv1" name="servicio" value="Corte de pelo" data-duracion="45" class="selector-item" required>
-                    <label for="srv1" class="service-card-label" style="background: url('https://images.unsplash.com/photo-1621605815971-fbc98d665033?auto=format&fit=crop&q=80&w=300') center/cover;">
-                        <div class="service-info">
-                            <span class="service-name">Corte de Pelo</span>
-                            <span class="service-desc">45 min • Estilo profesional</span>
-                        </div>
-                    </label>
-                </div>
-
-                <!-- Cerquillo -->
-                <div>
-                    <input type="radio" id="srv2" name="servicio" value="Cerquillo" data-duracion="30" class="selector-item">
-                    <label for="srv2" class="service-card-label" style="background: url('https://images.unsplash.com/photo-1512864084360-7c0c4d0a0845?auto=format&fit=crop&q=80&w=300') center/cover;">
-                        <div class="service-info">
-                            <span class="service-name">Cerquillo</span>
-                            <span class="service-desc">30 min • Perfilado nítido</span>
-                        </div>
-                    </label>
-                </div>
-
-                <!-- Trenzado Normal -->
-                <div>
-                    <input type="radio" id="srv4" name="servicio" value="Trenzado normal" data-duracion="60" class="selector-item">
-                    <label for="srv4" class="service-card-label" style="background: url('https://images.unsplash.com/photo-1605497746445-97d1b0a9eaf4?auto=format&fit=crop&q=80&w=300') center/cover;">
-                        <div class="service-info">
-                            <span class="service-name">Trenzado Normal</span>
-                            <span class="service-desc">60 min • Diseño a mano</span>
-                        </div>
-                    </label>
-                </div>
-
-                <!-- Trenzado con Pelo -->
-                <div>
-                    <input type="radio" id="srv5" name="servicio" value="Trenzado con pelo" data-duracion="360" class="selector-item">
-                    <label for="srv5" class="service-card-label" style="background: url('https://images.unsplash.com/photo-1629000214131-04b77f19f2f8?auto=format&fit=crop&q=80&w=300') center/cover;">
-                        <div class="service-info">
-                            <span class="service-name">Trenzado con Pelo</span>
-                            <span class="service-desc">6 horas • Extensiones completas</span>
-                        </div>
-                    </label>
-                </div>
-
-                <!-- Facial -->
-                <div>
-                    <input type="radio" id="srv6" name="servicio" value="Facial" data-duracion="60" class="selector-item">
-                    <label for="srv6" class="service-card-label" style="background: url('https://images.unsplash.com/photo-1515377905703-c4788e51af15?auto=format&fit=crop&q=80&w=300') center/cover;">
-                        <div class="service-info">
-                            <span class="service-name">Facial</span>
-                            <span class="service-desc">60 min • Limpieza e hidratación</span>
-                        </div>
-                    </label>
-                </div>
-
-                <!-- Más opciones simplificadas -->
-                <div>
-                    <input type="radio" id="srv3" name="servicio" value="Haircut niños" data-duracion="45" class="selector-item">
-                    <label for="srv3" class="service-card-label" style="background: url('https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&q=80&w=300') center/cover;">
-                        <div class="service-info">
-                            <span class="service-name">Haircut Niños</span>
-                            <span class="service-desc">45 min • Menores de 12 años</span>
-                        </div>
-                    </label>
-                </div>
-
+                <p id="mensaje-status" class="text-center"></p>
             </div>
+
+            <button id="btn-ejecutar-cancelar" class="confirm-btn btn-danger" disabled>
+                Confirmar Cancelación de Espacio
+            </button>
         </div>
 
-        <div class="form-section">
-            <span class="section-title">3. Selecciona tu Profesional</span>
-            <div class="barbers-group" id="contenedor-barberos">
-                <p style="color: #aaa; font-size: 14px;">Cargando proveedores disponibles...</p>
-            </div>
-        </div>
-
-        <div class="form-section">
-            <span class="section-title">4. Elige el Día</span>
-            <input type="date" id="fecha" class="input-field" required>
-        </div>
-
-        <div class="form-section">
-            <span class="section-title">5. Horarios Disponibles</span>
-            <div class="hours-grid" id="contenedor-horas">
-                <div class="texto-alerta">Elige fecha y barbero para calcular horarios...</div>
-            </div>
-        </div>
-
-        <button type="submit" class="confirm-btn btn-gold">
-            Agendar Cita Premium
-        </button>
-    </form>
-
-    <div id="modulo-cancelar" class="cancel-content hidden">
-        <div class="form-section">
-            <span class="section-title" style="color: var(--danger-color);">Cancelar Espacio</span>
-            <div class="info-card">
-                <div class="info-line"><strong>Cliente:</strong> <span id="cancel-info-cliente">Cargando...</span></div>
-                <div class="info-line"><strong>Servicio:</strong> <span id="cancel-info-servicio">-</span></div>
-                <div class="info-line"><strong>Barbero:</strong> <span id="cancel-info-barbero">-</span></div>
-                <div class="info-line"><strong>Fecha:</strong> <span id="cancel-info-fecha">-</span></div>
-                <div class="info-line"><strong>Horario:</strong> <span id="cancel-info-hora">-</span></div>
-            </div>
-            <p id="mensaje-status" style="text-align: center; margin-top: 15px;"></p>
-        </div>
-        <button id="btn-ejecutar-cancelar" class="confirm-btn btn-danger" disabled>
-            Confirmar Cancelación
-        </button>
     </div>
 
-</div>
- <script>
+    <script>
         // Inicializamos EmailJS con tu llave pública
         emailjs.init("GQ0nATFCZx9T_S2wV");
 
@@ -932,6 +801,6 @@
     }
 
         });
-    </script>                        
+    </script>
 </body>
 </html>
