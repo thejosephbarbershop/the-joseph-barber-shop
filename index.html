@@ -700,6 +700,226 @@ window.onload = async function() {
     }
 
     // --- FUNCIÓN CORREGIDA ---
-    function convertirMin                           
+    function convertirMinutosAString12h(minutosTotales) {
+        let horas = Math.floor(minutosTotales / 60);
+        let minutos = minutosTotales % 60; // Corregido: antes decía minutesTotales
+        let ampm = horas >= 12 ? "PM" : "AM";
+        horas = horas % 12;
+        horas = horas ? horas : 12; 
+        return `${String(horas).padStart(2, "0")}:${String(minutos).padStart(2, "0")} ${ampm}`;
+    }
+
+    function generarObjetoFecha(fechaStr, minutesTotales) {
+        let horas = Math.floor(minutesTotales / 60);
+        let minutos = minutesTotales % 60;
+        if (horas >= 24) { 
+            horas = 23; 
+            minutos = 59; 
+        }
+        return new Date(`${fechaStr}T${String(horas).padStart(2, '0')}:${String(minutos).padStart(2, '0')}:00`);
+    }
+
+    // --- GENERADOR DE BOTONES DE HORA ---
+    async function actualizarHorariosDisponibles() {
+        const fechaSeleccionada = inputFecha ? inputFecha.value : "";
+        const barberoSeleccionadoInput = document.querySelector('input[name="barbero"]:checked');
+        const servicioSeleccionadoInput = document.querySelector('input[name="servicio"]:checked');
+        
+        if (!fechaSeleccionada || !barberoSeleccionadoInput) {
+            if (contenedorHoras) {
+                contenedorHoras.style.display = "block";
+                contenedorHoras.innerHTML = '<div class="texto-alerta">Elige fecha y barbero para calcular horarios...</div>';
+            }
+            return;
+        }
+        
+        const duracionServicioSolicitado = servicioSeleccionadoInput ? parseInt(servicioSeleccionadoInput.getAttribute("data-duracion"), 10) : 45;
+        const barberoSeleccionado = barberoSeleccionadoInput.value;
+        const ahora = new Date();
+
+        contenedorHoras.style.display = "grid";
+        contenedorHoras.style.gridTemplateColumns = "repeat(auto-fill, minmax(100px, 1fr))";
+        contenedorHoras.style.gap = "10px";
+        contenedorHoras.innerHTML = "<div>Calculando agenda...</div>";
+
+        try {
+            const { data: reservas, error } = await window._supabase
+                .from("reservas")
+                .select("hora, duracion")
+                .eq("fecha", fechaSeleccionada)
+                .eq("barbero", barberoSeleccionado);
+
+            if (error) throw error;
+
+            let rangosOcupados = [];
+            reservas.forEach(reserva => {
+                if (!reserva.hora) return;
+                let inicio = convertirStringAMinutos(reserva.hora);
+                let fin = inicio + (reserva.duracion || 30);
+                rangosOcupados.push({ inicio, fin });
+            });
+
+            rangosOcupados.sort((a, b) => a.inicio - b.inicio);
+            let htmlBotones = "";
+            let minutoPuntero = APERTURA_MINUTOS;
+            let indexBotones = 1;
+
+            while (minutoPuntero + duracionServicioSolicitado <= CIERRE_MINUTOS) {
+                let colisiona = false;
+                let inicioPropuesto = minutoPuntero;
+                let finPropuesto = minutoPuntero + duracionServicioSolicitado;
+
+                for (let rango of rangosOcupados) {
+                    if (inicioPropuesto < rango.fin && finPropuesto > rango.inicio) {
+                        colisiona = true;
+                        minutoPuntero = rango.fin + MARGEN_LIMPIEZA;
+                        break;
+                    }
+                }
+
+                if (!colisiona) {
+                    let stringHora12h = convertirMinutosAString12h(minutoPuntero);
+                    let objetoFechaBoton = generarObjetoFecha(fechaSeleccionada, minutoPuntero);
+                    
+                    if (objetoFechaBoton >= ahora) {
+                        htmlBotones += `
+                            <div class="hora-boton-contenedor">
+                                <input type="radio" id="dyn-hr-${indexBotones}" name="hora" value="${stringHora12h}" class="hora-radio-oculto" required>
+                                <label for="dyn-hr-${indexBotones}" class="hora-boton-label">
+                                    ${stringHora12h.replace(" AM", "").replace(" PM", "")} 
+                                    <span class="ampm-sub">${stringHora12h.includes("PM") ? "PM" : "AM"}</span>
+                                </label>
+                            </div>`;
+                        indexBotones++;
+                    }
+                    minutoPuntero += duracionServicioSolicitado + MARGEN_LIMPIEZA;
+                }
+            }
+
+            contenedorHoras.innerHTML = htmlBotones || "<div class='texto-alerta'>No quedan bloques hoy.</div>";
+
+        } catch (err) {
+            console.error(err);
+            contenedorHoras.style.display = "block";
+            contenedorHoras.innerHTML = "<div class='texto-alerta'>Error al sincronizar agenda.</div>";
+        }
+    }
+
+    // --- SUBMIT DEL FORMULARIO ---
+    if (formulario) {
+        formulario.addEventListener("submit", async (e) => {
+            e.preventDefault();
+
+            const nombre = document.getElementById("client-name").value;
+            const telefono = document.getElementById("client-phone").value;
+            const servicioInput = document.querySelector('input[name="servicio"]:checked');
+            
+            if (!servicioInput) { alert("Selecciona un servicio."); return; }
+            
+            const servicio = servicioInput.value;
+            const duracion = parseInt(servicioInput.getAttribute("data-duracion"), 10) || 30;
+            const barberoInput = document.querySelector('input[name="barbero"]:checked');
+            const fecha = inputFecha.value;
+            const horaSeleccionadaInput = document.querySelector('input[name="hora"]:checked');
+
+            if (!barberoInput || !horaSeleccionadaInput) {
+                alert("Por favor selecciona Barbero y Horario.");
+                return;
+            }
+
+            const barbero = barberoInput.value;
+            const hora = horaSeleccionadaInput.value;
+            const nuevaPestana = window.open("about:blank", "_blank");
+
+            try {
+                const { data: duplicados } = await window._supabase.from("reservas").select("hora, duracion").eq("fecha", fecha).eq("barbero", barbero);
+                let sobreescrito = false;
+                const inicioNuevaCitaMin = convertirStringAMinutos(hora);
+                const finNuevaCitaMin = inicioNuevaCitaMin + duracion;
+
+                if (duplicados) {
+                    for (let d of duplicados) {
+                        let dInicio = convertirStringAMinutos(d.hora);
+                        let dFin = dInicio + (d.duracion || 30);
+                        if (inicioNuevaCitaMin < dFin && finNuevaCitaMin > dInicio) { sobreescrito = true; break; }
+                    }
+                }
+
+                if (sobreescrito) {
+                    if (nuevaPestana) nuevaPestana.close();
+                    alert("¡Ese espacio se acaba de ocupar!");
+                    actualizarHorariosDisponibles();
+                    return;
+                }
+
+                const { data: nuevaReserva, error: errorInsert } = await window._supabase
+                    .from("reservas")
+                    .insert([{ fecha, hora, barbero, duracion, nombre: nombre, cliente: nombre, telefono, servicio }])
+                    .select();
+
+                if (errorInsert) throw errorInsert;
+
+                localStorage.setItem("barberia_nombre", nombre);
+                localStorage.setItem("barberia_telefono", telefono);
+
+                if (typeof emailjs !== 'undefined') {
+                    emailjs.send("service_z2lbr3y", "template_7phspmb", {
+                        nombre_cliente: nombre, telefono: telefono, hora_cita: `${hora} el día ${fecha} con ${barbero}`
+                    }).catch(e => console.log(e));
+                }
+
+                const idGenerado = nuevaReserva[0].id;
+                const urlBase = window.location.origin + window.location.pathname;
+                const mensaje = `💈 *NUEVA CITA* 💈\n\n👤 *Cliente:* ${nombre}\n✂️ *Servicio:* ${servicio}\n🧔 *Barbero:* ${barbero}\n📅 *Fecha:* ${fecha}\n⏰ *Hora:* ${hora}\n\n❌ *Cancelar:* ${urlBase}?cancelar=${idGenerado}`;
+                
+                if (nuevaPestana) {
+                    nuevaPestana.location.href = `https://wa.me/18299702130?text=${encodeURIComponent(mensaje)}`;
+                } else {
+                    window.open(`https://wa.me/18299702130?text=${encodeURIComponent(mensaje)}`, "_blank");
+                }
+                
+                actualizarHorariosDisponibles();
+
+            } catch (err) {
+                if (nuevaPestana) nuevaPestana.close();
+                alert("Error al procesar: " + err.message);
+            }
+        });
+    }
+
+    // --- LOGICA DE CANCELACION (¡COMPLETA!) ---
+    async function obtenerDetallesCita(id) {
+        try {
+            const { data: cita, error } = await window._supabase.from("reservas").select("*").eq("id", id).single();
+            if (error || !cita) return;
+            if(document.getElementById("cancel-info-cliente")) document.getElementById("cancel-info-cliente").innerText = cita.cliente || cita.nombre;
+            if(document.getElementById("cancel-info-servicio")) document.getElementById("cancel-info-servicio").innerText = cita.servicio;
+            if(document.getElementById("cancel-info-barbero")) document.getElementById("cancel-info-barbero").innerText = cita.barbero;
+            if(document.getElementById("cancel-info-fecha")) document.getElementById("cancel-info-fecha").innerText = cita.fecha;
+            if(document.getElementById("cancel-info-hora")) document.getElementById("cancel-info-hora").innerText = cita.hora;
+            if (btnEjecutarCancelar) btnEjecutarCancelar.disabled = false;
+        } catch (e) {
+            console.error("Error obteniendo detalles para cancelar:", e);
+        }
+    }
+
+    if (btnEjecutarCancelar) {
+        btnEjecutarCancelar.addEventListener("click", async () => {
+            try {
+                const { error } = await window._supabase.from("reservas").delete().eq("id", idACancelar);
+                if (error) throw error;
+                
+                if (txtStatus) txtStatus.innerText = "Cita cancelada con éxito.";
+                setTimeout(() => { 
+                    window.location.href = window.location.origin + window.location.pathname; 
+                }, 2000);
+            } catch (err) {
+                console.error("Error al eliminar la reserva:", err);
+                if (txtStatus) txtStatus.innerText = "Error al intentar cancelar la cita.";
+            }
+        });
+    }
+};
+</script>                          
 </body>
 </html>
