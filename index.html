@@ -709,16 +709,15 @@ window.onload = async function() {
         return `${String(horas).padStart(2, "0")}:${String(minutos).padStart(2, "0")} ${ampm}`;
     }
 
-    function generarObjetoFecha(fechaStr, minutesTotales) {
-        let horas = Math.floor(minutesTotales / 60);
-        let minutos = minutesTotales % 60;
-        if (horas >= 24) { 
-            horas = 23; 
-            minutos = 59; 
-        }
-        return new Date(`${fechaStr}T${String(horas).padStart(2, '0')}:${String(minutos).padStart(2, '0')}:00`);
+function generarObjetoFecha(fechaStr, minutosTotales) { // <-- Cambiado a 'i'
+    let horas = Math.floor(minutosTotales / 60);
+    let minutos = minutosTotales % 60;
+    if (horas >= 24) { 
+        horas = 23; 
+        minutos = 59; 
     }
-
+    return new Date(`${fechaStr}T${String(horas).padStart(2, '0')}:${String(minutos).padStart(2, '0')}:00`);
+}
     // --- GENERADOR DE BOTONES DE HORA ---
     async function actualizarHorariosDisponibles() {
         const fechaSeleccionada = inputFecha ? inputFecha.value : "";
