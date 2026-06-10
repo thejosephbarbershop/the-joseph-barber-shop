@@ -164,56 +164,52 @@
 
     // --- LÓGICA DE CARGA Y ESCRITURA EN SUPABASE ---
 
-    // Apartado optimizado para ver las citas hechas
-   async function cargarCitas() {
-    const tbody = document.querySelector('#tabla-citas tbody');
-    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">Buscando la agenda de hoy...</td></tr>';
+    // Ver las citas del día de hoy
+    async function cargarCitas() {
+        const tbody = document.querySelector('#tabla-citas tbody');
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">Buscando la agenda de hoy...</td></tr>';
 
-    try {
-        // 📅 1. Obtener la fecha de hoy en formato local AAAA-MM-DD
-        const hoy = new Date();
-        const año = hoy.getFullYear();
-        const mes = String(hoy.getMonth() + 1).padStart(2, '0'); // Los meses van de 0 a 11
-        const dia = String(hoy.getDate()).padStart(2, '0');
-        const fechaHoyString = `${año}-${mes}-${dia}`; 
+        try {
+            const hoy = new Date();
+            const año = hoy.getFullYear();
+            const mes = String(hoy.getMonth() + 1).padStart(2, '0');
+            const dia = String(hoy.getDate()).padStart(2, '0');
+            const fechaHoyString = `${año}-${mes}-${dia}`; 
 
-        // 🔍 2. Consultar a Supabase filtrando SOLO por la fecha de hoy
-        const { data: citas, error } = await _supabase
-            .from('reservas')
-            .select('*')
-            .eq('fecha', fechaHoyString) // <-- Filtro clave
-            .order('hora', { ascending: true }); // Ordenadas por hora para ver cuál sigue
+            const { data: citas, error } = await _supabase
+                .from('reservas')
+                .select('*')
+                .eq('fecha', fechaHoyString)
+                .order('hora', { ascending: true });
 
-        if (error) {
-            console.error("Error al obtener citas de hoy:", error);
-            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:red;">Error al cargar las citas del día.</td></tr>';
-            return;
+            if (error) {
+                console.error("Error al obtener citas:", error);
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:red;">Error al cargar las citas.</td></tr>';
+                return;
+            }
+
+            if (!citas || citas.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color: #7f8c8d; font-weight: bold; padding: 20px;">
+                    🎉 No hay citas programadas para hoy (${dia}/${mes}/${año}).
+                </td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = citas.map(c => `
+                <tr>
+                    <td><strong>${c.cliente || 'Sin nombre'}</strong></td>
+                    <td>${c.barbero || 'No asignado'}</td>
+                    <td>${c.servicio || 'No especificado'}</td>
+                    <td><span style="color: #2c3e50; font-weight: bold;">Hoy</span></td>
+                    <td><span style="background: #d4af37; color: black; padding: 4px 10px; border-radius: 4px; font-weight: bold;">${c.hora || 'Sin hora'}</span></td>
+                    <td><button class="btn-delete" onclick="eliminarCita('${c.id}')">Eliminar</button></td>
+                </tr>
+            `).join('');
+
+        } catch (err) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:red;">Error de conexión.</td></tr>';
         }
-
-        if (!citas || citas.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color: #7f8c8d; font-weight: bold; padding: 20px;">
-                🎉 No hay citas programadas para hoy (${dia}/${mes}/${año}). ¡Día libre o a esperar clientes espontáneos!
-            </td></tr>`;
-            return;
-        }
-
-        // 📋 3. Pintar las citas del día en la tabla
-        tbody.innerHTML = citas.map(c => `
-            <tr>
-                <td><strong>${c.cliente || 'Sin nombre'}</strong></td>
-                <td>${c.barbero || 'No asignado'}</td>
-                <td>${c.servicio || 'No especificado'}</td>
-                <td><span style="color: #2c3e50; font-weight: bold;">Hoy</span></td>
-                <td><span style="background: #d4af37; color: black; padding: 4px 10px; border-radius: 4px; font-weight: bold;">${c.hora || 'Sin hora'}</span></td>
-                <td><button class="btn-delete" onclick="eliminarCita('${c.id}')">Eliminar</button></td>
-            </tr>
-        `).join('');
-
-    } catch (err) {
-        console.error("Error crítico en panel de citas diarias:", err);
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:red;">Error de conexión.</td></tr>';
     }
-}
 
     async function agregarBarbero() {
         const inputNombre = document.getElementById('barbero-nombre');
@@ -223,12 +219,15 @@
         const rol = inputRol.value.trim();
         if(!nombre || !rol) return alert("Completa todos los campos del barbero");
         
-        await _supabase.from('proveedores').insert([{ nombre, rol }]);
-        
-        // Limpiar inputs y recargar
-        inputNombre.value = "";
-        inputRol.value = "";
-        cargarBarberos();
+        const { error } = await _supabase.from('proveedores').insert([{ nombre, rol }]);
+        if (error) {
+            alert("Error al guardar barbero: " + error.message);
+        } else {
+            alert("¡Barbero añadido con éxito!");
+            inputNombre.value = "";
+            inputRol.value = "";
+            cargarBarberos();
+        }
     }
 
     async function cargarBarberos() {
@@ -252,13 +251,16 @@
         
         if(!nombre || !duracion) return alert("El nombre y la duración son obligatorios");
         
-        await _supabase.from('servicios').insert([{ nombre, duracion, descripcion: description }]);
-        
-        // Limpiar inputs y recargar
-        inputNombre.value = "";
-        inputDuracion.value = "";
-        inputDesc.value = "";
-        cargarServicios();
+        const { error } = await _supabase.from('servicios').insert([{ nombre, duracion, descripcion: description }]);
+        if (error) {
+            alert("Error al guardar servicio: " + error.message);
+        } else {
+            alert("¡Servicio añadido con éxito!");
+            inputNombre.value = "";
+            inputDuracion.value = "";
+            inputDesc.value = "";
+            cargarServicios();
+        }
     }
 
     async function cargarServicios() {
@@ -279,22 +281,27 @@
         const motivo = inputMotivo.value.trim();
         if(!fecha) return alert("Selecciona una fecha para bloquear");
 
-        await _supabase.from('fechas_feriadas').insert([{ fecha, motivo }]);
-        
-        // Limpiar inputs y recargar
-        inputFecha.value = "";
-        inputMotivo.value = "";
-        cargarFeriados();
+        // CAMBIADO: 'fechas_feriadas' por 'dias_bloqueados'
+        const { error } = await _supabase.from('dias_bloqueados').insert([{ fecha, motivo }]);
+        if (error) {
+            alert("Error al bloquear fecha: " + error.message);
+        } else {
+            alert("¡Día bloqueado con éxito!");
+            inputFecha.value = "";
+            inputMotivo.value = "";
+            cargarFeriados();
+        }
     }
 
     async function cargarFeriados() {
-        const { data } = await _supabase.from('fechas_feriadas').select('*');
+        // CAMBIADO: 'fechas_feriadas' por 'dias_bloqueados'
+        const { data } = await _supabase.from('dias_bloqueados').select('*');
         const tbody = document.querySelector('#tabla-feriados tbody');
         if (!data || data.length === 0) {
             tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">No hay días feriados bloqueados.</td></tr>';
             return;
         }
-        tbody.innerHTML = data.map(f => `<tr><td>${f.fecha}</td><td>${f.motivo || 'Feriado'}</td><td><button class="btn-delete" onclick="eliminarFila('fechas_feriadas','${f.id}', cargarFeriados)">X</button></td></tr>`).join('');
+        tbody.innerHTML = data.map(f => `<tr><td>${f.fecha}</td><td>${f.motivo || 'Feriado'}</td><td><button class="btn-delete" onclick="eliminarFila('dias_bloqueados','${f.id}', cargarFeriados)">X</button></td></tr>`).join('');
     }
 
     async function guardarHorario() {
@@ -304,9 +311,15 @@
 
         if(!apertura || !cierre) return alert("Por favor define las horas de apertura y cierre");
 
-        const id = tipo === 'semana' ? 1 : 2;
-        await _supabase.from('configuracion_horarios').upsert({ id, tipo_dia: tipo, apertura, cierre });
-        alert("Horario actualizado con éxito en la base de datos");
+        // CAMBIADO: Ajustado para usar la tabla de configuración original (clave / valor)
+        const { error: errApertura } = await _supabase.from('configuracion').upsert({ clave: 'apertura', valor: apertura });
+        const { error: errCierre } = await _supabase.from('configuracion').upsert({ clave: tipo === 'semana' ? 'cierre_semana' : 'cierre_finde', valor: cierre });
+        
+        if (errApertura || errCierre) {
+            alert("Error al actualizar horarios");
+        } else {
+            alert("¡Horario actualizado con éxito!");
+        }
     }
 
     async function eliminarFila(tabla, id, callbackRecarga) {
