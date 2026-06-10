@@ -119,7 +119,9 @@
             filter: invert(1);
         }
 
-        /* DISEÑO DE TARJETAS DE SERVICIOS CON IMÁGENES */
+        /*/* ========================================================
+           📸 DISEÑO DE TARJETAS DE SERVICIOS CON IMÁGENES (CORREGIDO)
+           ======================================================== */
         .services-grid {
             display: flex;
             flex-direction: column;
@@ -150,38 +152,71 @@
             border-radius: 14px;
             overflow: hidden;
             border: 1px solid #2f3b4c;
-            height: 85px;
+            height: 90px; /* Un poco más de altura para el precio */
             transition: all 0.3s ease;
             box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            box-sizing: border-box;
+            width: 100%;
         }
 
-        .service-card-label::before {
-            content: '';
+        /* Capa oscura mejorada: Da un contraste perfecto abajo pero deja ver la foto arriba */
+        .service-card-overlay {
             position: absolute;
-            top:0; left:0; width:100%; height:100%;
-            background: linear-gradient(90deg, rgba(11,12,16,0.9) 40%, rgba(11,12,16,0.4) 100%);
+            inset: 0;
+            background: linear-gradient(to top, rgba(11, 12, 16, 0.9) 0%, rgba(11, 12, 16, 0.4) 100%);
             z-index: 1;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+            width: 100%;
+            box-sizing: border-box;
             transition: all 0.3s ease;
         }
 
-        .service-info {
-            position: relative;
-            z-index: 2;
-            padding-left: 20px;
+        .service-card-info {
             display: flex;
             flex-direction: column;
+            justify-content: center;
         }
 
+        /* Nombre del servicio en blanco puro de alta intensidad */
         .service-name {
-            font-weight: 600;
-            font-size: 1.05rem;
-            color: #fff;
+            font-weight: 700; /* Letra más imponente */
+            font-size: 1.15rem;
+            color: #ffffff !important; /* Fuerza el blanco brillante */
+            margin: 0;
+            text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.9); /* Sombra nítida de fondo */
         }
 
-        .service-desc {
-            font-size: 0.8rem;
-            color: var(--accent-gold);
-            margin-top: 2px;
+        /* Duración con gris claro limpio */
+        .service-duration {
+            font-size: 0.85rem;
+            color: #e0e0e0 !important;
+            margin-top: 3px;
+            font-weight: 500;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+        }
+
+        /* Precio visible y llamativo en tono dorado champaña */
+        .service-card-price {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--accent-gold) !important;
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.9);
+            z-index: 2;
+        }
+
+        /* Estados de Selección */
+        .selector-item:checked + .service-card-label {
+            border-color: var(--accent-gold);
+            transform: scale(1.01);
+            box-shadow: 0 0 15px rgba(197, 168, 128, 0.3);
+        }
+
+        /* Cuando se selecciona el servicio, la capa se vuelve un poco más premium */
+        .selector-item:checked + .service-card-label .service-card-overlay {
+            background: linear-gradient(to top, rgba(31, 40, 51, 0.95) 0%, rgba(31, 40, 51, 0.5) 100%);
         }
 
         /* Estados de Selección */
@@ -499,21 +534,36 @@ async function cargarServiciosDesdeSupabase() {
 
         contenedor.innerHTML = ''; // Limpiamos el mensaje de carga
 
-        servicios.forEach((srv, index) => {
-            // Si no tienes imágenes guardadas en la base de datos, usamos una por defecto de Barbería
+       servicios.forEach((srv, index) => {
             const imagenFondo = srv.imagen_url || 'https://images.unsplash.com/photo-1621605815971-fbc98d665033?auto=format&fit=crop&q=80&w=300';
-            
-            // Marcamos el primero como seleccionado por defecto
             const checkedAttr = index === 0 ? 'checked' : '';
 
+            // ⏱️ LÓGICA INTELIGENTE PARA CONVERTIR MINUTOS A HORAS
+            const minutosTotales = parseInt(srv.duracion) || 30;
+            let textoDuracion = "";
+
+            if (minutosTotales < 60) {
+                textoDuracion = `${minutosTotales} min`; // Ej: 45 min
+            } else {
+                const horas = Math.floor(minutosTotales / 60);
+                const minutosRestantes = minutosTotales % 60;
+                
+                if (minutosRestantes === 0) {
+                    textoDuracion = horas === 1 ? `1 hora` : `${horas} horas`; // Ej: 1 hora, 2 horas
+                } else {
+                    textoDuracion = `${horas} h ${minutosRestantes} min`; // Ej: 1 h 30 min
+                }
+            }
+
+            // 📋 AQUÍ SE GENERA TU NUEVA TARJETA CON EL TEXTO FORMATEADO
             const tarjetaHTML = `
                 <div class="service-card-wrapper">
-                    <input type="radio" id="srv_${srv.id}" name="servicio" value="${srv.nombre}" data-duracion="${srv.duracion || 30}" class="service-radio" ${checkedAttr} required>
+                    <input type="radio" id="srv_${srv.id}" name="servicio" value="${srv.nombre}" data-duracion="${minutosTotales}" class="service-radio" ${checkedAttr} required>
                     <label for="srv_${srv.id}" class="service-card-label" style="background: url('${imagenFondo}') center/cover;">
                         <div class="service-card-overlay">
                             <div class="service-card-info">
                                 <h3 class="service-name">${srv.nombre}</h3>
-                                <p class="service-duration"><i class="far fa-clock"></i> ${srv.duracion || 30} min</p>
+                                <p class="service-duration"><i class="far fa-clock"></i> ${textoDuracion}</p>
                             </div>
                             <div class="service-card-price">$${srv.precio || 0}</div>
                         </div>
