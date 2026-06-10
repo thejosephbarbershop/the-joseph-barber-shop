@@ -3,424 +3,328 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel de Control - The Joseph Barbershop</title>
-    
-    <link rel="manifest" href="manifest.json">
-    
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-    
+    <title>Admin Panel - The Joseph Barbershop</title>
     <style>
         :root {
             --primary-color: #1a1a1a;
             --accent-color: #d4af37;
-            --bg-color: #f4f7f6;
-            --text-color: #333;
-            --white: #ffffff;
-            --whatsapp-color: #25d366;
-            --alert-color: #ff9800;
+            --danger-color: #e74c3c;
+            --bg-color: #f4f6f9;
         }
-        body { font-family: 'Segoe UI', Arial, sans-serif; background-color: var(--bg-color); color: var(--text-color); margin: 0; padding: 20px; }
-        .admin-container { max-width: 800px; margin: 0 auto; background: var(--white); border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); overflow: hidden; }
-        header { background-color: var(--primary-color); color: var(--white); padding: 20px; text-align: center; border-bottom: 4px solid var(--accent-color); }
-        header h1 { margin: 0; font-size: 1.5rem; color: var(--accent-color); letter-spacing: 1px; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg-color); margin: 0; padding: 0; }
+        header { background: var(--primary-color); color: white; padding: 15px; text-align: center; }
         
-        /* Estilos de la nueva barra de permisos */
-        .permisos-bar { padding: 12px; text-align: center; font-weight: bold; border-bottom: 2px solid #ffeeba; display: none; transition: all 0.3s; }
-        .btn-permisos { background: var(--primary-color); color: var(--accent-color); border: 2px solid var(--accent-color); padding: 6px 15px; margin-left: 10px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 0.85rem; }
-        .btn-permisos:hover { background: var(--accent-color); color: var(--primary-color); }
+        /* Estilos del Menú */
+        nav { background: #2c3e50; display: flex; justify-content: center; gap: 10px; padding: 10px; }
+        nav button { background: none; border: 1px solid transparent; color: white; padding: 10px 15px; cursor: pointer; font-size: 0.95rem; border-radius: 4px; transition: 0.3s; }
+        nav button:hover, nav button.active { background: var(--accent-color); color: black; font-weight: bold; }
         
-        .controls { padding: 20px; background: #eee; display: flex; gap: 15px; align-items: center; justify-content: center; flex-wrap: wrap; }
-        .btn-refresh { background: var(--primary-color); color: var(--white); border: 2px solid var(--accent-color); padding: 10px 20px; border-radius: 10px; cursor: pointer; font-weight: bold; transition: all 0.3s; }
-        .btn-refresh:hover { background: var(--accent-color); color: var(--primary-color); }
-        .input-date { padding: 10px; border-radius: 10px; border: 2px solid #ccc; font-size: 1rem; }
-        .appointments-list { padding: 20px; }
-        .appointment-card { background: #f9f9f9; border: 2px solid #eee; border-radius: 15px; padding: 15px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
-        .appointment-card.urgent { border-color: var(--alert-color); background: #fffbe6; }
-        .info-client h3 { margin: 0 0 5px 0; color: var(--primary-color); }
-        .info-client p { margin: 3px 0; font-size: 0.9rem; color: #666; }
-        .badge-time { background: var(--primary-color); color: var(--accent-color); padding: 5px 10px; border-radius: 8px; font-weight: bold; font-size: 0.9rem; }
-        .btn-remind { background-color: var(--whatsapp-color); color: white; border: none; padding: 12px 18px; border-radius: 10px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 8px; text-decoration: none; font-size: 0.9rem; transition: transform 0.2s; }
-        .btn-remind:hover { transform: scale(1.03); background-color: #20ba59; }
-        .no-data { text-align: center; color: #888; padding: 40px 20px; font-size: 1.1rem; }
-        .status-tag { font-size: 0.8rem; font-weight: bold; padding: 3px 8px; border-radius: 5px; text-transform: uppercase; }
-        .tag-waiting { background: #ffe0b2; color: #f57c00; }
-        .tag-now { background: #c8e6c9; color: #388e3c; }
+        .container { max-width: 1000px; margin: 30px auto; padding: 20px; background: white; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        .section-panel { display: none; }
+        .section-panel.active { display: block; }
+        
+        h2 { border-bottom: 2px solid var(--accent-color); padding-bottom: 8px; color: var(--primary-color); }
+        .form-group { margin-bottom: 15px; display: flex; flex-direction: column; gap: 5px; }
+        input, select, button.action-btn { padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 1rem; }
+        button.action-btn { background: var(--primary-color); color: white; cursor: pointer; border: none; font-weight: bold;}
+        button.action-btn:hover { background: #333; }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        table, th, td { border: 1px solid #ddd; }
+        th, td { padding: 12px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        .btn-delete { background: var(--danger-color); color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; }
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 
-    <div class="admin-container">
-        <header>
-            <h1>PANEL DE ADMINISTRACIÓN</h1>
-            <p style="margin: 5px 0 0 0; opacity: 0.8; font-size: 0.9rem;">Monitoreo y Recordatorios de Citas</p>
-        </header>
-        
-        <div id="barra-permisos" class="permisos-bar">
-            <span id="texto-permisos">⚠️ Las notificaciones están inactivas en este navegador.</span>
-            <button id="btn-activar-permisos" class="btn-permisos">🔔 Activar Alertas</button>
+    <header>
+        <h1>PANEL ADMINISTRADOR CENTRAL</h1>
+        <p>The Joseph Barbershop</p>
+    </header>
+
+    <nav>
+        <button onclick="cambiarPestana('citas')" id="btn-citas" class="active">📋 Ver Citas</button>
+        <button onclick="cambiarPestana('horarios')" id="btn-horarios">🕒 Horarios</button>
+        <button onclick="cambiarPestana('proveedores')" id="btn-proveedores">🧔 Barberos</button>
+        <button onclick="cambiarPestana('servicios')" id="btn-servicios">✂️ Servicios</button>
+        <button onclick="cambiarPestana('feriados')" id="btn-feriados">📅 Feriados</button>
+    </nav>
+
+    <div class="container">
+
+        <div id="panel-citas" class="section-panel active">
+            <h2>Citas Agendadas</h2>
+            <table id="tabla-citas">
+                <thead>
+                    <tr>
+                        <th>Cliente</th>
+                        <th>Barbero</th>
+                        <th>Servicio</th>
+                        <th>Fecha</th>
+                        <th>Hora</th>
+                        <th>Acción</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
         </div>
 
-        <div class="controls">
-            <label><b>Ver citas del día:</b></label>
-            <input type="date" id="filtro-fecha" class="input-date">
-            <button id="btn-cargar" class="btn-refresh">🔄 Actualizar Lista</button>
+        <div id="panel-horarios" class="section-panel">
+            <h2>Control de Horarios de Apertura y Cierre</h2>
+            <form id="form-horarios">
+                <div class="form-group">
+                    <label>Tipo de Jornada</label>
+                    <select id="horario-tipo">
+                        <option value="semana">Lunes a Jueves</option>
+                        <option value="fin_de_semana">Viernes a Domingo</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Hora de Apertura</label>
+                    <input type="text" id="horario-apertura" placeholder="Ej: 08:00 AM">
+                </div>
+                <div class="form-group">
+                    <label>Hora de Cierre</label>
+                    <input type="text" id="horario-cierre" placeholder="Ej: 08:00 PM o 12:00 AM">
+                </div>
+                <button type="button" class="action-btn" onclick="guardarHorario()">Actualizar Horario</button>
+            </form>
         </div>
-        <div id="lista-citas" class="appointments-list">
-            <div class="no-data">Conectando con la barbería...</div>
+
+        <div id="panel-proveedores" class="section-panel">
+            <h2>Gestión de Barberos / Personal</h2>
+            <div class="form-group">
+                <input type="text" id="barbero-nombre" placeholder="Nombre del Barbero">
+                <input type="text" id="barbero-rol" placeholder="Ej: Barbero Máster, Especialista">
+                <button class="action-btn" onclick="agregarBarbero()">Añadir Barbero</button>
+            </div>
+            <table id="tabla-barberos">
+                <thead>
+                    <tr><th>Nombre</th><th>Rol</th><th>Eliminar</th></tr>
+                </thead>
+                <tbody></tbody>
+            </table>
         </div>
+
+        <div id="panel-servicios" class="section-panel">
+            <h2>Gestión de Servicios y Tiempos</h2>
+            <div class="form-group">
+                <input type="text" id="servicio-nombre" placeholder="Nombre del Servicio (Ej: Corte VIP)">
+                <input type="number" id="servicio-duracion" placeholder="Duración en minutos (Ej: 45)">
+                <input type="text" id="servicio-desc" placeholder="Descripción corta (Ej: 45 min • Premium)">
+                <button class="action-btn" onclick="agregarServicio()">Añadir Servicio</button>
+            </div>
+            <table id="tabla-servicios">
+                <thead>
+                    <tr><th>Servicio</th><th>Duración</th><th>Descripción</th><th>Eliminar</th></tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+
+        <div id="panel-feriados" class="section-panel">
+            <h2>Fechas Feriadas / Días de Cierre</h2>
+            <div class="form-group">
+                <input type="date" id="feriado-fecha">
+                <input type="text" id="feriado-motivo" placeholder="Motivo (Ej: Año Nuevo)">
+                <button class="action-btn" onclick="agregarFeriado()">Bloquear Día</button>
+            </div>
+            <table id="tabla-feriados">
+                <thead>
+                    <tr><th>Fecha</th><th>Motivo</th><th>Eliminar</th></tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+
     </div>
 
-<script>
-window.onload = function() {
+    <script>
+    // Configuración de las llaves de Supabase
     const SUPABASE_URL = "https://xnfmqumhhxpkrigizvlu.supabase.co";
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhuZm1xdW1oaHhwa3JpZ2l6dmx1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5MTE3NjgsImV4cCI6MjA5NTQ4Nzc2OH0.zNSZ4Nw2Iz2IieExt9SErJddPseWb65Hxedg5ZGZCvI";
-    
-    const miSupabase = window.supabase || (typeof supabase !== 'undefined' ? supabase : null);
+    const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    if (!miSupabase) {
-        document.getElementById('lista-citas').innerHTML = '<div class="no-data" style="color: red;">❌ Error de conexión interna.</div>';
-        return;
-    }
-
-    // Definimos _supabase de forma global y segura
-    window._supabase = miSupabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-    
-    const selectorFecha = document.getElementById('filtro-fecha');
-    const btnCargar = document.getElementById('btn-cargar');
-    const listaCitas = document.getElementById('lista-citas');
-    const barraPermisos = document.getElementById('barra-permisos');
-    const btnActivarPermisos = document.getElementById('btn-activar-permisos');
-    const textoPermisos = document.getElementById('texto-permisos');
-
-    let notificacionesEnviadas = new Set();
-
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js')
-            .then(reg => console.log('Service Worker listo para enviar alertas'))
-            .catch(err => console.error('Error al registrar Service Worker:', err));
-    }
-
-    // ========================================================
-    // GESTIÓN INTELIGENTE DE PERMISOS (MANUAL Y AUTOMÁTICA)
-    // ========================================================
-    function comprobarPermisos() {
-        if (!barraPermisos || !textoPermisos || !btnActivarPermisos) return;
-
-        if (!("Notification" in window)) {
-            barraPermisos.style.display = "block";
-            barraPermisos.style.background = "#f8d7da";
-            textoPermisos.innerHTML = "❌ Este navegador no soporta alertas de escritorio.";
-            btnActivarPermisos.style.display = "none";
-            return;
-        }
-
-        if (Notification.permission === "granted") {
-            barraPermisos.style.display = "none"; 
-        } else if (Notification.permission === "denied") {
-            barraPermisos.style.display = "block";
-            barraPermisos.style.background = "#f8d7da";
-            barraPermisos.style.color = "#721c24";
-            textoPermisos.innerHTML = "❌ <b>Notificaciones bloqueadas de forma manual.</b> Dale clic al candado de arriba al lado de la URL y cambia 'Bloquear' por 'Permitir'.";
-            btnActivarPermisos.style.display = "none";
-        } else {
-            barraPermisos.style.display = "block";
-            barraPermisos.style.background = "#fff3cd";
-            barraPermisos.style.color = "#856404";
-            textoPermisos.innerHTML = "🔔 Las alertas en tiempo real necesitan tu autorización:";
-            btnActivarPermisos.style.display = "inline-block";
-        }
-    }
-
-    if (btnActivarPermisos) {
-        btnActivarPermisos.addEventListener('click', function() {
-            Notification.requestPermission().then(permiso => {
-                comprobarPermisos();
-                if (permiso === "granted") {
-                    alert("¡Genial! Alertas activadas con éxito.");
-                    lanzarNotificacionPush("💈 ¡Prueba Exitosa!", "El panel está conectado correctamente.");
-                }
-            });
-        });
-    }
-
-    comprobarPermisos();
-
-    const hoy = new Date();
-    const offset = hoy.getTimezoneOffset();
-    const hoyLocal = new Date(hoy.getTime() - (offset*60*1000));
-    if (selectorFecha) selectorFecha.value = hoyLocal.toISOString().split('T')[0];
-
-    function horaAMinutos(horaStr) {
-        if (!horaStr) return 0;
-        let [time, modifier] = horaStr.split(' ');
-        let [hours, minutes] = time.split(':').map(Number);
-        if (hours === 12 && modifier === 'AM') hours = 0;
-        if (modifier === 'PM' && hours !== 12) hours += 12;
-        return (hours * 60) + minutes;
-    }
-
-    function lanzarNotificacionPush(titulo, mensaje) {
-        if ("Notification" in window && Notification.permission === "granted") {
-            if (navigator.serviceWorker && navigator.serviceWorker.controller) {
-                navigator.serviceWorker.controller.postMessage({
-                    type: 'NOTIFY',
-                    title: titulo,
-                    body: mensaje
-                });
-            } else {
-                new Notification(titulo, { body: mensaje });
-            }
-            if ("vibrate" in navigator) {
-                navigator.vibrate([200, 100, 200]);
-            }
-        }
-    }
-
-    window.cargarAgenda = async function() {
-        if (!selectorFecha || !listaCitas) return;
-        const fechaSeleccionada = selectorFecha.value;
-        if (!fechaSeleccionada) return;
+    // Cambiar entre pestañas del Menú
+    function cambiarPestana(pestana) {
+        document.querySelectorAll('.section-panel').forEach(panel => panel.classList.remove('active'));
+        document.querySelectorAll('nav button').forEach(btn => btn.classList.remove('active'));
         
-        try {
-            const { data: reservas, error } = await window._supabase
-                .from('reservas')
-                .select('*')
-                .eq('fecha', fechaSeleccionada);
+        document.getElementById(`panel-${pestana}`).classList.add('active');
+        document.getElementById(`btn-${pestana}`).classList.add('active');
 
-            if (error) throw error;
-
-            if (!reservas || reservas.length === 0) {
-                listaCitas.innerHTML = '<div class="no-data">📭 No hay citas agendadas para esta fecha.</div>';
-                return;
-            }
-
-            reservas.sort((a, b) => horaAMinutos(a.hora) - horaAMinutos(b.hora));
-            let htmlContenido = "";
-            
-            const ahora = new Date();
-            const minutesActuales = (ahora.getHours() * 60) + ahora.getMinutes();
-            const esHoy = fechaSeleccionada === ahora.toISOString().split('T')[0];
-
-            reservas.forEach(cita => {
-                const minCita = horaAMinutos(cita.hora);
-                const diferencia = minCita - minutesActuales;
-                
-                let esUrgente = esHoy && (diferencia <= 10 && diferencia >= -30);
-                let claseUrgent = esUrgente ? "urgent" : "";
-                let estadoTag = "";
-                
-                if (esHoy) {
-                    if (diferencia > 10) { 
-                        estadoTag = `<span class="status-tag tag-waiting">Faltan ${diferencia} min</span>`; 
-                    } else if (diferencia <= 10 && diferencia >= -30) { 
-                        estadoTag = `<span class="status-tag tag-now">⏰ Toca Ahora / Pronto</span>`; 
-                        
-                        const idNotificacion = `${cita.id}-${cita.hora}`;
-                        if (diferencia > 0 && diferencia <= 10 && !notificacionesEnviadas.has(idNotificacion)) {
-                            lanzarNotificacionPush(
-                                `💈 Próxima Cita en ${diferencia} min`,
-                                `Cliente: ${cita.cliente} \nServicio: ${cita.servicio} a las ${cita.hora}.`
-                            );
-                            notificacionesEnviadas.add(idNotificacion);
-                        }
-                    }
-                }
-
-                const mensajeRecordatorio = `¡Hola ${cita.cliente}! 🔥 Te saluda Joseph de The Joseph Barbershop. Pasaba a recordarte que tu espacio para hoy de *${cita.servicio}* está reservado para las *${cita.hora}*. ¡Te esperamos! 💈`;
-                let numCliente = cita.telefono ? cita.telefono.replace(/\D/g, '') : "";
-                if (numCliente.length === 10 && !numCliente.startsWith('1')) { numCliente = '1' + numCliente; }
-                const urlWhatsapp = `https://wa.me/${numCliente}?text=${encodeURIComponent(mensajeRecordatorio)}`;
-
-                htmlContenido += `
-                    <div class="appointment-card ${claseUrgent}">
-                        <div class="info-client">
-                            <h3>${cita.cliente || "Cliente sin nombre"}</h3>
-                            <p><strong>📞 Teléfono:</strong> ${cita.telefono || "No registrado"}</p>
-                            <p><strong>✂️ Servicio:</strong> ${cita.servicio || "No especificado"}</p>
-                            <div style="margin-top: 8px;">${estadoTag}</div>
-                        </div>
-                        <div style="text-align: right; display: flex; flex-direction: column; gap: 10px; align-items: flex-end;">
-                            <span class="badge-time">${cita.hora}</span>
-                            <a href="${urlWhatsapp}" target="_blank" class="btn-remind">💬 Recordar</a>
-                            <button onclick="eliminarReserva('${cita.id}')" style="background-color: #dc3545; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; margin-left: 10px;">❌ Cancelar</button>
-                        </div>
-                    </div>`;
-            });
-            listaCitas.innerHTML = htmlContenido;
-        } catch (err) {
-            console.error(err);
-            listaCitas.innerHTML = '<div class="no-data" style="color: red;">❌ Error al conectar.</div>';
-        }
+        // Cargar datos automáticamente al abrir la pestaña
+        if(pestana === 'proveedores') cargarBarberos();
+        if(pestana === 'servicios') cargarServicios();
+        if(pestana === 'feriados') cargarFeriados();
+        if(pestana === 'citas') cargarCitas();
     }
 
-    if (btnCargar) btnCargar.addEventListener('click', window.cargarAgenda);
-    if (selectorFecha) selectorFecha.addEventListener('change', window.cargarAgenda);
-    
-    window.cargarAgenda();
+    // --- LÓGICA DE CARGA Y ESCRITURA EN SUPABASE ---
 
-    setInterval(() => {
-        if (!selectorFecha) return;
-        const ahora = new Date();
-        const esHoy = selectorFecha.value === ahora.toISOString().split('T')[0];
-        if (esHoy) {
-            window.cargarAgenda();
-        }
-    }, 60000); 
-
-    // Realtime de Supabase listo
-    window._supabase
-        .channel('cambios-reservas')
-        .on(
-            'postgres_changes', 
-            { event: 'INSERT', schema: 'public', table: 'reservas' }, 
-            (payload) => {
-                const nuevaCita = payload.new;
-                lanzarNotificacionPush(
-                    "💈 ¡Nueva Reserva Recibida!",
-                    `Cliente: ${nuevaCita.cliente || 'Alguien'} agendó para el ${nuevaCita.fecha} a las ${nuevaCita.hora}.`
-                );
-                if (selectorFecha && selectorFecha.value === nuevaCita.fecha) {
-                    window.cargarAgenda();
-                }
-            }
-        )
-        .subscribe();
-
-    // HACEMOS LA LLAMADA AL NUEVO PANEL DE CONFIGURACIÓN JUSTO AQUÍ ADENTRO
-    cargarConfiguracionAdmin();
-};
-
-window.eliminarReserva = async function(idReserva) {
-    const confirmar = confirm("¿Estás seguro de que deseas cancelar esta reserva?");
-    if (!confirmar) return;
+    // Apartado optimizado para ver las citas hechas
+   async function cargarCitas() {
+    const tbody = document.querySelector('#tabla-citas tbody');
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">Buscando la agenda de hoy...</td></tr>';
 
     try {
-        const { error } = await window._supabase
+        // 📅 1. Obtener la fecha de hoy en formato local AAAA-MM-DD
+        const hoy = new Date();
+        const año = hoy.getFullYear();
+        const mes = String(hoy.getMonth() + 1).padStart(2, '0'); // Los meses van de 0 a 11
+        const dia = String(hoy.getDate()).padStart(2, '0');
+        const fechaHoyString = `${año}-${mes}-${dia}`; 
+
+        // 🔍 2. Consultar a Supabase filtrando SOLO por la fecha de hoy
+        const { data: citas, error } = await _supabase
             .from('reservas')
-            .delete()
-            .eq('id', idReserva);
+            .select('*')
+            .eq('fecha', fechaHoyString) // <-- Filtro clave
+            .order('hora', { ascending: true }); // Ordenadas por hora para ver cuál sigue
 
-        if (error) throw error;
-
-        alert("Reserva cancelada con éxito.");
-        window.cargarAgenda(); 
-
-    } catch (error) {
-        console.error("Error al cancelar:", error);
-        alert("No se pudo cancelar la reserva.");
-    }
-}    
-
-// --- CORRECCIÓN EN LA GESTIÓN DE CONFIGURACIÓN ---
-async function cargarConfiguracionAdmin() {
-    try {
-        // Usamos window._supabase unificado
-        const { data: horarios } = await window._supabase.from('configuracion').select('*');
-        if (horarios) {
-            horarios.forEach(h => {
-                if(h.clave === 'apertura' && document.getElementById('admin-apertura')) document.getElementById('admin-apertura').value = h.valor;
-                if(h.clave === 'cierre_semana' && document.getElementById('admin-cierre-semana')) document.getElementById('admin-cierre-semana').value = h.valor;
-                if(h.clave === 'cierre_finde' && document.getElementById('admin-cierre-finde')) document.getElementById('admin-cierre-finde').value = h.valor;
-            });
-        }
-
-        const { data: barberos } = await window._supabase.from('barberos').select('*').eq('activo', true);
-        const contenedorLista = document.getElementById('lista-barberos-admin');
-        if (contenedorLista) {
-            contenedorLista.innerHTML = "";
-            if (!barberos || barberos.length === 0) {
-                contenedorLista.innerHTML = "<p style='color: #aaa; font-size: 13px;'>No hay barberos registrados.</p>";
-            } else {
-                barberos.forEach(b => {
-                    contenedorLista.innerHTML += `
-                        <div style="display: flex; justify-content: space-between; align-items: center; background: #333; padding: 8px 12px; margin-bottom: 6px; border-radius: 4px;">
-                            <span>${b.nombre}</span>
-                            <button onclick="eliminarBarberoAdmin(${b.id})" style="background: #d9534f; color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 12px;">Eliminar</button>
-                        </div>`;
-                });
-            }
-        }
-    } catch (error) {
-        console.error("Error cargando la configuración:", error);
-    }
-}
-
-// Vinculación de eventos seguros usando window._supabase
-document.addEventListener('click', async function(e) {
-    if(e.target && e.target.id === 'btn-guardar-horarios') {
-        const ap = document.getElementById('admin-apertura').value.trim();
-        const cs = document.getElementById('admin-cierre-semana').value.trim();
-        const cf = document.getElementById('admin-cierre-finde').value.trim();
-
-        if(!ap || !cs || !cf) {
-            alert("Por favor llena todos los campos de horarios.");
+        if (error) {
+            console.error("Error al obtener citas de hoy:", error);
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:red;">Error al cargar las citas del día.</td></tr>';
             return;
         }
 
-        await window._supabase.from('configuracion').upsert({ clave: 'apertura', valor: ap });
-        await window._supabase.from('configuracion').upsert({ clave: 'cierre_semana', valor: cs });
-        await window._supabase.from('configuracion').upsert({ clave: 'cierre_finde', valor: cf });
+        if (!citas || citas.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color: #7f8c8d; font-weight: bold; padding: 20px;">
+                🎉 No hay citas programadas para hoy (${dia}/${mes}/${año}). ¡Día libre o a esperar clientes espontáneos!
+            </td></tr>`;
+            return;
+        }
 
-        alert("¡Horarios actualizados correctamente!");
+        // 📋 3. Pintar las citas del día en la tabla
+        tbody.innerHTML = citas.map(c => `
+            <tr>
+                <td><strong>${c.cliente || 'Sin nombre'}</strong></td>
+                <td>${c.barbero || 'No asignado'}</td>
+                <td>${c.servicio || 'No especificado'}</td>
+                <td><span style="color: #2c3e50; font-weight: bold;">Hoy</span></td>
+                <td><span style="background: #d4af37; color: black; padding: 4px 10px; border-radius: 4px; font-weight: bold;">${c.hora || 'Sin hora'}</span></td>
+                <td><button class="btn-delete" onclick="eliminarCita('${c.id}')">Eliminar</button></td>
+            </tr>
+        `).join('');
+
+    } catch (err) {
+        console.error("Error crítico en panel de citas diarias:", err);
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:red;">Error de conexión.</td></tr>';
     }
+}
 
-    if(e.target && e.target.id === 'btn-anadir-barbero') {
-        const inputNombre = document.getElementById('nuevo-barbero-nombre');
+    async function agregarBarbero() {
+        const inputNombre = document.getElementById('barbero-nombre');
+        const inputRol = document.getElementById('barbero-rol');
+        
         const nombre = inputNombre.value.trim();
+        const rol = inputRol.value.trim();
+        if(!nombre || !rol) return alert("Completa todos los campos del barbero");
         
-        if (!nombre) {
-            alert("Escribe el nombre del barbero.");
+        await _supabase.from('proveedores').insert([{ nombre, rol }]);
+        
+        // Limpiar inputs y recargar
+        inputNombre.value = "";
+        inputRol.value = "";
+        cargarBarberos();
+    }
+
+    async function cargarBarberos() {
+        const { data } = await _supabase.from('proveedores').select('*');
+        const tbody = document.querySelector('#tabla-barberos tbody');
+        if (!data || data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">No hay barberos registrados.</td></tr>';
             return;
         }
+        tbody.innerHTML = data.map(b => `<tr><td>${b.nombre}</td><td>${b.rol}</td><td><button class="btn-delete" onclick="eliminarFila('proveedores','${b.id}', cargarBarberos)">X</button></td></tr>`).join('');
+    }
 
-        await window._supabase.from('barberos').insert([{ nombre: nombre, activo: true }]);
+    async function agregarServicio() {
+        const inputNombre = document.getElementById('servicio-nombre');
+        const inputDuracion = document.getElementById('servicio-duracion');
+        const inputDesc = document.getElementById('servicio-desc');
+
+        const nombre = inputNombre.value.trim();
+        const duracion = parseInt(inputDuracion.value, 10);
+        const description = inputDesc.value.trim();
+        
+        if(!nombre || !duracion) return alert("El nombre y la duración son obligatorios");
+        
+        await _supabase.from('servicios').insert([{ nombre, duracion, descripcion: description }]);
+        
+        // Limpiar inputs y recargar
         inputNombre.value = "";
-        cargarConfiguracionAdmin();
+        inputDuracion.value = "";
+        inputDesc.value = "";
+        cargarServicios();
     }
-});
 
-window.eliminarBarberoAdmin = async function(id) {
-    if (confirm("¿Seguro que deseas eliminar este barbero del sistema?")) {
-        await window._supabase.from('barberos').update({ activo: false }).eq('id', id);
-        cargarConfiguracionAdmin();
+    async function cargarServicios() {
+        const { data } = await _supabase.from('servicios').select('*');
+        const tbody = document.querySelector('#tabla-servicios tbody');
+        if (!data || data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">No hay servicios creados.</td></tr>';
+            return;
+        }
+        tbody.innerHTML = data.map(s => `<tr><td>${s.nombre}</td><td>${s.duracion} min</td><td>${s.descripcion || ''}</td><td><button class="btn-delete" onclick="eliminarFila('servicios','${s.id}', cargarServicios)">X</button></td></tr>`).join('');
     }
-}
+
+    async function agregarFeriado() {
+        const inputFecha = document.getElementById('feriado-fecha');
+        const inputMotivo = document.getElementById('feriado-motivo');
+
+        const fecha = inputFecha.value;
+        const motivo = inputMotivo.value.trim();
+        if(!fecha) return alert("Selecciona una fecha para bloquear");
+
+        await _supabase.from('fechas_feriadas').insert([{ fecha, motivo }]);
+        
+        // Limpiar inputs y recargar
+        inputFecha.value = "";
+        inputMotivo.value = "";
+        cargarFeriados();
+    }
+
+    async function cargarFeriados() {
+        const { data } = await _supabase.from('fechas_feriadas').select('*');
+        const tbody = document.querySelector('#tabla-feriados tbody');
+        if (!data || data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">No hay días feriados bloqueados.</td></tr>';
+            return;
+        }
+        tbody.innerHTML = data.map(f => `<tr><td>${f.fecha}</td><td>${f.motivo || 'Feriado'}</td><td><button class="btn-delete" onclick="eliminarFila('fechas_feriadas','${f.id}', cargarFeriados)">X</button></td></tr>`).join('');
+    }
+
+    async function guardarHorario() {
+        const tipo = document.getElementById('horario-tipo').value;
+        const apertura = document.getElementById('horario-apertura').value.trim();
+        const cierre = document.getElementById('horario-cierre').value.trim();
+
+        if(!apertura || !cierre) return alert("Por favor define las horas de apertura y cierre");
+
+        const id = tipo === 'semana' ? 1 : 2;
+        await _supabase.from('configuracion_horarios').upsert({ id, tipo_dia: tipo, apertura, cierre });
+        alert("Horario actualizado con éxito en la base de datos");
+    }
+
+    async function eliminarFila(tabla, id, callbackRecarga) {
+        if(confirm("¿Seguro que deseas eliminar este registro?")) {
+            await _supabase.from(tabla).delete().eq('id', id);
+            callbackRecarga();
+        }
+    }
+
+    async function eliminarCita(id) {
+        if(confirm("¿Eliminar cita definitivamente de la agenda?")) {
+            await _supabase.from('reservas').delete().eq('id', id);
+            cargarCitas();
+        }
+    }
+
+    // Carga inicial al entrar al panel
+    window.onload = () => { cargarCitas(); };
 </script>
-
-<hr style="margin: 40px 0; border-color: #333;">
-
-<div style="max-width: 800px; margin: 0 auto; font-family: Arial, sans-serif; padding: 20px; background: #1e1e1e; color: #fff; border-radius: 8px;">
-    <h2>⚙️ Configuración del Negocio</h2>
-    
-    <div style="margin-bottom: 30px; padding: 15px; background: #2a2a2a; border-radius: 6px;">
-        <h3>🕒 Modificar Horarios de Atención</h3>
-        <p style="font-size: 12px; color: #aaa;">Usa el formato exacto: HH:MM AM/PM (Ej: 08:00 AM)</p>
-        
-        <div style="margin-bottom: 10px;">
-            <label>Hora de Apertura General:</label><br>
-            <input type="text" id="admin-apertura" style="padding: 8px; margin-top: 5px; border-radius: 4px; border: none; color: #000;">
-        </div>
-        <div style="margin-bottom: 10px;">
-            <label>Cierre Regular (Lunes a Jueves):</label><br>
-            <input type="text" id="admin-cierre-semana" style="padding: 8px; margin-top: 5px; border-radius: 4px; border: none; color: #000;">
-        </div>
-        <div style="margin-bottom: 15px;">
-            <label>Cierre Fin de Semana (Viernes a Domingo):</label><br>
-            <input type="text" id="admin-cierre-finde" style="padding: 8px; margin-top: 5px; border-radius: 4px; border: none; color: #000;">
-        </div>
-        <button id="btn-guardar-horarios" style="background: #e0a96d; color: #000; font-weight: bold; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer;">Guardar Horarios</button>
-    </div>
-
-    <div style="padding: 15px; background: #2a2a2a; border-radius: 6px;">
-        <h3>🧔 Gestión de Barberos / Proveedores</h3>
-        <div style="margin-bottom: 15px;">
-            <input type="text" id="nuevo-barbero-nombre" placeholder="Nombre del nuevo barbero" style="padding: 8px; border-radius: 4px; border: none; width: 60%; color: #000;">
-            <button id="btn-anadir-barbero" style="background: #5cb85c; color: #fff; font-weight: bold; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer;">+ Añadir</button>
-        </div>
-        
-        <h4>Barberos en el sistema:</h4>
-        <div id="lista-barberos-admin"></div>
-    </div>
-</div>
 </body>
 </html>
