@@ -380,96 +380,9 @@
 
             <div class="form-section">
                 <span class="section-title">2. Selecciona el Servicio</span>
-                <div class="services-grid">
-                    
-                    <div>
-                        <input type="radio" id="srv1" name="servicio" value="Corte de pelo" data-duracion="45" class="selector-item" required>
-                        <label for="srv1" class="service-card-label" style="background: url('https://images.unsplash.com/photo-1621605815971-fbc98d665033?auto=format&fit=crop&q=80&w=300') center/cover;">
-                            <div class="service-info">
-                                <span class="service-name">Corte de Pelo</span>
-                                <span class="service-desc">45 min • Estilo profesional</span>
-                            </div>
-                        </label>
-                    </div>
-
-                    <div>
-                        <input type="radio" id="srv2" name="servicio" value="Cerquillo" data-duracion="30" class="selector-item">
-                        <label for="srv2" class="service-card-label" style="background: url('https://images.unsplash.com/photo-1512864084360-7c0c4d0a0845?auto=format&fit=crop&q=80&w=300') center/cover;">
-                            <div class="service-info">
-                                <span class="service-name">Cerquillo</span>
-                                <span class="service-desc">30 min • Perfilado nítido</span>
-                            </div>
-                        </label>
-                    </div>
-
-                    <div>
-                        <input type="radio" id="srv4" name="servicio" value="Trenzado normal" data-duracion="60" class="selector-item">
-                        <label for="srv4" class="service-card-label" style="background: url('https://images.unsplash.com/photo-1605497746445-97d1b0a9eaf4?auto=format&fit=crop&q=80&w=300') center/cover;">
-                            <div class="service-info">
-                                <span class="service-name">Trenzado Normal</span>
-                                <span class="service-desc">60 min • Diseño a mano</span>
-                            </div>
-                        </label>
-                    </div>
-
-                    <div>
-                        <input type="radio" id="srv5" name="servicio" value="Trenzado con pelo" data-duracion="360" class="selector-item">
-                        <label for="srv5" class="service-card-label" style="background: url('https://images.unsplash.com/photo-1629000214131-04b77f19f2f8?auto=format&fit=crop&q=80&w=300') center/cover;">
-                            <div class="service-info">
-                                <span class="service-name">Trenzado con Pelo</span>
-                                <span class="service-desc">6 horas • Extensiones completas</span>
-                            </div>
-                        </label>
-                    </div>
-
-                    <div>
-                        <input type="radio" id="srv6" name="servicio" value="Facial" data-duracion="60" class="selector-item">
-                        <label for="srv6" class="service-card-label" style="background: url('https://images.unsplash.com/photo-1515377905703-c4788e51af15?auto=format&fit=crop&q=80&w=300') center/cover;">
-                            <div class="service-info">
-                                <span class="service-name">Facial</span>
-                                <span class="service-desc">60 min • Limpieza e hidratación</span>
-                            </div>
-                        </label>
-                    </div>
-
-                    <div>
-                        <input type="radio" id="srv3" name="servicio" value="Haircut niños" data-duracion="45" class="selector-item">
-                        <label for="srv3" class="service-card-label" style="background: url('https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&q=80&w=300') center/cover;">
-                            <div class="service-info">
-                                <span class="service-name">Haircut Niños</span>
-                                <span class="service-desc">45 min • Menores de 12 años</span>
-                            </div>
-                        </label>
-                    </div>
-
-                </div>
-            </div>
-
-            <div class="form-section">
-                <span class="section-title">3. Selecciona tu Profesional</span>
-                <div class="barbers-group">
-                    
-                    <div>
-                        <input type="radio" id="barb1" name="barbero" value="Joseph" class="selector-item barbero-opcion" required>
-                        <label for="barb1" class="barber-card-label">
-                            <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200" alt="Joseph" class="barber-avatar">
-                            <span class="barber-name">Joseph</span>
-                            <span class="barber-role">Barbero Máster</span>
-                        </label>
-                    </div>
-
-                    <div>
-                        <input type="radio" id="barb2" name="barbero" value="Vanessa" class="selector-item barbero-opcion">
-                        <label for="barb2" class="barber-card-label">
-                            <img src="https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&q=80&w=200" alt="Vanessa" class="barber-avatar">
-                            <span class="barber-name">Vanessa</span>
-                            <span class="barber-role">Especialista / Trenzas</span>
-                        </label>
-                    </div>
-
-                </div>
-            </div>
-
+               <div class="services-grid" id="contenedor-servicios-dinamicos">
+    <div class="texto-alerta">Cargando servicios disponibles...</div>
+</div>
             <div class="form-section">
                 <span class="section-title">4. Elige el Día</span>
                 <input type="date" id="fecha" class="input-field" required>
@@ -566,7 +479,69 @@
     // Escuchadores para actualizar horarios en tiempo real
     selectorFecha.addEventListener('change', actualizarBloqueHorarios);
     opcionesBarbero.forEach(b => b.addEventListener('change', actualizarBloqueHorarios));
+// 📦 FUNCIÓN PARA CARGAR SERVICIOS DESDE SUPABASE AUTOMÁTICAMENTE
+async function cargarServiciosDesdeSupabase() {
+    const contenedor = document.getElementById('contenedor-servicios-dinamicos');
+    if (!contenedor) return;
 
+    try {
+        // Traemos los servicios ordenados por ID o por nombre
+        const { data: servicios, error } = await supabaseClient
+            .from('servicios') // Asegúrate de que tu tabla en Supabase se llame 'servicios'
+            .select('*');
+
+        if (error) throw error;
+
+        if (!servicios || servicios.length === 0) {
+            contenedor.innerHTML = '<div class="texto-alerta">No hay servicios configurados.</div>';
+            return;
+        }
+
+        contenedor.innerHTML = ''; // Limpiamos el mensaje de carga
+
+        servicios.forEach((srv, index) => {
+            // Si no tienes imágenes guardadas en la base de datos, usamos una por defecto de Barbería
+            const imagenFondo = srv.imagen_url || 'https://images.unsplash.com/photo-1621605815971-fbc98d665033?auto=format&fit=crop&q=80&w=300';
+            
+            // Marcamos el primero como seleccionado por defecto
+            const checkedAttr = index === 0 ? 'checked' : '';
+
+            const tarjetaHTML = `
+                <div class="service-card-wrapper">
+                    <input type="radio" id="srv_${srv.id}" name="servicio" value="${srv.nombre}" data-duracion="${srv.duracion || 30}" class="service-radio" ${checkedAttr} required>
+                    <label for="srv_${srv.id}" class="service-card-label" style="background: url('${imagenFondo}') center/cover;">
+                        <div class="service-card-overlay">
+                            <div class="service-card-info">
+                                <h3 class="service-name">${srv.nombre}</h3>
+                                <p class="service-duration"><i class="far fa-clock"></i> ${srv.duracion || 30} min</p>
+                            </div>
+                            <div class="service-card-price">$${srv.precio || 0}</div>
+                        </div>
+                    </label>
+                </div>
+            `;
+            contenedor.insertAdjacentHTML('beforeend', tarjetaHTML);
+        });
+
+        // 🔄 Volver a activar los escuchadores de cambio para que actualicen las horas cuando el cliente elija el servicio
+        document.getElementsByName('servicio').forEach(el => {
+            el.addEventListener('change', () => {
+                if(selectorFecha.value && document.querySelector('input[name="barbero"]:checked')) {
+                    actualizarBloqueHorarios();
+                }
+            });
+        });
+
+        // Si ya hay fecha y barbero seleccionados, actualiza los horarios con el servicio por defecto
+        if(selectorFecha.value && document.querySelector('input[name="barbero"]:checked')) {
+            actualizarBloqueHorarios();
+        }
+
+    } catch (err) {
+        console.error("Error cargando servicios:", err);
+        contenedor.innerHTML = '<div class="texto-alerta" style="color:var(--danger-color);">Error al cargar los servicios</div>';
+    }
+}
     async function actualizarBloqueHorarios() {
         const fechaSel = selectorFecha.value;
         const barberoSel = document.querySelector('input[name="barbero"]:checked')?.value;
@@ -726,6 +701,7 @@
 
     // 4. Módulo de Cancelación Automática 
     window.addEventListener('DOMContentLoaded', async () => {
+        await cargarServiciosDesdeSupabase();
         // 🛡️ Autocompletado protegido contra bloqueos de LocalStorage
         try {
             const nombreGuardado = localStorage.getItem("barberia_nombre");
