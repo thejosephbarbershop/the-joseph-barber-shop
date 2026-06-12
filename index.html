@@ -4,341 +4,276 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
     <title>Reserva tu Cita - The Joseph Barbershop</title>
-
+    
     <link rel="icon" type="image/png" sizes="192x192" href="https://ibb.co/LzbTQvbL?v=2">
     <link rel="apple-touch-icon" sizes="180x180" href="https://ibb.co/LzbTQvbL?v=2">
     <link rel="manifest" href="manifest.json">
-    
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Marcellus&family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
     
     <style>
         :root {
-            --primary-color: #1a1a1a;   /* Negro Barbería */
-            --accent-color: #d4af37;    /* Dorado Premium */
-            --bg-color: #f4f7f6;
-            --text-color: #333;
-            --white: #ffffff;
-            --whatsapp-color: #25d366; /* Verde WhatsApp */
-            --danger-color: #de3b3b;   /* Rojo Cancelación */
+            --primary: #0a0a0a;
+            --secondary: #161616;
+            --accent: #d4af37;
+            --accent-glow: rgba(212, 175, 55, 0.3);
+            --text-light: #f3f4f6;
+            --text-muted: #9ca3af;
+            --whatsapp-color: #25d366;
+            --danger-color: #de3b3b;
+            --transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            margin: 0;
-            padding: 10px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--primary);
+            color: var(--text-light);
+            margin: 0; padding: 0;
+            background-image: radial-gradient(circle at 50% 0%, #201a0b 0%, var(--primary) 70%);
+            background-attachment: fixed;
             min-height: 100vh;
-            box-sizing: border-box;
         }
 
-        .app-container {
-            width: 100%;
-            max-width: 430px;
-            background-color: var(--white);
-            border-radius: 25px;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.15);
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-        }
-
-        header {
-            background-color: var(--primary-color);
-            color: var(--white);
-            padding: 30px 20px;
-            text-align: center;
-            border-bottom: 4px solid var(--accent-color);
-        }
-
-        header h1 {
+        header { text-align: center; padding: 50px 20px 30px; }
+        .logo-barber {
+            font-family: 'Marcellus', serif;
+            font-size: 2.5rem;
+            color: var(--accent);
+            letter-spacing: 4px;
             margin: 0;
-            font-size: 1.6rem;
-            font-weight: bold;
-            letter-spacing: 2px;
-            color: var(--accent-color);
+            text-shadow: 0 4px 10px rgba(0,0,0,0.5);
         }
+        header p { color: var(--text-muted); font-size: 1rem; letter-spacing: 2px; margin-top: 5px; text-transform: uppercase; }
 
-        header p {
-            margin: 5px 0 0 0;
-            font-size: 0.85rem;
-            opacity: 0.7;
-        }
+        .booking-container { max-width: 700px; margin: 0 auto 60px; padding: 0 20px; }
 
-        .form-content, .cancel-content {
-            padding: 20px 20px 100px 20px !important;
-            max-height: 70vh;
-            overflow-y: auto;
-        }
-
-        .form-section {
+        .step-section {
+            background: var(--secondary);
+            border-radius: 20px;
+            padding: 30px;
             margin-bottom: 25px;
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            transition: var(--transition);
+        }
+        .step-section:hover { border-color: rgba(212, 175, 55, 0.15); }
+
+        h2 {
+            font-family: 'Marcellus', serif;
+            font-size: 1.4rem;
+            color: var(--accent);
+            margin-top: 0; margin-bottom: 20px;
+            display: flex; align-items: center; gap: 12px;
+        }
+        h2 span {
+            background: rgba(212, 175, 55, 0.1);
+            color: var(--accent);
+            width: 28px; height: 28px;
+            border-radius: 50%;
+            display: inline-flex; align-items: center; justify-content: center;
+            font-size: 0.9rem; font-family: 'Poppins', sans-serif; font-weight: bold;
+            border: 1px solid var(--accent);
         }
 
-        .section-title {
-            font-size: 0.85rem;
-            color: #777;
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-            margin-bottom: 12px;
-            display: block;
-            font-weight: bold;
-        }
+        .visual-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px; }
 
-        .input-field {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #eee;
-            border-radius: 12px;
-            font-size: 1rem;
-            box-sizing: border-box;
-            margin-bottom: 10px;
-            transition: border-color 0.3s;
-        }
-
-        .input-field:focus {
-            outline: none;
-            border-color: var(--accent-color);
-        }
-
-        .selector-group {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 12px;
-        }
-
-        .selector-item {
-            display: none;
-        }
-
-        .selector-label {
-            display: block;
-            background-color: var(--white);
-            border: 2px solid #eee;
-            border-radius: 14px;
-            padding: 15px 10px;
+        .selectable-card {
+            background: #1e1e1e !important;
+            border-radius: 14px !important;
+            overflow: hidden;
+            cursor: pointer;
+            border: 2px solid transparent !important;
+            transition: var(--transition);
             text-align: center;
-            cursor: pointer;
-            transition: all 0.25s ease;
-            height: 100%;
+            position: relative;
+            padding: 20px 12px !important;
             box-sizing: border-box;
+            display: block !important;
+        }
+        .selectable-card:hover { transform: translateY(-4px); background: #252525 !important; }
+        .selectable-card input[type="radio"] { position: absolute; opacity: 0; width: 0; height: 0; margin: 0; }
+
+        .card-info { padding: 5px 0; pointer-events: none; }
+        .card-title { font-weight: 600; font-size: 0.95rem; margin: 0; color: var(--text-light); display: block; }
+        .card-subtitle { font-size: 0.8rem; color: var(--text-muted); margin-top: 5px; display: block; }
+
+        .selectable-card.selected { 
+            border-color: var(--accent) !important; 
+            box-shadow: 0 0 15px var(--accent-glow) !important; 
+            background: #221c0e !important; 
+        }
+        .selectable-card.selected .card-title { color: var(--accent); }
+        
+        .selectable-card::after {
+            content: "\f058"; font-family: "Font Awesome 6 Free"; font-weight: 900;
+            position: absolute; top: 10px; right: 10px; color: var(--accent);
+            font-size: 1.1rem; opacity: 0; transform: scale(0.5); transition: var(--transition); z-index: 2;
+        }
+        .selectable-card.selected::after { opacity: 1; transform: scale(1); }
+
+        .form-group { margin-bottom: 20px; }
+        label.input-label { display: block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
+        
+        .input-wrapper { position: relative; }
+        .input-wrapper i { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: var(--accent); }
+        
+        input[type="text"], input[type="tel"], input[type="date"] {
+            width: 100%; padding: 14px 14px 14px 45px;
+            background: #1e1e1e; border: 2px solid rgba(255,255,255,0.05);
+            border-radius: 12px; color: white; font-size: 1rem; font-family: inherit; box-sizing: border-box; transition: var(--transition);
+        }
+        input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 10px var(--accent-glow); }
+
+        .time-slots-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(105px, 1fr)); gap: 12px; margin-top: 15px; }
+        
+        .texto-alerta {
+            grid-column: span 12;
+            text-align: center;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            padding: 10px 0;
+            width: 100%;
         }
 
-        .selector-label:hover {
-            border-color: var(--accent-color);
-            background-color: #fffdf7;
+        .btn-submit-booking {
+            background: linear-gradient(90deg, #25d366, #20ba59); color: white;
+            width: 100%; border: none; padding: 16px; font-size: 1.1rem; font-weight: 700;
+            border-radius: 14px; cursor: pointer; box-shadow: 0 5px 20px rgba(37, 211, 102, 0.2);
+            transition: var(--transition); display: flex; align-items: center; justify-content: center; gap: 10px; text-transform: uppercase; letter-spacing: 1px;
         }
-
-        .selector-item:checked + .selector-label {
-            border-color: var(--accent-color);
-            background-color: var(--primary-color);
-            color: var(--white);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-        }
-
-        .selector-item:checked + .selector-label .item-desc {
-            color: var(--accent-color);
-        }
-
-        .item-name {
-            display: block;
-            font-weight: bold;
-            font-size: 0.95rem;
-        }
-
-        .item-desc {
-            display: block;
-            font-size: 0.8rem;
-            color: #666;
-            margin-top: 4px;
-            font-weight: 500;
-        }
-
-        .confirm-btn {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            width: calc(100% - 40px);
-            max-width: 390px;
-            padding: 16px;
-            color: var(--white);
-            border: none;
-            border-radius: 14px;
-            font-size: 1.1rem;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 999;
-        }
-
-        .btn-whatsapp {
-            background-color: var(--whatsapp-color);
-            box-shadow: 0 -4px 15px rgba(0, 0, 0, 0.1), 0 4px 10px rgba(37, 211, 102, 0.3);
-        }
-
-        .btn-whatsapp:hover {
-            background-color: #20ba59;
-            transform: translateX(-50%) translateY(-2px);
-        }
-
-        .btn-danger {
-            background-color: var(--danger-color);
-            box-shadow: 0 -4px 15px rgba(0, 0, 0, 0.1), 0 4px 10px rgba(222, 59, 59, 0.3);
-        }
-
-        .btn-danger:hover {
-            background-color: #c43030;
-            transform: translateX(-50%) translateY(-2px);
-        }
-
-        .btn-danger:disabled {
-            background-color: #ccc !important;
-            color: #fff !important;
-            cursor: not-allowed !important;
-            box-shadow: none !important;
-            transform: translateX(-50%) !important;
-        }
-
-        .hidden {
-            display: none !important;
-        }
+        .btn-submit-booking:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(37, 211, 102, 0.4); }
 
         .info-card {
-            background-color: #f9f9f9;
-            border: 2px solid #eee;
+            background-color: #1e1e1e;
+            border: 1px solid rgba(255,255,255,0.05);
             border-radius: 16px;
             padding: 20px;
             text-align: left;
             margin-top: 15px;
         }
+        .info-line { margin-bottom: 12px; font-size: 0.95rem; color: var(--text-light); }
+        .info-line strong { color: var(--accent); }
+        .info-line:last-child { margin-bottom: 0; }
 
-        .info-line {
-            margin-bottom: 12px;
-            font-size: 0.95rem;
+        .btn-danger-booking {
+            background: linear-gradient(90deg, #de3b3b, #c43030); color: white;
+            width: 100%; border: none; padding: 16px; font-size: 1.1rem; font-weight: 700;
+            border-radius: 14px; cursor: pointer; box-shadow: 0 5px 20px rgba(222, 59, 59, 0.2);
+            transition: var(--transition); display: flex; align-items: center; justify-content: center; gap: 10px; text-transform: uppercase; letter-spacing: 1px;
         }
+        .btn-danger-booking:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(222, 59, 59, 0.4); }
+        .btn-danger-booking:disabled { background: #444; color: #888; cursor: not-allowed; box-shadow: none; }
 
-        .info-line:last-child {
-            margin-bottom: 0;
-        }
-
-        .info-line strong {
-            color: var(--primary-color);
-        }
-
-        #mensaje-status {
-            margin-top: 20px;
-            font-weight: bold;
-            font-size: 1rem;
-        }
-
-        .texto-alerta {
-            grid-column: span 2;
-            text-align: center;
-            font-size: 0.9rem;
-            color: #888;
-            padding: 15px 0;
-        }
+        .hidden { display: none !important; }
+        #mensaje-status { font-weight: bold; font-size: 1rem; margin-top: 15px; text-align: center; }
     </style>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 </head>
 <body>
 
-   <div class="app-container">
     <header>
-        <h1 id="header-title">THE JOSEPH BARBERSHOP</h1>
-        <p id="header-subtitle">Citas y Reservas por WhatsApp</p>
+        <h1 id="header-title" class="logo-barber">THE JOSEPH</h1>
+        <p id="header-subtitle">Barbershop & Spa</p>
     </header>
 
-    <form id="reserva-form" class="form-content">
+    <div class="booking-container">
         
-        <div class="form-section">
-            <span class="section-title">Tus Datos</span>
-            <input type="text" id="client-name" class="input-field" placeholder="Nombre completo" required>
-            <input type="tel" id="client-phone" class="input-field" placeholder="Número de teléfono" required>
-        </div>
-
-        <div class="form-section">
-            <span class="section-title">Selecciona tu Barbero</span>
-            <div id="contenedor-barberos-dinamicos" class="selector-group">
-                <p style="color: #a0aec0; text-align: center; padding: 10px; width: 100%;">Cargando barberos disponibles...</p>
-            </div>
-        </div>
-
-        <div class="form-section">
-            <span class="section-title">Selecciona un Servicio</span>
-            <div id="contenedor-servicios-dinamicos" class="selector-group">
-                <p style="color: #a0aec0; text-align: center; padding: 10px; width: 100%;">Cargando servicios y tarifas...</p>
-            </div>
-        </div>
-
-        <div class="form-section">
-            <span class="section-title">Selecciona el Día</span>
-            <input type="date" id="fecha" class="input-field" required>
-        </div>
-
-        <div class="form-section">
-            <span class="section-title">Selecciona la Hora</span>
-            <div class="selector-group" id="contenedor-hours">
-                <div class="texto-alerta">Selecciona fecha, barbero y servicio para ver horarios...</div>
-            </div>
-        </div>
-
-        <button type="submit" class="confirm-btn btn-whatsapp">
-            Confirmar y enviar Cita
-        </button>
-    </form>
-
-    <div id="modulo-cancelar" class="cancel-content hidden">
-        <div class="form-section">
-            <span class="section-title" style="color: var(--danger-color);">Detalles de la Cita a Cancelar</span>
-            <p style="font-size: 0.9rem; color: #555; margin-bottom: 15px;">
-                Verifica la información de tu espacio antes de confirmar la cancelación. Esta acción liberará el horario de forma inmediata.
-            </p>
-
-            <div class="info-card">
-                <div class="info-line"><strong>Cliente:</strong> <span id="cancel-info-cliente">Cargando...</span></div>
-                <div class="info-line"><strong>Servicio:</strong> <span id="cancel-info-servicio">-</span></div>
-                <div class="info-line"><strong>Barbero:</strong> <span id="cancel-info-barbero">-</span></div>
-                <div class="info-line"><strong>Fecha:</strong> <span id="cancel-info-fecha">-</span></div>
-                <div class="info-line"><strong>Horario:</strong> <span id="cancel-info-hora">-</span></div>
-            </div>
+        <form id="reserva-form" class="form-content">
             
-            <p id="mensaje-status" class="text-center"></p>
+            <div class="step-section">
+                <h2><span>1</span> Tus Datos de Contacto</h2>
+                <div class="form-group">
+                    <label class="input-label">Nombre y Apellido</label>
+                    <div class="input-wrapper">
+                        <i class="fa-regular fa-user"></i>
+                        <input type="text" id="client-name" placeholder="Nombre completo" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="input-label">Número de WhatsApp</label>
+                    <div class="input-wrapper">
+                        <i class="fa-brands fa-whatsapp"></i>
+                        <input type="tel" id="client-phone" placeholder="Número de teléfono" required>
+                    </div>
+                </div>
+            </div>
+
+            <div class="step-section">
+                <h2><span>2</span> Selecciona tu Barbero</h2>
+                <div class="visual-grid" id="contenedor-barberos-dinamicos">
+                    <div class="texto-alerta">Conectando con la lista de barberos...</div>
+                </div>
+            </div>
+
+            <div class="step-section">
+                <h2><span>3</span> Elige el Servicio</h2>
+                <div class="visual-grid" id="contenedor-servicios-dinamicos">
+                    <div class="texto-alerta">Sincronizando catálogo...</div>
+                </div>
+            </div>
+
+            <div class="step-section">
+                <h2><span>4</span> Agenda tu Turno</h2>
+                <div class="form-group">
+                    <label class="input-label">Selecciona el Día</label>
+                    <div class="input-wrapper">
+                        <i class="fa-regular fa-calendar-days"></i>
+                        <input type="date" id="fecha" required>
+                    </div>
+                </div>
+                
+                <div class="form-group" style="margin-top: 25px;">
+                    <label class="input-label">Horarios Disponibles</label>
+                    <div class="time-slots-grid" id="contenedor-hours">
+                        <div class="texto-alerta">Selecciona fecha, barbero y servicio para ver horarios...</div>
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" class="btn-submit-booking">
+                <i class="fa-brands fa-whatsapp"></i> Confirmar y enviar Cita
+            </button>
+        </form>
+
+        <div id="modulo-cancelar" class="cancel-content hidden">
+            <div class="step-section" style="border-color: rgba(222, 59, 59, 0.2);">
+                <h2 style="color: var(--danger-color);"><i class="fa-solid fa-calendar-xmark"></i> Detalles de la Cita a Cancelar</h2>
+                <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 15px;">
+                    Verifica la información de tu espacio antes de confirmar la cancelación. Esta acción liberará el horario de forma inmediata.
+                </p>
+
+                <div class="info-card">
+                    <div class="info-line"><strong>Cliente:</strong> <span id="cancel-info-cliente">Cargando...</span></div>
+                    <div class="info-line"><strong>Servicio:</strong> <span id="cancel-info-servicio">-</span></div>
+                    <div class="info-line"><strong>Barbero:</strong> <span id="cancel-info-barbero">-</span></div>
+                    <div class="info-line"><strong>Fecha:</strong> <span id="cancel-info-fecha">-</span></div>
+                    <div class="info-line"><strong>Horario:</strong> <span id="cancel-info-hora">-</span></div>
+                </div>
+                
+                <p id="mensaje-status"></p>
+            </div>
+
+            <button id="btn-ejecutar-cancelar" class="btn-danger-booking" disabled>
+                <i class="fa-solid fa-trash-can"></i> Confirmar Cancelación de Espacio
+            </button>
         </div>
 
-        <button id="btn-ejecutar-cancelar" class="confirm-btn btn-danger" disabled>
-            Confirmar Cancelación de Espacio
-        </button>
     </div>
-</div>
+
     <script>
-    // --- ESCUDO DE SEGURIDAD PARA EMAILJS ---
     try {
         if (typeof emailjs !== 'undefined') {
             emailjs.init("GQ0nATFCZx9T_S2wV");
-        } else {
-            console.warn("EmailJS no se cargó correctamente debido a las restricciones del contenedor.");
         }
-    } catch (e) {
-        console.error("Error al inicializar EmailJS en este entorno:", e);
-    }
+    } catch (e) { console.error(e); }
 
     const SUPABASE_URL = "https://xnfmqumhhxpkrigizvlu.supabase.co";
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhuZm1xdW1oaHhwa3JpZ2l6dmx1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5MTE3NjgsImV4cCI6MjA5NTQ4Nzc2OH0.zNSZ4Nw2Iz2IieExt9SErJddPseWb65Hxedg5ZGZCvI";
-
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    // --- SELECCIÓN DE ELEMENTOS DEL DOM ---
     const inputFecha = document.getElementById('fecha');
     const contenedorHoras = document.getElementById('contenedor-hours');
     const formulario = document.getElementById('reserva-form');
@@ -350,33 +285,36 @@
     const btnEjecutarCancelar = document.getElementById('btn-ejecutar-cancelar');
     const txtStatus = document.getElementById('mensaje-status');
 
-    // --- PARÁMETROS DE CONFIGURACIÓN DE ATENCIÓN ---
-    const APERTURA_MINUTOS = 8 * 60;   // 08:00 AM en minutos totales
-    const MARGEN_LIMPIEZA = 5;         // 5 minutos entre citas
-    let CIERRE_MINUTOS = 20 * 60;      // Por defecto 8:00 PM
+    const APERTURA_MINUTOS = 8 * 60;   
+    const MARGEN_LIMPIEZA = 5;         
+    let CIERRE_MINUTOS = 20 * 60;      
 
-    // ==========================================
-    // 🛠️ FUNCIÓN PARA CAMBIAR EL HORARIO DE CIERRE SEGÚN EL DÍA
-    // ==========================================
     function ajustarHorarioCierre(fechaSeleccionada) {
         if (!fechaSeleccionada) return;
-        
         const partes = fechaSeleccionada.split('-');
         const fechaObjeto = new Date(partes[0], partes[1] - 1, partes[2]);
         const numeroDia = fechaObjeto.getDay(); 
-
         if (numeroDia >= 1 && numeroDia <= 4) {
             CIERRE_MINUTOS = 20 * 60;  
-            console.log("Horario ajustado para Lunes-Jueves: Cierre a las 8:00 PM");
         } else {
             CIERRE_MINUTOS = 24 * 60;  
-            console.log("Horario ajustado para Fin de Semana: Cierre a las 12:00 AM");
         }
     }
 
-    // ==========================================
-    // 🎯 CARGA DINÁMICA DESDE SUPABASE
-    // ==========================================
+    function refrescarSeleccionVisual(nombreGrupo) {
+        const radios = document.querySelectorAll(`input[name="${nombreGrupo}"]`);
+        radios.forEach(rd => {
+            const card = rd.closest('.selectable-card');
+            if (card) {
+                if (rd.checked) {
+                    card.classList.add('selected');
+                } else {
+                    card.classList.remove('selected');
+                }
+            }
+        });
+    }
+
     async function inicializarBarberosCliente() {
         const contenedor = document.getElementById('contenedor-barberos-dinamicos');
         if (!contenedor) return;
@@ -385,27 +323,30 @@
             if (error) throw error;
 
             if (!barberos || barberos.length === 0) {
-                contenedor.innerHTML = '<p style="color: red; text-align: center; width:100%;">No hay barberos disponibles.</p>';
+                contenedor.innerHTML = '<div class="texto-alerta" style="color:var(--danger-color);">No hay barberos disponibles.</div>';
                 return;
             }
 
             contenedor.innerHTML = barberos.map((barbero, idx) => `
-                <div>
-                    <input type="radio" id="barb-dyn-${idx}" name="barbero" value="${barbero.nombre}" class="selector-item barbero-opcion" required>
-                    <label for="barb-dyn-${idx}" class="selector-label">
-                        <span class="item-name">${barbero.nombre}</span>
-                        <span class="item-desc">${barbero.rol}</span>
-                    </label>
+                <div class="selectable-card" onclick="document.getElementById('barb-dyn-${idx}').click();">
+                    <input type="radio" id="barb-dyn-${idx}" name="barbero" value="${barbero.nombre}" class="barbero-opcion" required>
+                    <div class="card-info">
+                        <span class="card-title">${barbero.nombre}</span>
+                        <span class="card-subtitle">${barbero.rol}</span>
+                    </div>
                 </div>
             `).join('');
 
             document.querySelectorAll('.barbero-opcion').forEach(radio => {
-                radio.addEventListener('change', actualizarHorariosDisponibles);
+                radio.addEventListener('change', function() {
+                    refrescarSeleccionVisual('barbero');
+                    actualizarHorariosDisponibles();
+                });
             });
 
         } catch (err) {
             console.error("Error cargando barberos:", err);
-            contenedor.innerHTML = '<p style="color: red; text-align: center; width:100%;">Error al conectar con la agenda.</p>';
+            contenedor.innerHTML = '<div class="texto-alerta" style="color:var(--danger-color);">Error al conectar con la agenda.</div>';
         }
     }
 
@@ -417,45 +358,40 @@
             if (error) throw error;
 
             if (!servicios || servicios.length === 0) {
-                contenedor.innerHTML = '<p style="color: red; text-align: center; width:100%;">No hay servicios configurados.</p>';
+                contenedor.innerHTML = '<div class="texto-alerta" style="color:var(--danger-color);">No hay servicios configurados.</div>';
                 return;
             }
 
             contenedor.innerHTML = servicios.map((servicio, idx) => `
-                <div>
-                    <input type="radio" id="srv-dyn-${idx}" name="servicio" value="${servicio.nombre}" data-duracion="${servicio.duracion}" class="selector-item servicio-opcion" required>
-                    <label for="srv-dyn-${idx}" class="selector-label">
-                        <span class="item-name">${servicio.nombre}</span>
-                        <span class="item-desc">${servicio.descripcion || ''} (${formatearDuracion(servicio.duracion)})</span>
-                    </label>
+                <div class="selectable-card" onclick="document.getElementById('srv-dyn-${idx}').click();">
+                    <input type="radio" id="srv-dyn-${idx}" name="servicio" value="${servicio.nombre}" data-duracion="${servicio.duracion}" class="servicio-opcion" required>
+                    <div class="card-info">
+                        <span class="card-title">${servicio.nombre}</span>
+                        <span class="card-subtitle">${servicio.descripcion || ''} (${formatearDuracion(servicio.duracion)})</span>
+                    </div>
                 </div>
             `).join('');
 
             document.querySelectorAll('.servicio-opcion').forEach(radio => {
-                radio.addEventListener('change', actualizarHorariosDisponibles);
+                radio.addEventListener('change', function() {
+                    refrescarSeleccionVisual('servicio');
+                    actualizarHorariosDisponibles();
+                });
             });
 
         } catch (err) {
             console.error("Error cargando servicios:", err);
-            contenedor.innerHTML = '<p style="color: red; text-align: center; width:100%;">Error al cargar el catálogo.</p>';
+            contenedor.innerHTML = '<div class="texto-alerta" style="color:var(--danger-color);">Error al cargar el catálogo.</div>';
         }
     }
 
-    // ==========================================
-    // 🎯 ARRANQUE SEGURO DE LA APLICACIÓN
-    // ==========================================
     document.addEventListener("DOMContentLoaded", async function() {
-        
-        // --- ESCUDO DE SEGURIDAD PARA LOCALSTORAGE ---
         try {
             const nombreGuardado = localStorage.getItem("barberia_nombre");
             const telefonoGuardado = localStorage.getItem("barberia_telefono");
-
             if (nombreGuardado) document.getElementById("client-name").value = nombreGuardado;
             if (telefonoGuardado) document.getElementById("client-phone").value = telefonoGuardado;
-        } catch (storageError) {
-            console.warn("LocalStorage bloqueado por el contenedor de pruebas. Autocompletado desactivado temporalmente.");
-        }
+        } catch (e) {}
 
         const hoyObjeto = new Date();
         const offset = hoyObjeto.getTimezoneOffset();
@@ -473,8 +409,8 @@
         if (idACancelar) {
             moduloReserva.classList.add('hidden');
             moduloCancelar.classList.remove('hidden');
-            document.getElementById('header-title').innerText = "CANCELAR ESPACIO";
-            document.getElementById('header-subtitle').innerText = "Gestión de citas - The Joseph Barbershop";
+            document.getElementById('header-title').innerText = "CANCELAR CITA";
+            document.getElementById('header-subtitle').innerText = "Gestión de turnos - The Joseph Barbershop";
             obtenerDetallesCita(idACancelar);
         }
 
@@ -482,7 +418,6 @@
         await inicializarServiciosCliente();
     });
 
-    // --- UTILIDADES MATEMÁTICAS DE TIEMPO ---
     function convertirStringAMinutos(horaStr) {
         let [time, modifier] = horaStr.split(' ');
         let [hours, minutes] = time.split(':').map(Number);
@@ -508,9 +443,6 @@
         return new Date(`${fechaStr}T${String(horas).padStart(2, '0')}:${String(minutos).padStart(2, '0')}:00`);
     }
 
-    // ==========================================
-    // 🎯 MOTOR CENTRAL: CÁLCULO Y GENERACIÓN DINÁMICA
-    // ==========================================
     async function actualizarHorariosDisponibles() {
         const fechaSeleccionada = inputFecha.value;
         const barberoSeleccionadoInput = document.querySelector('input[name="barbero"]:checked');
@@ -571,12 +503,11 @@
 
                     if (!esPasada) {
                         htmlBotones += `
-                            <div>
-                                <input type="radio" id="dyn-hr-${indexBotones}" name="hora" value="${stringHora12h}" class="selector-item" required>
-                                <label for="dyn-hr-${indexBotones}" class="selector-label">
-                                    <span class="item-name">${stringHora12h}</span>
-                                    <span class="item-desc">Disponible</span>
-                                </label>
+                            <div class="selectable-card" style="padding: 12px !important;" onclick="document.getElementById('dyn-hr-${indexBotones}').click();">
+                                <input type="radio" id="dyn-hr-${indexBotones}" name="hora" value="${stringHora12h}" class="hora-opcion" required>
+                                <div class="card-info">
+                                    <span class="card-title" style="font-size:0.9rem;">${stringHora12h}</span>
+                                </div>
                             </div>`;
                         indexBotones++;
                     }
@@ -588,23 +519,32 @@
                 contenedorHoras.innerHTML = '<div class="texto-alerta" style="color: var(--danger-color);">No quedan bloques libres para este servicio hoy.</div>';
             } else {
                 contenedorHoras.innerHTML = htmlBotones;
+                
+                document.querySelectorAll('.hora-opcion').forEach(radio => {
+                    radio.addEventListener('change', function() {
+                        refrescarSeleccionVisual('hora');
+                    });
+                });
             }
 
         } catch (err) {
-            console.error("Error al sincronizar agenda:", err);
+            console.error(err);
             contenedorHoras.innerHTML = '<div class="texto-alerta" style="color: var(--danger-color);">Error al sincronizar agenda.</div>';
         }
     }
 
-    // ==========================================
-    // 💾 PROCESAR ENVIÓ DE FORMULARIO DE RESERVA
-    // ==========================================
     formulario.addEventListener('submit', async (e) => {
         e.preventDefault();
 
         const nombre = document.getElementById('client-name').value;
         const telefono = document.getElementById('client-phone').value;
         const servicioInput = document.querySelector('input[name="servicio"]:checked');
+        
+        if(!servicioInput || !document.querySelector('input[name="barbero"]:checked')) {
+            alert("Por favor selecciona barbero y servicio.");
+            return;
+        }
+
         const servicio = servicioInput.value;
         const duracion = parseInt(servicioInput.getAttribute('data-duracion'), 10) || 30;
         const barbero = document.querySelector('input[name="barbero"]:checked').value;
@@ -669,7 +609,7 @@
             } catch(e){}
 
             if (typeof emailjs !== 'undefined') {
-                var datosParaCorreo = {
+                const datosParaCorreo = {
                     nombre_cliente: nombre,
                     telefono: telefono,
                     hora_cita: `${hora} el día ${fecha} con ${barbero}`
@@ -682,8 +622,9 @@
             const enlaceCancelar = `${urlBase}?cancelar=${idGenerado}`;
 
             const telefonoBarberia = "18299702130"; 
-           // BUSCA ESTA LÍNEA DENTRO DEL EVENT LISTENER DEL SUBMIT Y REEMPLÁZALA:
-const mensaje = `💈 *NUEVA CITA - THE JOSEPH BARBERSHOP* 💈\n\n👤 *Cliente:* ${nombre}\n📞 *Teléfono:* ${telefono}\n✂️ *Servicio:* ${servicio} (${formatearDuracion(duracion)})\n🧔 *Barbero:* ${barbero}\n📅 *Fecha:* ${fecha}\n⏰ *Hora:* ${hora}\n\n_¡Por favor confirma mi espacio!_\n\n❌ *Para cancelar o cambiar tu espacio haz clic aquí:* \n${enlaceCancelar}`;
+            const [fAno, fMes, fDia] = fecha.split('-');
+            
+            const mensaje = `💈 *NUEVA CITA - THE JOSEPH BARBERSHOP* 💈\n\n👤 *Cliente:* ${nombre}\n📞 *Teléfono:* ${telefono}\n✂️ *Servicio:* ${servicio} (${formatearDuracion(duracion)})\n🧔 *Barbero:* ${barbero}\n📅 *Fecha:* ${fDia}/${fMes}/${fAno}\n⏰ *Hora:* ${hora}\n\n_¡Por favor confirma mi espacio!_\n\n❌ *Para cancelar o cambiar tu espacio haz clic aquí:* \n${enlaceCancelar}`;
             
             const urlWhatsapp = `https://wa.me/${telefonoBarberia}?text=${encodeURIComponent(mensaje)}`;
             
@@ -700,9 +641,6 @@ const mensaje = `💈 *NUEVA CITA - THE JOSEPH BARBERSHOP* 💈\n\n👤 *Cliente
         }
     });
 
-    // ==========================================
-    // ❌ LÓGICA DEL MÓDULO DE CANCELACIÓN
-    // ==========================================
     async function obtenerDetallesCita(id) {
         try {
             const { data: cita, error } = await _supabase
@@ -736,7 +674,6 @@ const mensaje = `💈 *NUEVA CITA - THE JOSEPH BARBERSHOP* 💈\n\n👤 *Cliente
     btnEjecutarCancelar.addEventListener('click', async () => {
         btnEjecutarCancelar.disabled = true;
         txtStatus.innerText = "Procesando la liberación de tu espacio...";
-        txtStatus.style.color = "var(--primary-color)";
 
         try {
             const { error } = await _supabase
@@ -748,7 +685,7 @@ const mensaje = `💈 *NUEVA CITA - THE JOSEPH BARBERSHOP* 💈\n\n👤 *Cliente
 
             txtStatus.innerText = "¡Tu cita ha sido cancelada exitosamente! El bloque de horario ya se encuentra disponible.";
             txtStatus.style.color = "var(--whatsapp-color)";
-            document.querySelector('.info-card').style.opacity = "0.5";
+            document.querySelector('.info-card').style.opacity = "0.4";
             
             setTimeout(() => {
                 window.location.href = window.location.origin + window.location.pathname;
@@ -761,14 +698,10 @@ const mensaje = `💈 *NUEVA CITA - THE JOSEPH BARBERSHOP* 💈\n\n👤 *Cliente
         }
     });
 
-    // ==========================================
-    // 🕒 FUNCIÓN GLOBAL PARA FORMATEAR DURACIÓN 
-    // ==========================================
     function formatearDuracion(minutosTotales) {
         if (!minutosTotales || minutosTotales <= 0) return "0 min";
         const horas = Math.floor(minutosTotales / 60);
         const minutosRestantes = minutosTotales % 60;
-
         if (horas > 0 && minutosRestantes === 0) {
             return horas === 1 ? `${horas} hora` : `${horas} horas`;
         }
