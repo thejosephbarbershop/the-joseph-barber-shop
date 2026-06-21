@@ -254,7 +254,7 @@
             return (hours * 60) + minutes;
         }
 
-       // Lógica principal de renderizado en la TV (CORREGIDA)
+       // Lógica principal de renderizado en la TV (CORREGIDA Y SIN ERRORES)
         async function actualizarPantallaTV() {
             // Obtenemos la fecha de hoy en formato YYYY-MM-DD local
             const hoy = new Date();
@@ -262,7 +262,7 @@
             const hoyLocal = new Date(hoy.getTime() - (offset * 60 * 1000));
             const fechaHoy = hoyLocal.toISOString().split('T')[0];
 
-            // Obtener la hora actual en minutos desde la medianoche para comparar
+            // Obtener la hora actual en minutos desde la medianoche
             const ahoraEnMinutos = (hoy.getHours() * 60) + hoy.getMinutes();
 
             try {
@@ -285,6 +285,62 @@
                     return;
                 }
 
+                // Las ordenamos cronológicamente usando tu lógica de horaAMinutos
+                reservas.sort((a, b) => horaAMinutos(a.hora) - horaAMinutos(b.hora));
+
+                // Total de citas del día
+                document.getElementById('totalTurnos').innerText = `Total: ${reservas.length}`;
+
+                // --- FILTRADO INTELIGENTE POR HORA ---
+                // Tiempo estimado por corte (en minutos) para decidir cuándo quitar al cliente de la pantalla
+                const duracionCorte = 40; 
+
+                // Filtramos para dejar solo los turnos que no han terminado
+                const turnosActivos = reservas.filter(cita => {
+                    const horaCitaMinutos = horaAMinutos(cita.hora);
+                    // Si la hora de la cita + 40 minutos es mayor que la hora actual, sigue vigente
+                    return (horaCitaMinutos + duracionCorte) > ahoraEnMinutos;
+                });
+
+                // Si ya pasaron todos los turnos del día según la hora actual
+                if (turnosActivos.length === 0) {
+                    document.getElementById('actualNombre').innerText = "Libre";
+                    document.getElementById('actualServicio').innerText = "Terminamos por hoy";
+                    document.getElementById('actualHora').innerText = "--:--";
+                    listaEspera.innerHTML = '<div class="no-data">💈 No hay más turnos hoy.</div>';
+                    return;
+                }
+
+                // El primer turno de los que quedan vigentes va a "Atendiendo Ahora"
+                const primero = turnosActivos[0];
+                document.getElementById('actualNombre').innerText = primero.cliente || "Cliente";
+                document.getElementById('actualServicio').innerText = primero.servicio || "Corte de Pelo";
+                document.getElementById('actualHora').innerText = primero.hora;
+
+                // El resto de turnos que vienen más tarde se listan a la derecha
+                const siguientes = turnosActivos.slice(1);
+                if (siguientes.length === 0) {
+                    listaEspera.innerHTML = '<div class="no-data">Próximo turno libre</div>';
+                } else {
+                    let htmlSiguientes = "";
+                    siguientes.forEach(cita => {
+                        htmlSiguientes += `
+                            <div class="item-reserva">
+                                <div class="info-cliente">
+                                    <span class="info-nombre">${cita.cliente || "Cliente"}</span>
+                                    <span class="info-servicio">✂️ ${cita.servicio || "Servicio"}</span>
+                                </div>
+                                <span class="info-hora">${cita.hora}</span>
+                            </div>
+                        `;
+                    });
+                    listaEspera.innerHTML = htmlSiguientes;
+                }
+
+            } catch (err) {
+                console.error("Error cargando datos para la TV:", err);
+            }
+        }
                 // Las ordenamos cronológicamente usando tu lógica
                 reservas.sort((a, b) => horaAMinutos(a.hora) - horaAMinutos(b.hora));
 
