@@ -1,8 +1,8 @@
 {
   "name": "The Joseph Barbershop",
   "short_name": "Joseph Barbershop",
-  "description": "Sistema de Reservas Oficial para The Joseph Barbershop",
-  "start_url": "./admin.html",
+  "description": "Sistema de Reservas para clientes de The Joseph Barbershop",
+  "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#1a1a1a",
   "theme_color": "#d4af37",
