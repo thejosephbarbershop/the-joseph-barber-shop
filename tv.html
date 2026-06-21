@@ -254,13 +254,16 @@
             return (hours * 60) + minutes;
         }
 
-        // Lógica principal de renderizado en la TV
+       // Lógica principal de renderizado en la TV (CORREGIDA)
         async function actualizarPantallaTV() {
             // Obtenemos la fecha de hoy en formato YYYY-MM-DD local
             const hoy = new Date();
             const offset = hoy.getTimezoneOffset();
             const hoyLocal = new Date(hoy.getTime() - (offset * 60 * 1000));
             const fechaHoy = hoyLocal.toISOString().split('T')[0];
+
+            // Obtener la hora actual en minutos desde la medianoche para comparar
+            const ahoraEnMinutos = (hoy.getHours() * 60) + hoy.getMinutes();
 
             try {
                 // Buscamos las reservas del día de hoy
@@ -281,6 +284,65 @@
                     listaEspera.innerHTML = '<div class="no-data">💈 No hay más turnos hoy.</div>';
                     return;
                 }
+
+                // Las ordenamos cronológicamente usando tu lógica
+                reservas.sort((a, b) => horaAMinutos(a.hora) - horaAMinutos(b.hora));
+
+                // Total de citas del día
+                document.getElementById('totalTurnos').innerText = `Total: ${reservas.length}`;
+
+                // --- NUEVA LÓGICA FILTRADO POR HORA ---
+                
+                // Asumimos un tiempo estimado por corte (ej: 40 minutos) 
+                // para saber cuándo quitar a un cliente de la pantalla
+                const duracionCorte = 40; 
+
+                // Filtramos las reservas que pertenecen al futuro o que se están atendiendo justo ahora
+                const turnosRestantes o Activos = reservas.filter(cita => {
+                    const horaCitaMinutos = horaAMinutos(cita.hora);
+                    // Mantiene la cita si la hora actual no ha superado el tiempo estimado del corte
+                    return (horaCitaMinutos + duracionCorte) > ahoraEnMinutos;
+                });
+
+                if (turnosRestantesoActivos.length === 0) {
+                    // Si ya pasaron todas las citas del día
+                    document.getElementById('actualNombre').innerText = "Libre";
+                    document.getElementById('actualServicio').innerText = "Terminamos por hoy";
+                    document.getElementById('actualHora').innerText = "--:--";
+                    listaEspera.innerHTML = '<div class="no-data">💈 No hay más turnos hoy.</div>';
+                    return;
+                }
+
+                // El primer turno de los que quedan activos va a "Atendiendo Ahora"
+                const primero = turnosRestantesoActivos[0];
+                document.getElementById('actualNombre').innerText = primero.cliente || "Cliente";
+                document.getElementById('actualServicio').innerText = primero.servicio || "Corte de Pelo";
+                document.getElementById('actualHora').innerText = primero.hora;
+
+                // El resto de turnos futuros se lista a la derecha
+                const siguientes = turnosRestantesoActivos.slice(1);
+                if (siguientes.length === 0) {
+                    listaEspera.innerHTML = '<div class="no-data">Próximo turno libre</div>';
+                } else {
+                    let htmlSiguientes = "";
+                    siguientes.forEach(cita => {
+                        htmlSiguientes += `
+                            <div class="item-reserva">
+                                <div class="info-cliente">
+                                    <span class="info-nombre">${cita.cliente || "Cliente"}</span>
+                                    <span class="info-servicio">✂️ ${cita.servicio || "Servicio"}</span>
+                                </div>
+                                <span class="info-hora">${cita.hora}</span>
+                            </div>
+                        `;
+                    });
+                    listaEspera.innerHTML = htmlSiguientes;
+                }
+
+            } catch (err) {
+                console.error("Error cargando datos para la TV:", err);
+            }
+        }
 
                 // Las ordenamos cronológicamente usando tu lógica
                 reservas.sort((a, b) => horaAMinutos(a.hora) - horaAMinutos(b.hora));
