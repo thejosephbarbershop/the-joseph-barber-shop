@@ -35,6 +35,24 @@
         th, td { padding: 12px; text-align: left; }
         th { background-color: #f2f2f2; }
         .btn-delete { background: var(--danger-color); color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; }
+
+        /* Estilos nuevos para las filas de horarios */
+        .fila-horario {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #fdfdfd;
+            padding: 12px;
+            border: 1px solid #eee;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .fila-horario .dia-nombre { font-weight: bold; width: 100px; }
+        .fila-horario input[type="time"] { padding: 6px; font-size: 0.95rem; }
+        .btn-save-day { background: #27ae60; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .btn-save-day:hover { background: #219150; }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -73,25 +91,13 @@
         </div>
 
         <div id="panel-horarios" class="section-panel">
-            <h2>Control de Horarios de Apertura y Cierre</h2>
-            <form id="form-horarios">
-                <div class="form-group">
-                    <label>Tipo de Jornada</label>
-                    <select id="horario-tipo">
-                        <option value="semana">Lunes a Jueves</option>
-                        <option value="fin_de_semana">Viernes a Domingo</option>
-                    </select>
+            <h2>Control de Horarios por Día de la Semana</h2>
+            <p style="color: #666; font-size: 0.9rem; margin-bottom: 20px;">
+                Define el horario específico de apertura y cierre para cada día de forma independiente.
+            </p>
+            
+            <div id="contenedor-horarios-dias">
                 </div>
-                <div class="form-group">
-                    <label>Hora de Apertura</label>
-                    <input type="text" id="horario-apertura" placeholder="Ej: 08:00 AM">
-                </div>
-                <div class="form-group">
-                    <label>Hora de Cierre</label>
-                    <input type="text" id="horario-cierre" placeholder="Ej: 08:00 PM o 12:00 AM">
-                </div>
-                <button type="button" class="action-btn" onclick="guardarHorario()">Actualizar Horario</button>
-            </form>
         </div>
 
         <div id="panel-proveedores" class="section-panel">
@@ -143,12 +149,21 @@
     </div>
 
     <script>
-    // Configuración de las llaves de Supabase
     const SUPABASE_URL = "https://xnfmqumhhxpkrigizvlu.supabase.co";
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhuZm1xdW1oaHhwa3JpZ2l6dmx1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5MTE3NjgsImV4cCI6MjA5NTQ4Nzc2OH0.zNSZ4Nw2Iz2IieExt9SErJddPseWb65Hxedg5ZGZCvI";
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    // Cambiar entre pestañas del Menú
+    // Nombres de los días mapeados al estándar de la base de datos (0 = Domingo, 1 = Lunes...)
+    const DIAS_SEMANA = [
+        { id: 1, nombre: "Lunes" },
+        { id: 2, nombre: "Martes" },
+        { id: 3, nombre: "Miércoles" },
+        { id: 4, nombre: "Jueves" },
+        { id: 5, font: "Viernes", nombre: "Viernes" },
+        { id: 6, nombre: "Sábado" },
+        { id: 0, nombre: "Domingo" }
+    ];
+
     function cambiarPestana(pestana) {
         document.querySelectorAll('.section-panel').forEach(panel => panel.classList.remove('active'));
         document.querySelectorAll('nav button').forEach(btn => btn.classList.remove('active'));
@@ -156,16 +171,103 @@
         document.getElementById(`panel-${pestana}`).classList.add('active');
         document.getElementById(`btn-${pestana}`).classList.add('active');
 
-        // Cargar datos automáticamente al abrir la pestaña
+        if(pestana === 'horarios') cargarPanelHorarios();
         if(pestana === 'proveedores') cargarBarberos();
         if(pestana === 'servicios') cargarServicios();
         if(pestana === 'feriados') cargarFeriados();
         if(pestana === 'citas') cargarCitas();
     }
 
-    // --- LÓGICA DE CARGA Y ESCRITURA EN SUPABASE ---
+    // --- NUEVA LÓGICA GESTIÓN DE HORARIOS DÍA POR DÍA ---
 
-    // Ver las citas del día de hoy
+    async function cargarPanelHorarios() {
+        const contenedor = document.getElementById('contenedor-horarios-dias');
+        contenedor.innerHTML = '<p style="text-align:center;">Cargando configuraciones de horario...</p>';
+
+        // Obtenemos los horarios guardados actualmente
+        const { data: horariosExistentes, error } = await _supabase
+            .from('horarios_proveedor')
+            .select('*');
+
+        if (error) {
+            contenedor.innerHTML = '<p style="color:red;">Error al cargar horarios de la base de datos.</p>';
+            return;
+        }
+
+        // Estructura HTML para los inputs individuales de cada día
+        let htmlContenido = '';
+        
+        DIAS_SEMANA.forEach(dia => {
+            // Buscamos si este día ya tiene configuración en base de datos
+            const configDia = horariosExistentes ? horariosExistentes.find(h => h.dia_semana === dia.id) : null;
+            
+            // Valores por defecto si no existen en la BD
+            const apertura = configDia ? configDia.hora_apertura.substring(0, 5) : "08:00";
+            const cierre = configDia ? configDia.hora_cierre.substring(0, 5) : "20:00";
+            const laborable = configDia ? configDia.es_laborable : true;
+
+            htmlContenido += `
+                <div class="fila-horario" id="fila-dia-${dia.id}">
+                    <span class="dia-nombre">${dia.nombre}</span>
+                    
+                    <div>
+                        <label>Apertura: </label>
+                        <input type="time" id="apertura-${dia.id}" value="${apertura}">
+                    </div>
+
+                    <div>
+                        <label>Cierre: </label>
+                        <input type="time" id="cierre-${dia.id}" value="${cierre}">
+                    </div>
+
+                    <div>
+                        <label>¿Abierto?: </label>
+                        <select id="laborable-${dia.id}">
+                            <option value="true" ${laborable ? 'selected' : ''}>Sí</option>
+                            <option value="false" ${!laborable ? 'selected' : ''}>No (Cerrado)</option>
+                        </select>
+                    </div>
+
+                    <button class="btn-save-day" onclick="actualizarDiaEspecifico(${dia.id})">Guardar Día</button>
+                </div>
+            `;
+        });
+
+        contenedor.innerHTML = htmlContenido;
+    }
+
+    async function actualizarDiaEspecifico(diaId) {
+        const apertura = document.getElementById(`apertura-${diaId}`).value;
+        const cierre = document.getElementById(`cierre-${diaId}`).value;
+        const laborable = document.getElementById(`laborable-${diaId}`).value === "true";
+
+        if (!apertura || !cierre) return alert("Por favor, introduce horas válidas.");
+
+        // Como tu tabla requiere un proveedor_id (clave foránea), usaremos temporalmente un ID de proveedor global/estándar.
+        // NOTA: Si manejas múltiples barberos con horarios individuales, deberás añadir un selector de barberos.
+        // Si el horario es ÚNICO y GENERAL de la barbería, puedes usar un proveedor_id de prueba o por defecto (ej: 1).
+        const PROVEEDOR_ID_DEFECTO = 1; 
+
+        const { error } = await _supabase
+            .from('horarios_proveedor')
+            .upsert({
+                proveedor_id: PROVEEDOR_ID_DEFECTO, 
+                dia_semana: diaId,
+                hora_apertura: apertura + ":00", // Formato TIME requiere segundos (HH:MM:SS)
+                hora_cierre: cierre + ":00",
+                es_laborable: laborable
+            }, { onConflict: 'proveedor_id, dia_semana' });
+
+        if (error) {
+            alert("Error al actualizar el día: " + error.message);
+            console.error(error);
+        } else {
+            alert("¡Horario del día guardado correctamente!");
+        }
+    }
+
+    // --- LÓGICA RESTANTE ---
+
     async function cargarCitas() {
         const tbody = document.querySelector('#tabla-citas tbody');
         tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">Buscando la agenda de hoy...</td></tr>';
@@ -184,7 +286,6 @@
                 .order('hora', { ascending: true });
 
             if (error) {
-                console.error("Error al obtener citas:", error);
                 tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:red;">Error al cargar las citas.</td></tr>';
                 return;
             }
@@ -215,7 +316,6 @@
     async function agregarBarbero() {
         const inputNombre = document.getElementById('barbero-nombre');
         const inputRol = document.getElementById('barbero-rol');
-        
         const nombre = inputNombre.value.trim();
         const rol = inputRol.value.trim();
         if(!nombre || !rol) return alert("Completa todos los campos del barbero");
@@ -225,8 +325,7 @@
             alert("Error al guardar barbero: " + error.message);
         } else {
             alert("¡Barbero añadido con éxito!");
-            inputNombre.value = "";
-            inputRol.value = "";
+            inputNombre.value = ""; inputRol.value = "";
             cargarBarberos();
         }
     }
@@ -245,7 +344,6 @@
         const inputNombre = document.getElementById('servicio-nombre');
         const inputDuracion = document.getElementById('servicio-duracion');
         const inputDesc = document.getElementById('servicio-desc');
-
         const nombre = inputNombre.value.trim();
         const duracion = parseInt(inputDuracion.value, 10);
         const description = inputDesc.value.trim();
@@ -257,9 +355,7 @@
             alert("Error al guardar servicio: " + error.message);
         } else {
             alert("¡Servicio añadido con éxito!");
-            inputNombre.value = "";
-            inputDuracion.value = "";
-            inputDesc.value = "";
+            inputNombre.value = ""; inputDuracion.value = ""; inputDesc.value = "";
             cargarServicios();
         }
     }
@@ -277,25 +373,21 @@
     async function agregarFeriado() {
         const inputFecha = document.getElementById('feriado-fecha');
         const inputMotivo = document.getElementById('feriado-motivo');
-
         const fecha = inputFecha.value;
         const motivo = inputMotivo.value.trim();
         if(!fecha) return alert("Selecciona una fecha para bloquear");
 
-        // CAMBIADO: 'fechas_feriadas' por 'dias_bloqueados'
         const { error } = await _supabase.from('dias_bloqueados').insert([{ fecha, motivo }]);
         if (error) {
             alert("Error al bloquear fecha: " + error.message);
         } else {
             alert("¡Día bloqueado con éxito!");
-            inputFecha.value = "";
-            inputMotivo.value = "";
+            inputFecha.value = ""; inputMotivo.value = "";
             cargarFeriados();
         }
     }
 
     async function cargarFeriados() {
-        // CAMBIADO: 'fechas_feriadas' por 'dias_bloqueados'
         const { data } = await _supabase.from('dias_bloqueados').select('*');
         const tbody = document.querySelector('#tabla-feriados tbody');
         if (!data || data.length === 0) {
@@ -303,24 +395,6 @@
             return;
         }
         tbody.innerHTML = data.map(f => `<tr><td>${f.fecha}</td><td>${f.motivo || 'Feriado'}</td><td><button class="btn-delete" onclick="eliminarFila('dias_bloqueados','${f.id}', cargarFeriados)">X</button></td></tr>`).join('');
-    }
-
-    async function guardarHorario() {
-        const tipo = document.getElementById('horario-tipo').value;
-        const apertura = document.getElementById('horario-apertura').value.trim();
-        const cierre = document.getElementById('horario-cierre').value.trim();
-
-        if(!apertura || !cierre) return alert("Por favor define las horas de apertura y cierre");
-
-        // CAMBIADO: Ajustado para usar la tabla de configuración original (clave / valor)
-        const { error: errApertura } = await _supabase.from('configuracion').upsert({ clave: 'apertura', valor: apertura });
-        const { error: errCierre } = await _supabase.from('configuracion').upsert({ clave: tipo === 'semana' ? 'cierre_semana' : 'cierre_finde', valor: cierre });
-        
-        if (errApertura || errCierre) {
-            alert("Error al actualizar horarios");
-        } else {
-            alert("¡Horario actualizado con éxito!");
-        }
     }
 
     async function eliminarFila(tabla, id, callbackRecarga) {
@@ -337,7 +411,6 @@
         }
     }
 
-    // Carga inicial al entrar al panel
     window.onload = () => { cargarCitas(); };
 </script>
 </body>
