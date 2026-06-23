@@ -7,7 +7,7 @@
 
     <link rel="icon" type="image/png" sizes="192x192" href="https://ibb.co/LzbTQvbL?v=2">
     <link rel="apple-touch-icon" sizes="180x180" href="https://ibb.co/LzbTQvbL?v=2">
-   <link rel="manifest" href="./manifest.json">
+    <link rel="manifest" href="./manifest.json">
     
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
@@ -352,30 +352,37 @@
 
     // --- PARÁMETROS DE CONFIGURACIÓN DE ATENCIÓN ---
     const APERTURA_MINUTOS = 8 * 60;   // 08:00 AM en minutos totales
-    const MARGEN_LIMPIEZA = 5;         // 5 minutos entre citas
+    const MARGEN_LIMPIEZA = 5;          // 5 minutos entre citas
     let CIERRE_MINUTOS = 20 * 60;      // Por defecto 8:00 PM
 
     // ==========================================
-    // 🛠️ FUNCIÓN PARA CAMBIAR EL HORARIO DE CIERRE SEGÚN EL DÍA
+    // FUNCIÓN PARA CAMBIAR EL HORARIO DE CIERRE SEGÚN EL DÍA
     // ==========================================
     function ajustarHorarioCierre(fechaSeleccionada) {
         if (!fechaSeleccionada) return;
         
         const partes = fechaSeleccionada.split('-');
         const fechaObjeto = new Date(partes[0], partes[1] - 1, partes[2]);
-        const numeroDia = fechaObjeto.getDay(); 
+        let numeroDia = fechaObjeto.getDay(); 
+        if (numeroDia === 0) numeroDia = 7; // Aseguramos que Domingo sea 7
 
-        if (numeroDia >= 1 && numeroDia <= 4) {
+        if (numeroDia === 7) {
+            // DOMINGOS: Cierre a las 3:00 PM (15:00h)
+            CIERRE_MINUTOS = 15 * 60;  
+            console.log("Horario ajustado para Domingo: Cierre temprano a las 3:00 PM");
+        } else if (numeroDia >= 1 && numeroDia <= 4) {
+            // LUNES A JUEVES: Cierre a las 8:00 PM (20:00h)
             CIERRE_MINUTOS = 20 * 60;  
             console.log("Horario ajustado para Lunes-Jueves: Cierre a las 8:00 PM");
         } else {
+            // VIERNES Y SÁBADOS: Cierre a las 12:00 AM (24:00h)
             CIERRE_MINUTOS = 24 * 60;  
-            console.log("Horario ajustado para Fin de Semana: Cierre a las 12:00 AM");
+            console.log("Horario adjusted para Viernes-Sábado: Cierre a las 12:00 AM");
         }
     }
 
     // ==========================================
-    // 🎯 CARGA DINÁMICA DESDE SUPABASE
+    // CARGA DINÁMICA DESDE SUPABASE
     // ==========================================
     async function inicializarBarberosCliente() {
         const contenedor = document.getElementById('contenedor-barberos-dinamicos');
@@ -391,14 +398,14 @@
 
             contenedor.innerHTML = barberos.map((barbero, idx) => `
                 <div>
-                    <input type="radio" id="barb-dyn-${idx}" name="barbero" value="${barbero.nombre}" class="selector-item barbero-opcion" required>
+                    <input type="radio" id="barb-dyn-${idx}" name="barbero" value="${barbero.nombre}" data-id="${barbero.id}" class="selector-item barbero-opcion" required>
                     <label for="barb-dyn-${idx}" class="selector-label">
                         <span class="item-name">${barbero.nombre}</span>
                         <span class="item-desc">${barbero.rol}</span>
                     </label>
                 </div>
             `).join('');
-
+            
             document.querySelectorAll('.barbero-opcion').forEach(radio => {
                 radio.addEventListener('change', actualizarHorariosDisponibles);
             });
@@ -442,11 +449,9 @@
     }
 
     // ==========================================
-    // 🎯 ARRANQUE SEGURO DE LA APLICACIÓN
+    // ARRANQUE SEGURO DE LA APLICACIÓN
     // ==========================================
     document.addEventListener("DOMContentLoaded", async function() {
-        
-        // --- ESCUDO DE SEGURIDAD PARA LOCALSTORAGE ---
         try {
             const nombreGuardado = localStorage.getItem("barberia_nombre");
             const telefonoGuardado = localStorage.getItem("barberia_telefono");
@@ -491,6 +496,9 @@
         return (hours * 60) + minutes;
     }
 
+    // ==========================================
+    // MOTOR CENTRAL: CÁLCULO Y GENERACIÓN DINÁMICA
+    // ==========================================
     function convertirMinutosAString12h(minutosTotales) {
         let horas = Math.floor(minutosTotales / 60);
         let minutes = minutosTotales % 60;
@@ -502,29 +510,72 @@
         return `${strHoras}:${strMinutos} ${ampm}`;
     }
 
-    function generarObjetoFecha(fechaStr, minutosTotales) {
-        let horas = Math.floor(minutosTotales / 60);
-        let minutos = minutosTotales % 60; 
+    function generarObjetoFecha(fechaStr, minutesTotales) {
+        let horas = Math.floor(minutesTotales / 60);
+        let minutos = minutesTotales % 60; 
         return new Date(`${fechaStr}T${String(horas).padStart(2, '0')}:${String(minutos).padStart(2, '0')}:00`);
     }
 
-    // ==========================================
-    // 🎯 MOTOR CENTRAL: CÁLCULO Y GENERACIÓN DINÁMICA
-    // ==========================================
     async function actualizarHorariosDisponibles() {
         const fechaSeleccionada = inputFecha.value;
         const barberoSeleccionadoInput = document.querySelector('input[name="barbero"]:checked');
         const servicioSeleccionadoInput = document.querySelector('input[name="servicio"]:checked');
         
-        if (!fechaSeleccionada || !barberoSeleccionadoInput) return;
+        if (!fechaSeleccionada || !barberoSeleccionadoInput) {
+            contenedorHoras.innerHTML = '<div class="texto-alerta">Selecciona un barbero y una fecha para ver los horarios.</div>';
+            return;
+        }
         
-        const duracionServicioSolicitado = servicioSeleccionadoInput ? parseInt(servicioSeleccionadoInput.getAttribute('data-duracion'), 10) : 45;
+        const barberoId = barberoSeleccionadoInput.getAttribute('data-id'); 
         const barberoSeleccionado = barberoSeleccionadoInput.value;
+        
+        if (!barberoId || barberoId === 'null' || barberoId === 'undefined') {
+            contenedorHoras.innerHTML = '<div class="texto-alerta">Selecciona un barbero válido para ver los horarios.</div>';
+            return;
+        }
+
+        const duracionServicioSolicitado = servicioSeleccionadoInput ? parseInt(servicioSeleccionadoInput.getAttribute('data-duracion'), 10) : 45;
         const ahora = new Date();
 
         contenedorHoras.innerHTML = '<div class="texto-alerta">Calculando agenda perfecta...</div>';
 
         try {
+            const barberoIdNumero = parseInt(barberoId, 10);
+            const partes = fechaSeleccionada.split('-');
+            const fechaObjeto = new Date(partes[0], partes[1] - 1, partes[2]);
+            let numeroDia = fechaObjeto.getDay(); 
+            if (numeroDia === 0) numeroDia = 7;   
+
+            const { data: configHorario, error: errorHorario } = await _supabase
+                .from('horarios_proveedor')
+                .select('hora_apertura, hora_cierre, es_laborable')
+                .eq('proveedor_id', barberoIdNumero)
+                .eq('dia_semana', numeroDia) 
+                .maybeSingle();
+
+            if (errorHorario) {
+                console.error("Error crítico leyendo horarios_proveedor:", errorHorario);
+            }
+
+            ajustarHorarioCierre(fechaSeleccionada);
+            let aperturaDinamica = APERTURA_MINUTOS;
+            let cierreDinamico = CIERRE_MINUTOS;
+
+            if (configHorario) {
+                if (!configHorario.es_laborable) {
+                    contenedorHoras.innerHTML = '<div class="texto-alerta" style="color: var(--danger-color);">Este proveedor no trabaja este día.</div>';
+                    return;
+                }
+                if (configHorario.hora_apertura) {
+                    const [hA, mA] = configHorario.hora_apertura.split(':').map(Number);
+                    aperturaDinamica = (hA * 60) + mA;
+                }
+                if (configHorario.hora_cierre) {
+                    const [hC, mC] = configHorario.hora_cierre.split(':').map(Number);
+                    cierreDinamico = (hC * 60) + mC;
+                }
+            }
+
             const { data: reservas, error } = await _supabase
                 .from('reservas')
                 .select('hora, duracion') 
@@ -546,11 +597,11 @@
             rangosOcupados.sort((a, b) => a.inicio - b.inicio);
 
             let htmlBotones = "";
-            let minutoPuntero = APERTURA_MINUTOS;
+            let minutoPuntero = aperturaDinamica; 
             let indexBotones = 1;
             let vueltasEvitarBucle = 0;
 
-            while (minutoPuntero + duracionServicioSolicitado <= CIERRE_MINUTOS && vueltasEvitarBucle < 200) {
+            while (minutoPuntero + duracionServicioSolicitado <= cierreDinamico && vueltasEvitarBucle < 200) {
                 vueltasEvitarBucle++;
                 let colisiona = false;
                 let inicioPropuesto = minutoPuntero;
@@ -559,7 +610,6 @@
                 for (let rango of rangosOcupados) {
                     if (inicioPropuesto < rango.fin && finPropuesto > rango.inicio) {
                         colisiona = true;
-                        minutoPuntero = rango.fin + MARGEN_LIMPIEZA;
                         break;
                     }
                 }
@@ -580,8 +630,8 @@
                             </div>`;
                         indexBotones++;
                     }
-                    minutoPuntero += 15; 
                 }
+                minutoPuntero += 15; 
             }
 
             if (htmlBotones === "") {
@@ -597,7 +647,7 @@
     }
 
     // ==========================================
-    // 💾 PROCESAR ENVIÓ DE FORMULARIO DE RESERVA
+    // 💾 PROCESAR ENVÍO DE FORMULARIO DE RESERVA
     // ==========================================
     formulario.addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -682,8 +732,7 @@
             const enlaceCancelar = `${urlBase}?cancelar=${idGenerado}`;
 
             const telefonoBarberia = "18299702130"; 
-           // BUSCA ESTA LÍNEA DENTRO DEL EVENT LISTENER DEL SUBMIT Y REEMPLÁZALA:
-const mensaje = `💈 *NUEVA CITA - THE JOSEPH BARBERSHOP* 💈\n\n👤 *Cliente:* ${nombre}\n📞 *Teléfono:* ${telefono}\n✂️ *Servicio:* ${servicio} (${formatearDuracion(duracion)})\n🧔 *Barbero:* ${barbero}\n📅 *Fecha:* ${fecha}\n⏰ *Hora:* ${hora}\n\n_¡Por favor confirma mi espacio!_\n\n❌ *Para cancelar o cambiar tu espacio haz clic aquí:* \n${enlaceCancelar}`;
+            const mensaje = `💈 *NUEVA CITA - THE JOSEPH BARBERSHOP* 💈\n\n👤 *Cliente:* ${nombre}\n📞 *Teléfono:* ${telefono}\n✂️ *Servicio:* ${servicio} (${formatearDuracion(duracion)})\n🧔 *Barbero:* ${barbero}\n📅 *Fecha:* ${fecha}\n⏰ *Hora:* ${hora}\n\n_¡Por favor confirma mi espacio!_\n\n❌ *Para cancelar o cambiar tu espacio haz clic aquí:* \n${enlaceCancelar}`;
             
             const urlWhatsapp = `https://wa.me/${telefonoBarberia}?text=${encodeURIComponent(mensaje)}`;
             
@@ -771,11 +820,10 @@ const mensaje = `💈 *NUEVA CITA - THE JOSEPH BARBERSHOP* 💈\n\n👤 *Cliente
 
         if (horas > 0 && minutosRestantes === 0) {
             return horas === 1 ? `${horas} hora` : `${horas} horas`;
+        } else if (horas > 0) {
+            return `${horas} h ${minutosRestantes} min`;
         }
-        if (horas === 0 && minutosRestantes > 0) {
-            return `${minutosRestantes} min`;
-        }
-        return `${horas === 1 ? '1 hora' : horas + ' horas'} y ${minutosRestantes} min`;
+        return `${minutosRestantes} min`;
     }
 </script>
 </body>
