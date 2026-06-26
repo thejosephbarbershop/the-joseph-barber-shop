@@ -322,7 +322,7 @@
     </div>
 </div>
     <script>
-    // --- ESCUDO DE SEGURIDAD PARA EMAILJS ---
+  // --- ESCUDO DE SEGURIDAD PARA EMAILJS ---
     try {
         if (typeof emailjs !== 'undefined') {
             emailjs.init("GQ0nATFCZx9T_S2wV");
@@ -355,6 +355,10 @@
     const MARGEN_LIMPIEZA = 5;          // 5 minutos entre citas
     let CIERRE_MINUTOS = 20 * 60;      // Por defecto 8:00 PM
 
+    // Listas globales en memoria para filtrar sin hacer consultas extras a la BD
+    let listaBarberosGlobal = [];
+    let listaServiciosGlobal = [];
+
     // ==========================================
     // FUNCIÓN PARA CAMBIAR EL HORARIO DE CIERRE SEGÚN EL DÍA
     // ==========================================
@@ -367,84 +371,155 @@
         if (numeroDia === 0) numeroDia = 7; // Aseguramos que Domingo sea 7
 
         if (numeroDia === 7) {
-            // DOMINGOS: Cierre a las 3:00 PM (15:00h)
             CIERRE_MINUTOS = 15 * 60;  
             console.log("Horario ajustado para Domingo: Cierre temprano a las 3:00 PM");
         } else if (numeroDia >= 1 && numeroDia <= 4) {
-            // LUNES A JUEVES: Cierre a las 8:00 PM (20:00h)
             CIERRE_MINUTOS = 20 * 60;  
             console.log("Horario ajustado para Lunes-Jueves: Cierre a las 8:00 PM");
         } else {
-            // VIERNES Y SÁBADOS: Cierre a las 12:00 AM (24:00h)
             CIERRE_MINUTOS = 24 * 60;  
             console.log("Horario adjusted para Viernes-Sábado: Cierre a las 12:00 AM");
         }
     }
 
     // ==========================================
-    // CARGA DINÁMICA DESDE SUPABASE
+    // CARGA DINÁMICA INICIAL DESDE SUPABASE
     // ==========================================
-    async function inicializarBarberosCliente() {
-        const contenedor = document.getElementById('contenedor-barberos-dinamicos');
-        if (!contenedor) return;
+    async function inicializarDatosCliente() {
         try {
-            const { data: barberos, error } = await _supabase.from('proveedores').select('*');
-            if (error) throw error;
+            // Descargamos barberos y servicios en paralelo
+            const [resBarberos, resServicios] = await Promise.all([
+                _supabase.from('proveedores').select('*'),
+                _supabase.from('servicios').select('*')
+            ]);
 
-            if (!barberos || barberos.length === 0) {
-                contenedor.innerHTML = '<p style="color: red; text-align: center; width:100%;">No hay barberos disponibles.</p>';
-                return;
-            }
+            if (resBarberos.error) throw resBarberos.error;
+            if (resServicios.error) throw resServicios.error;
 
-            contenedor.innerHTML = barberos.map((barbero, idx) => `
-                <div>
-                    <input type="radio" id="barb-dyn-${idx}" name="barbero" value="${barbero.nombre}" data-id="${barbero.id}" class="selector-item barbero-opcion" required>
-                    <label for="barb-dyn-${idx}" class="selector-label">
-                        <span class="item-name">${barbero.nombre}</span>
-                        <span class="item-desc">${barbero.rol}</span>
-                    </label>
-                </div>
-            `).join('');
-            
-            document.querySelectorAll('.barbero-opcion').forEach(radio => {
-                radio.addEventListener('change', actualizarHorariosDisponibles);
-            });
+            listaBarberosGlobal = resBarberos.data || [];
+            listaServiciosGlobal = resServicios.data || [];
+
+            // Renderizamos todo por primera vez sin filtros
+            renderizarBarberos(listaBarberosGlobal);
+            renderizarServicios(listaServiciosGlobal);
 
         } catch (err) {
-            console.error("Error cargando barberos:", err);
-            contenedor.innerHTML = '<p style="color: red; text-align: center; width:100%;">Error al conectar con la agenda.</p>';
+            console.error("Error cargando el catálogo inicial:", err);
+            document.getElementById('contenedor-barberos-dinamicos').innerHTML = '<p style="color: red; text-align: center; width:100%;">Error al conectar con la agenda.</p>';
+            document.getElementById('contenedor-servicios-dinamicos').innerHTML = '<p style="color: red; text-align: center; width:100%;">Error al cargar el catálogo.</p>';
         }
     }
 
-    async function inicializarServiciosCliente() {
+    // Pinta los barberos en la pantalla
+    function renderizarBarberos(barberos) {
+        const contenedor = document.getElementById('contenedor-barberos-dinamicos');
+        if (!contenedor) return;
+
+        if (barberos.length === 0) {
+            contenedor.innerHTML = '<p style="color: #a0aec0; text-align: center; padding: 10px; width: 100%;">No hay barberos asignados a este servicio.</p>';
+            return;
+        }
+
+        contenedor.innerHTML = barberos.map((barbero, idx) => `
+            <div>
+                <input type="radio" id="barb-dyn-${barbero.id}" name="barbero" value="${barbero.nombre}" data-id="${barbero.id}" class="selector-item barbero-opcion" required>
+                <label for="barb-dyn-${barbero.id}" class="selector-label">
+                    <span class="item-name">${barbero.nombre}</span>
+                    <span class="item-desc">${barbero.rol}</span>
+                </label>
+            </div>
+        `).join('');
+
+        // Escuchadores de eventos
+        document.querySelectorAll('.barbero-opcion').forEach(radio => {
+            radio.addEventListener('change', async function() {
+                // Al elegir barbero, filtramos qué servicios puede hacer
+                await filtrarServiciosPorBarbero(this.getAttribute('data-id'));
+                actualizarHorariosDisponibles();
+            });
+        });
+    }
+
+    // Pinta los servicios en la pantalla
+    function renderizarServicios(servicios) {
         const contenedor = document.getElementById('contenedor-servicios-dinamicos');
         if (!contenedor) return;
-        try {
-            const { data: servicios, error } = await _supabase.from('servicios').select('*');
-            if (error) throw error;
 
-            if (!servicios || servicios.length === 0) {
-                contenedor.innerHTML = '<p style="color: red; text-align: center; width:100%;">No hay servicios configurados.</p>';
-                return;
-            }
+        if (servicios.length === 0) {
+            contenedor.innerHTML = '<p style="color: #a0aec0; text-align: center; padding: 10px; width: 100%;">Ningún servicio coincide con este barbero.</p>';
+            return;
+        }
 
-            contenedor.innerHTML = servicios.map((servicio, idx) => `
-                <div>
-                    <input type="radio" id="srv-dyn-${idx}" name="servicio" value="${servicio.nombre}" data-duracion="${servicio.duracion}" class="selector-item servicio-opcion" required>
-                    <label for="srv-dyn-${idx}" class="selector-label">
-                        <span class="item-name">${servicio.nombre}</span>
-                        <span class="item-desc">${servicio.descripcion || ''} (${formatearDuracion(servicio.duracion)})</span>
-                    </label>
-                </div>
-            `).join('');
+        contenedor.innerHTML = servicios.map((servicio, idx) => `
+            <div>
+                <input type="radio" id="srv-dyn-${servicio.id}" name="servicio" value="${servicio.nombre}" data-id="${servicio.id}" data-duracion="${servicio.duracion}" class="selector-item servicio-opcion" required>
+                <label for="srv-dyn-${servicio.id}" class="selector-label">
+                    <span class="item-name">${servicio.nombre}</span>
+                    <span class="item-desc">${servicio.descripcion || ''} (${formatearDuracion(servicio.duracion)})</span>
+                </label>
+            </div>
+        `).join('');
 
-            document.querySelectorAll('.servicio-opcion').forEach(radio => {
-                radio.addEventListener('change', actualizarHorariosDisponibles);
+        // Escuchadores de eventos
+        document.querySelectorAll('.servicio-opcion').forEach(radio => {
+            radio.addEventListener('change', async function() {
+                // Al elegir un servicio, filtramos qué barberos están calificados
+                await filtrarBarberosPorServicio(this.getAttribute('data-id'));
+                actualizarHorariosDisponibles();
             });
+        });
+    }
 
-        } catch (err) {
-            console.error("Error cargando servicios:", err);
-            contenedor.innerHTML = '<p style="color: red; text-align: center; width:100%;">Error al cargar el catálogo.</p>';
+    // ==========================================
+    // SINCRONIZACIÓN INTERMEDIA EN TIEMPO REAL
+    // ==========================================
+
+    async function filtrarBarberosPorServicio(servicioId) {
+        // Buscamos en la tabla intermedia quién ofrece este servicio
+        const { data, error } = await _supabase
+            .from('proveedor_servicios')
+            .select('proveedor_id')
+            .eq('servicio_id', servicioId);
+
+        if (error || !data) return;
+
+        const idsValidos = data.map(item => item.proveedor_id);
+        
+        // Buscamos cuál barbero está seleccionado actualmente antes de refrescar
+        const seleccionado = document.querySelector('input[name="barbero"]:checked');
+        const idSeleccionado = seleccionado ? seleccionado.getAttribute('data-id') : null;
+
+        // Filtramos la lista global
+        const barberosFiltrados = listaBarberosGlobal.filter(b => idsValidos.includes(b.id));
+        renderizarBarberos(barberosFiltrados);
+
+        // Si el barbero que estaba elegido sigue siendo válido, lo volvemos a marcar
+        if (idSeleccionado && idsValidos.includes(parseInt(idSeleccionado, 10))) {
+            const radioElement = document.getElementById(`barb-dyn-${idSeleccionado}`);
+            if (radioElement) radioElement.checked = true;
+        }
+    }
+
+    async function filtrarServiciosPorBarbero(barberoId) {
+        // Buscamos qué servicios tiene configurados este barbero
+        const { data, error } = await _supabase
+            .from('proveedor_servicios')
+            .select('servicio_id')
+            .eq('proveedor_id', barberoId);
+
+        if (error || !data) return;
+
+        const idsValidos = data.map(item => item.servicio_id);
+
+        const seleccionado = document.querySelector('input[name="servicio"]:checked');
+        const idSeleccionado = seleccionado ? seleccionado.getAttribute('data-id') : null;
+
+        const serviciosFiltrados = listaServiciosGlobal.filter(s => idsValidos.includes(s.id));
+        renderizarServicios(serviciosFiltrados);
+
+        if (idSeleccionado && idsValidos.includes(parseInt(idSeleccionado, 10))) {
+            const radioElement = document.getElementById(`srv-dyn-${idSeleccionado}`);
+            if (radioElement) radioElement.checked = true;
         }
     }
 
@@ -459,7 +534,7 @@
             if (nombreGuardado) document.getElementById("client-name").value = nombreGuardado;
             if (telefonoGuardado) document.getElementById("client-phone").value = telefonoGuardado;
         } catch (storageError) {
-            console.warn("LocalStorage bloqueado por el contenedor de pruebas. Autocompletado desactivado temporalmente.");
+            console.warn("LocalStorage bloqueado.");
         }
 
         const hoyObjeto = new Date();
@@ -483,8 +558,8 @@
             obtenerDetallesCita(idACancelar);
         }
 
-        await inicializarBarberosCliente();
-        await inicializarServiciosCliente();
+        // Cargamos los datos reales cruzados
+        await inicializarDatosCliente();
     });
 
     // --- UTILIDADES MATEMÁTICAS DE TIEMPO ---
@@ -496,9 +571,6 @@
         return (hours * 60) + minutes;
     }
 
-    // ==========================================
-    // MOTOR CENTRAL: CÁLCULO Y GENERACIÓN DINÁMICA
-    // ==========================================
     function convertirMinutosAString12h(minutosTotales) {
         let horas = Math.floor(minutosTotales / 60);
         let minutes = minutosTotales % 60;
@@ -516,25 +588,22 @@
         return new Date(`${fechaStr}T${String(horas).padStart(2, '0')}:${String(minutos).padStart(2, '0')}:00`);
     }
 
+    // ==========================================
+    // MOTOR CENTRAL: CÁLCULO Y GENERACIÓN DINÁMICA
+    // ==========================================
     async function actualizarHorariosDisponibles() {
         const fechaSeleccionada = inputFecha.value;
         const barberoSeleccionadoInput = document.querySelector('input[name="barbero"]:checked');
         const servicioSeleccionadoInput = document.querySelector('input[name="servicio"]:checked');
         
-        if (!fechaSeleccionada || !barberoSeleccionadoInput) {
-            contenedorHoras.innerHTML = '<div class="texto-alerta">Selecciona un barbero y una fecha para ver los horarios.</div>';
+        if (!fechaSeleccionada || !barberoSeleccionadoInput || !servicioSeleccionadoInput) {
+            contenedorHoras.innerHTML = '<div class="texto-alerta">Selecciona un barbero, un servicio y una fecha para ver los horarios disponibles.</div>';
             return;
         }
         
         const barberoId = barberoSeleccionadoInput.getAttribute('data-id'); 
         const barberoSeleccionado = barberoSeleccionadoInput.value;
-        
-        if (!barberoId || barberoId === 'null' || barberoId === 'undefined') {
-            contenedorHoras.innerHTML = '<div class="texto-alerta">Selecciona un barbero válido para ver los horarios.</div>';
-            return;
-        }
-
-        const duracionServicioSolicitado = servicioSeleccionadoInput ? parseInt(servicioSeleccionadoInput.getAttribute('data-duracion'), 10) : 45;
+        const duracionServicioSolicitado = parseInt(servicioSeleccionadoInput.getAttribute('data-duracion'), 10) || 45;
         const ahora = new Date();
 
         contenedorHoras.innerHTML = '<div class="texto-alerta">Calculando agenda perfecta...</div>';
@@ -546,16 +615,12 @@
             let numeroDia = fechaObjeto.getDay(); 
             if (numeroDia === 0) numeroDia = 7;   
 
-            const { data: configHorario, error: errorHorario } = await _supabase
+            const { data: configHorario } = await _supabase
                 .from('horarios_proveedor')
                 .select('hora_apertura, hora_cierre, es_laborable')
                 .eq('proveedor_id', barberoIdNumero)
                 .eq('dia_semana', numeroDia) 
                 .maybeSingle();
-
-            if (errorHorario) {
-                console.error("Error crítico leyendo horarios_proveedor:", errorHorario);
-            }
 
             ajustarHorarioCierre(fechaSeleccionada);
             let aperturaDinamica = APERTURA_MINUTOS;
@@ -563,7 +628,7 @@
 
             if (configHorario) {
                 if (!configHorario.es_laborable) {
-                    contenedorHoras.innerHTML = '<div class="texto-alerta" style="color: var(--danger-color);">Este proveedor no trabaja este día.</div>';
+                    contenedorHoras.innerHTML = '<div class="texto-alerta" style="color: var(--danger-color);">Este barbero no trabaja este día.</div>';
                     return;
                 }
                 if (configHorario.hora_apertura) {
@@ -646,7 +711,7 @@
         }
     }
 
-    // ==========================================
+  // ==========================================
     // 💾 PROCESAR ENVÍO DE FORMULARIO DE RESERVA
     // ==========================================
     formulario.addEventListener('submit', async (e) => {
@@ -657,7 +722,12 @@
         const servicioInput = document.querySelector('input[name="servicio"]:checked');
         const servicio = servicioInput.value;
         const duracion = parseInt(servicioInput.getAttribute('data-duracion'), 10) || 30;
-        const barbero = document.querySelector('input[name="barbero"]:checked').value;
+        
+        // 1. Capturamos el barbero seleccionado y su ID de Supabase
+        const barberoInput = document.querySelector('input[name="barbero"]:checked');
+        const barbero = barberoInput.value;
+        const barberoId = parseInt(barberoInput.getAttribute('data-id'), 10);
+        
         const fecha = inputFecha.value;
         
         const horaSeleccionadaInput = document.querySelector('input[name="hora"]:checked');
@@ -666,6 +736,19 @@
             return;
         }
         const hora = horaSeleccionadaInput.value;
+
+        // 2. BUSCAR EL TELÉFONO DEL BARBERO EN LA LISTA GLOBAL
+        const datosBarbero = listaBarberosGlobal.find(b => b.id === barberoId);
+        
+        // Número de la administración central como respaldo (por si falta el del barbero)
+        let telefonoDestino = "18299702130"; 
+
+        if (datosBarbero && datosBarbero.telefono) {
+            // Limpiamos cualquier espacio o guión extra por seguridad
+            telefonoDestino = datosBarbero.telefono.replace(/\s+/g, '').replace(/-/g, '');
+        } else {
+            console.warn(`El barbero ${barbero} no tiene teléfono en la BD. Usando número de la administración.`);
+        }
 
         const nuevaPestana = window.open('about:blank', '_blank');
 
@@ -731,10 +814,11 @@
             const urlBase = window.location.origin + window.location.pathname;
             const enlaceCancelar = `${urlBase}?cancelar=${idGenerado}`;
 
-            const telefonoBarberia = "18299702130"; 
-            const mensaje = `💈 *NUEVA CITA - THE JOSEPH BARBERSHOP* 💈\n\n👤 *Cliente:* ${nombre}\n📞 *Teléfono:* ${telefono}\n✂️ *Servicio:* ${servicio} (${formatearDuracion(duracion)})\n🧔 *Barbero:* ${barbero}\n📅 *Fecha:* ${fecha}\n⏰ *Hora:* ${hora}\n\n_¡Por favor confirma mi espacio!_\n\n❌ *Para cancelar o cambiar tu espacio haz clic aquí:* \n${enlaceCancelar}`;
+            // 3. Mensaje estructurado de forma personalizada
+            const mensaje = `💈 *NUEVA CITA ASIGNADA* 💈\n\n👤 *Cliente:* ${nombre}\n📞 *Teléfono:* ${telefono}\n✂️ *Servicio:* ${servicio} (${formatearDuracion(duracion)})\n📅 *Fecha:* ${fecha}\n⏰ *Hora:* ${hora}\n\n❌ *Si necesitas cancelar este espacio por alguna emergencia:* \n${enlaceCancelar}`;
             
-            const urlWhatsapp = `https://wa.me/${telefonoBarberia}?text=${encodeURIComponent(mensaje)}`;
+            // Redirección dinámica usando 'telefonoDestino'
+            const urlWhatsapp = `https://wa.me/${telefonoDestino}?text=${encodeURIComponent(mensaje)}`;
             
             if (nuevaPestana) {
                 nuevaPestana.location.href = urlWhatsapp;
@@ -748,7 +832,6 @@
             alert("Hubo un percance guardando tu espacio: " + err.message);
         }
     });
-
     // ==========================================
     // ❌ LÓGICA DEL MÓDULO DE CANCELACIÓN
     // ==========================================
