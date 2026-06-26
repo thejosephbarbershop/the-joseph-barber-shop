@@ -53,12 +53,46 @@
         .fila-horario input[type="time"] { padding: 6px; font-size: 0.95rem; }
         .btn-save-day { background: #27ae60; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; }
         .btn-save-day:hover { background: #219150; }
+        /* Forzar el ancho correcto en la tabla de barberos */
+#tabla-barberos {
+    width: 100%;
+    table-layout: fixed; /* Esto obliga a respetar los anchos fijos */
+    margin-top: 15px;
+}
+
+#tabla-barberos th, #tabla-barberos td {
+    padding: 12px;
+    text-align: left;
+    vertical-align: middle;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Asignar porcentajes exactos a cada columna */
+#tabla-barberos th:nth-child(1), #tabla-barberos td:nth-child(1) {
+    width: 30%; /* Nombre */
+}
+
+#tabla-barberos th:nth-child(2), #tabla-barberos td:nth-child(2) {
+    width: 25%; /* Rol */
+}
+
+#tabla-barberos th:nth-child(3), #tabla-barberos td:nth-child(3) {
+    width: 30%; /* Botón de Configurar Servicios */
+    text-align: center;
+}
+
+#tabla-barberos th:nth-child(4), #tabla-barberos td:nth-child(4) {
+    width: 15%; /* Botón de Eliminar (X) */
+    text-align: center;
+}
     </style>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 
-    <header>
+  <header>
         <h1>PANEL ADMINISTRADOR CENTRAL</h1>
         <p>The Joseph Barbershop</p>
     </header>
@@ -95,9 +129,7 @@
             <p style="color: #666; font-size: 0.9rem; margin-bottom: 20px;">
                 Define el horario específico de apertura y cierre para cada día de forma independiente.
             </p>
-            
-            <div id="contenedor-horarios-dias">
-                </div>
+            <div id="contenedor-horarios-dias"></div>
         </div>
 
         <div id="panel-proveedores" class="section-panel">
@@ -107,12 +139,28 @@
                 <input type="text" id="barbero-rol" placeholder="Ej: Barbero Máster, Especialista">
                 <button class="action-btn" onclick="agregarBarbero()">Añadir Barbero</button>
             </div>
+            
             <table id="tabla-barberos">
                 <thead>
-                    <tr><th>Nombre</th><th>Rol</th><th>Eliminar</th></tr>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Rol</th>
+                        <th>Asignar Servicios</th>
+                        <th>Eliminar</th>
+                    </tr>
                 </thead>
                 <tbody></tbody>
             </table>
+
+            <div id="seccion-asignar-servicios" style="display: none; margin-top: 30px; padding: 20px; background: #f9f9f9; border: 2px dashed var(--accent-color); border-radius: 6px;">
+                <h3 id="titulo-asignacion">Asignar Servicios a: <span id="nombre-barbero-asignar" style="color: var(--primary-color);"></span></h3>
+                <input type="hidden" id="id-barbero-asignar">
+                
+                <div id="contenedor-checkboxes-servicios" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px;"></div>
+                
+                <button class="btn-save-day" onclick="guardarServiciosAsignados()">Guardar Relación de Servicios</button>
+                <button class="btn-delete" style="background: #95a5a6; margin-left: 10px;" onclick="document.getElementById('seccion-asignar-servicios').style.display = 'none'">Cancelar</button>
+            </div>
         </div>
 
         <div id="panel-servicios" class="section-panel">
@@ -121,7 +169,7 @@
                 <input type="text" id="servicio-nombre" placeholder="Nombre del Servicio (Ej: Corte VIP)">
                 <input type="number" id="servicio-duracion" placeholder="Duración en minutos (Ej: 45)">
                 <input type="text" id="servicio-desc" placeholder="Descripción corta (Ej: 45 min • Premium)">
-                <button class="action-btn" onclick="agregarServicio()">Añadir Servicio</button>
+                <button class="action-btn" onclick="agregarService()">Añadir Servicio</button>
             </div>
             <table id="tabla-servicios">
                 <thead>
@@ -148,18 +196,17 @@
 
     </div>
 
-    <script>
+<script>
     const SUPABASE_URL = "https://xnfmqumhhxpkrigizvlu.supabase.co";
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhuZm1xdW1oaHhwa3JpZ2l6dmx1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5MTE3NjgsImV4cCI6MjA5NTQ4Nzc2OH0.zNSZ4Nw2Iz2IieExt9SErJddPseWb65Hxedg5ZGZCvI";
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    // Nombres de los días mapeados al estándar de la base de datos (0 = Domingo, 1 = Lunes...)
     const DIAS_SEMANA = [
         { id: 1, nombre: "Lunes" },
         { id: 2, nombre: "Martes" },
         { id: 3, nombre: "Miércoles" },
         { id: 4, nombre: "Jueves" },
-        { id: 5, font: "Viernes", nombre: "Viernes" },
+        { id: 5, nombre: "Viernes" },
         { id: 6, nombre: "Sábado" },
         { id: 0, nombre: "Domingo" }
     ];
@@ -178,30 +225,20 @@
         if(pestana === 'citas') cargarCitas();
     }
 
-    // --- NUEVA LÓGICA GESTIÓN DE HORARIOS DÍA POR DÍA ---
-
     async function cargarPanelHorarios() {
         const contenedor = document.getElementById('contenedor-horarios-dias');
         contenedor.innerHTML = '<p style="text-align:center;">Cargando configuraciones de horario...</p>';
 
-        // Obtenemos los horarios guardados actualmente
-        const { data: horariosExistentes, error } = await _supabase
-            .from('horarios_proveedor')
-            .select('*');
+        const { data: horariosExistentes, error } = await _supabase.from('horarios_proveedor').select('*');
 
         if (error) {
             contenedor.innerHTML = '<p style="color:red;">Error al cargar horarios de la base de datos.</p>';
             return;
         }
 
-        // Estructura HTML para los inputs individuales de cada día
         let htmlContenido = '';
-        
         DIAS_SEMANA.forEach(dia => {
-            // Buscamos si este día ya tiene configuración en base de datos
             const configDia = horariosExistentes ? horariosExistentes.find(h => h.dia_semana === dia.id) : null;
-            
-            // Valores por defecto si no existen en la BD
             const apertura = configDia ? configDia.hora_apertura.substring(0, 5) : "08:00";
             const cierre = configDia ? configDia.hora_cierre.substring(0, 5) : "20:00";
             const laborable = configDia ? configDia.es_laborable : true;
@@ -209,17 +246,14 @@
             htmlContenido += `
                 <div class="fila-horario" id="fila-dia-${dia.id}">
                     <span class="dia-nombre">${dia.nombre}</span>
-                    
                     <div>
                         <label>Apertura: </label>
                         <input type="time" id="apertura-${dia.id}" value="${apertura}">
                     </div>
-
                     <div>
                         <label>Cierre: </label>
                         <input type="time" id="cierre-${dia.id}" value="${cierre}">
                     </div>
-
                     <div>
                         <label>¿Abierto?: </label>
                         <select id="laborable-${dia.id}">
@@ -227,12 +261,10 @@
                             <option value="false" ${!laborable ? 'selected' : ''}>No (Cerrado)</option>
                         </select>
                     </div>
-
                     <button class="btn-save-day" onclick="actualizarDiaEspecifico(${dia.id})">Guardar Día</button>
                 </div>
             `;
         });
-
         contenedor.innerHTML = htmlContenido;
     }
 
@@ -242,31 +274,22 @@
         const laborable = document.getElementById(`laborable-${diaId}`).value === "true";
 
         if (!apertura || !cierre) return alert("Por favor, introduce horas válidas.");
-
-        // Como tu tabla requiere un proveedor_id (clave foránea), usaremos temporalmente un ID de proveedor global/estándar.
-        // NOTA: Si manejas múltiples barberos con horarios individuales, deberás añadir un selector de barberos.
-        // Si el horario es ÚNICO y GENERAL de la barbería, puedes usar un proveedor_id de prueba o por defecto (ej: 1).
         const PROVEEDOR_ID_DEFECTO = 1; 
 
-        const { error } = await _supabase
-            .from('horarios_proveedor')
-            .upsert({
-                proveedor_id: PROVEEDOR_ID_DEFECTO, 
-                dia_semana: diaId,
-                hora_apertura: apertura + ":00", // Formato TIME requiere segundos (HH:MM:SS)
-                hora_cierre: cierre + ":00",
-                es_laborable: laborable
-            }, { onConflict: 'proveedor_id, dia_semana' });
+        const { error } = await _supabase.from('horarios_proveedor').upsert({
+            proveedor_id: PROVEEDOR_ID_DEFECTO, 
+            dia_semana: diaId,
+            hora_apertura: apertura + ":00", 
+            hora_cierre: cierre + ":00",
+            es_laborable: laborable
+        }, { onConflict: 'proveedor_id, dia_semana' });
 
         if (error) {
             alert("Error al actualizar el día: " + error.message);
-            console.error(error);
         } else {
             alert("¡Horario del día guardado correctamente!");
         }
     }
-
-    // --- LÓGICA RESTANTE ---
 
     async function cargarCitas() {
         const tbody = document.querySelector('#tabla-citas tbody');
@@ -307,26 +330,8 @@
                     <td><button class="btn-delete" onclick="eliminarCita('${c.id}')">Eliminar</button></td>
                 </tr>
             `).join('');
-
         } catch (err) {
             tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:red;">Error de conexión.</td></tr>';
-        }
-    }
-
-    async function agregarBarbero() {
-        const inputNombre = document.getElementById('barbero-nombre');
-        const inputRol = document.getElementById('barbero-rol');
-        const nombre = inputNombre.value.trim();
-        const rol = inputRol.value.trim();
-        if(!nombre || !rol) return alert("Completa todos los campos del barbero");
-        
-        const { error } = await _supabase.from('proveedores').insert([{ nombre, rol }]);
-        if (error) {
-            alert("Error al guardar barbero: " + error.message);
-        } else {
-            alert("¡Barbero añadido con éxito!");
-            inputNombre.value = ""; inputRol.value = "";
-            cargarBarberos();
         }
     }
 
@@ -334,10 +339,24 @@
         const { data } = await _supabase.from('proveedores').select('*');
         const tbody = document.querySelector('#tabla-barberos tbody');
         if (!data || data.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">No hay barberos registrados.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">No hay barberos registrados.</td></tr>';
             return;
         }
-        tbody.innerHTML = data.map(b => `<tr><td>${b.nombre}</td><td>${b.rol}</td><td><button class="btn-delete" onclick="eliminarFila('proveedores','${b.id}', cargarBarberos)">X</button></td></tr>`).join('');
+        tbody.innerHTML = data.map(b => `
+            <tr>
+                <td>${b.nombre}</td>
+                <td>${b.rol}</td>
+                <td>
+                    <button class="action-btn" style="padding: 5px 10px; font-size: 0.85rem; background: #34495e;" 
+                        onclick="abrirAsignadorServicios('${b.id}', '${b.nombre}')">
+                        ⚙️ Configurar Servicios
+                    </button>
+                </td>
+                <td>
+                    <button class="btn-delete" onclick="eliminarFila('proveedores','${b.id}', cargarBarberos)">X</button>
+                </td>
+            </tr>
+        `).join('');
     }
 
     async function agregarServicio() {
@@ -412,6 +431,85 @@
     }
 
     window.onload = () => { cargarCitas(); };
+    // 1. FUNCIÓN PARA ABRIR EL PANEL Y CARGAR LOS CHECKBOXES
+async function abrirAsignadorServicios(barberoId, barberoNombre) {
+    // Mostramos el contenedor oculto y ponemos el nombre del barbero en el título
+    document.getElementById('seccion-asignar-servicios').style.display = 'block';
+    document.getElementById('nombre-barbero-asignar').innerText = barberoNombre;
+    document.getElementById('id-barbero-asignar').value = barberoId;
+
+    const contenedor = document.getElementById('contenedor-checkboxes-servicios');
+    contenedor.innerHTML = '<p>Cargando servicios...</p>';
+
+    try {
+        // Traemos todos los servicios existentes de la barbería
+        const { data: todosLosServicios } = await _supabase.from('servicios').select('*');
+        
+        // Traemos cuáles de esos servicios ya tiene asignados este barbero actualmente
+        const { data: serviciosAsignados } = await _supabase
+            .from('proveedor_servicios')
+            .select('servicio_id')
+            .eq('proveedor_id', barberoId);
+
+        if (!todosLosServicios || todosLosServicios.length === 0) {
+            contenedor.innerHTML = '<p>No hay servicios creados en el sistema aún.</p>';
+            return;
+        }
+
+        // Creamos una lista con los IDs de los servicios que ya tiene guardados
+        const idsAsignados = serviciosAsignados ? serviciosAsignados.map(s => s.servicio_id) : [];
+
+        // Generamos los checkboxes en la pantalla
+        contenedor.innerHTML = todosLosServicios.map(s => {
+            const estaChequeado = idsAsignados.includes(s.id) ? 'checked' : '';
+            return `
+                <label style="display: flex; align-items: center; gap: 10px; font-size: 1rem; cursor: pointer;">
+                    <input type="checkbox" class="chk-servicio" value="${s.id}" ${estaChequeado} style="width: 18px; height: 18px;">
+                    <strong>${s.nombre}</strong> (${s.duracion} min)
+                </label>
+            `;
+        }).join('');
+
+    } catch (err) {
+        console.error(err);
+        contenedor.innerHTML = '<p style="color:red;">Error al cargar la relación de servicios.</p>';
+    }
+}
+
+// 2. FUNCIÓN PARA GUARDAR LOS CAMBIOS EN SUPABASE
+async function guardarServiciosAsignados() {
+    const barberoId = document.getElementById('id-barbero-asignar').value;
+    const checkboxes = document.querySelectorAll('.chk-servicio');
+    
+    // Capturamos todos los servicios que el administrador marcó con el gancho
+    const serviciosSeleccionados = [];
+    checkboxes.forEach(chk => {
+        if (chk.checked) {
+            serviciosSeleccionados.push({
+                proveedor_id: barberoId,
+                servicio_id: chk.value
+            });
+        }
+    });
+
+    try {
+        // Primero borramos las asignaciones viejas de este barbero para no duplicar datos
+        await _supabase.from('proveedor_servicios').delete().eq('proveedor_id', barberoId);
+
+        // Si marcó al menos uno, los insertamos en la tabla intermedia
+        if (serviciosSeleccionados.length > 0) {
+            const { error } = await _supabase.from('proveedor_servicios').insert(serviciosSeleccionados);
+            if (error) throw error;
+        }
+
+        alert("¡Relación de servicios actualizada con éxito!");
+        document.getElementById('seccion-asignar-servicios').style.display = 'none'; // Cerramos el panel
+
+    } catch (err) {
+        alert("Error al guardar: " + err.message);
+        console.error(err);
+    }
+}
 </script>
 </body>
 </html>
