@@ -1,4 +1,4 @@
-OCTYPE html>
+<DOCTYPE html>
 
 <html lang="es">
 
@@ -510,134 +510,97 @@ OCTYPE html>
 
 
 
-        // Lógica principal de renderizado en la TV
-
+      // Lógica principal de renderizado en la TV (Sincronizada con el reloj)
         async function actualizarPantallaTV() {
-
             // Obtenemos la fecha de hoy en formato YYYY-MM-DD local
-
             const hoy = new Date();
-
             const offset = hoy.getTimezoneOffset();
-
             const hoyLocal = new Date(hoy.getTime() - (offset * 60 * 1000));
-
             const fechaHoy = hoyLocal.toISOString().split('T')[0];
 
-
+            // Calculamos los minutos transcurridos del día de hoy (Ej: 2:30 PM = 870 minutos)
+            const ahoraMinutos = (hoy.getHours() * 60) + hoy.getMinutes();
 
             try {
-
                 // Buscamos las reservas del día de hoy
-
                 const { data: reservas, error } = await window._supabase
-
                     .from('reservas')
-
                     .select('*')
-
                     .eq('fecha', fechaHoy);
-
-
 
                 if (error) throw error;
 
-
-
                 const listaEspera = document.getElementById('listaEspera');
 
-
-
                 if (!reservas || reservas.length === 0) {
-
                     document.getElementById('totalTurnos').innerText = "Total: 0";
-
                     document.getElementById('actualNombre').innerText = "Libre";
-
                     document.getElementById('actualServicio').innerText = "Sin citas para hoy";
-
                     document.getElementById('actualHora').innerText = "--:--";
-
                     listaEspera.innerHTML = '<div class="no-data">💈 No hay más turnos hoy.</div>';
-
                     return;
-
                 }
 
-
-
-                // Las ordenamos cronológicamente usando tu lógica
-
+                // Las ordenamos cronológicamente de menor a mayor hora
                 reservas.sort((a, b) => horaAMinutos(a.hora) - horaAMinutos(b.hora));
 
-
-
                 // Total de citas del día
-
                 document.getElementById('totalTurnos').innerText = `Total: ${reservas.length}`;
 
+                // --- MOTOR DE ASIGNACIÓN TIEMPO REAL ---
+                let clienteAtendiendo = null;
+                let proximosEnFila = [];
 
+                reservas.forEach(cita => {
+                    const inicioMinutos = horaAMinutos(cita.hora);
+                    const duracion = parseInt(cita.duracion, 10) || 30; // 30 min por defecto si no viene guardada
+                    const finMinutos = inicioMinutos + duracion;
 
-                // El primer turno va al monitor grande "Atendiendo Ahora"
+                    // Si el reloj actual cae en el rango del corte, va a la sección "Atendiendo Ahora"
+                    if (ahoraMinutos >= inicioMinutos && ahoraMinutos < finMinutos) {
+                        clienteAtendiendo = cita;
+                    } 
+                    // Si el turno es para más tarde, se suma a la fila de la derecha
+                    else if (inicioMinutos >= ahoraMinutos) {
+                        proximosEnFila.push(cita);
+                    }
+                });
 
-                const primero = reservas[0];
-
-                document.getElementById('actualNombre').innerText = primero.cliente || "Cliente";
-
-                document.getElementById('actualServicio').innerText = primero.servicio || "Corte de Pelo";
-
-                document.getElementById('actualHora').innerText = primero.hora;
-
-
-
-                // El resto se lista a la derecha
-
-                const siguientes = reservas.slice(1);
-
-                if (siguientes.length === 0) {
-
-                    listaEspera.innerHTML = '<div class="no-data">Próximo turno libre</div>';
-
+                // --- RENDERIZAR PANEL "ATENDIENDO AHORA" ---
+                if (clienteAtendiendo) {
+                    document.getElementById('actualNombre').innerText = clienteAtendiendo.cliente || "Cliente";
+                    document.getElementById('actualServicio').innerText = `${clienteAtendiendo.servicio || "Servicio"} (con ${clienteAtendiendo.barbero || 'Barbero'})`;
+                    document.getElementById('actualHora').innerText = clienteAtendiendo.hora;
                 } else {
-
-                    let htmlSiguientes = "";
-
-                    siguientes.forEach(cita => {
-
-                        htmlSiguientes += `
-
-                            <div class="item-reserva">
-
-                                <div class="info-cliente">
-
-                                    <span class="info-nombre">${cita.cliente || "Cliente"}</span>
-
-                                    <span class="info-servicio">✂️ ${cita.servicio || "Servicio"}</span>
-
-                                </div>
-
-                                <span class="info-hora">${cita.hora}</span>
-
-                            </div>
-
-                        `;
-
-                    });
-
-                    listaEspera.innerHTML = htmlSiguientes;
-
+                    // Si hay citas más tarde pero justo ahora el sillón está vacío
+                    document.getElementById('actualNombre').innerText = "Libre";
+                    document.getElementById('actualServicio').innerText = "Sillón disponible en este momento";
+                    document.getElementById('actualHora').innerText = "--:--";
                 }
 
-
+                // --- RENDERIZAR PANEL "SIGUIENTES EN FILA" ---
+                if (proximosEnFila.length === 0) {
+                    listaEspera.innerHTML = '<div class="no-data">No quedan más turnos pendientes</div>';
+                } else {
+                    let htmlSiguientes = "";
+                    proximosEnFila.forEach(cita => {
+                        htmlSiguientes += `
+                            <div class="item-reserva">
+                                <div class="info-cliente">
+                                    <span class="info-nombre">${cita.cliente || "Cliente"}</span>
+                                    <span class="info-servicio">✂️ ${cita.servicio || "Servicio"} (${cita.barbero || 'Barbero'})</span>
+                                </div>
+                                <span class="info-hora">${cita.hora}</span>
+                            </div>
+                        `;
+                    });
+                    listaEspera.innerHTML = htmlSiguientes;
+                }
 
             } catch (err) {
-
                 console.error("Error cargando datos para la TV:", err);
-
             }
-
         }
-
 
 
         // ========================================================
@@ -685,13 +648,11 @@ OCTYPE html>
         actualizarPantallaTV();
 
 
-
-        // Respaldo: Fuerza un refresco total cada 1 minuto por si acaso
-
-        setInterval(actualizarPantallaTV, 60000);
+// Cambia el respaldo de 60000 (1 minuto) a 15000 (15 segundos)
+setInterval(actualizarPantallaTV, 15000);
 
     </script>
 
 </body>
 
-</html> 
+</html>  
